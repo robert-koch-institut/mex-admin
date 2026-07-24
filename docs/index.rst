@@ -1,7 +1,7 @@
 Documentation
 =============
 
-Metadata editor web application.
+Metadata admin web application.
 
 .. toctree::
     :maxdepth: 2

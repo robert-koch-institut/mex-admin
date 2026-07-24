@@ -1,7 +1,7 @@
 [project]
-name = "mex-editor"
+name = "mex-admin"
 version = "3.1.0"
-description = "Metadata editor web application."
+description = "Metadata admin web application."
 authors = [{ name = "MEx Team", email = "mex@rki.de" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"
@@ -39,9 +39,9 @@ dev = [
 ]
 
 [project.scripts]
-editor = "mex.editor.main:main"
-editor-api = "mex.editor.main:editor_api"
-editor-frontend = "mex.editor.main:editor_frontend"
+admin = "mex.admin.main:main"
+admin-api = "mex.admin.main:admin_api"
+admin-frontend = "mex.admin.main:admin_frontend"
 
 [tool.cruft]
 template = "https://github.com/robert-koch-institut/mex-template"
@@ -113,10 +113,10 @@ ignore = [
 select = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
-"mex/editor/logging.py" = [
+"mex/admin/logging.py" = [
     "A005",     # Allow custom logging module to shadow standard-library
 ]
-"mex/editor/types.py" = [
+"mex/admin/types.py" = [
     "A005",     # Allow custom types module to shadow standard-library
 ]
 "docs/**" = [

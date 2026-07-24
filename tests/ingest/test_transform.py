@@ -1,9 +1,9 @@
 from unittest.mock import MagicMock, patch
 
+from mex.admin.ingest.models import IngestResult
+from mex.admin.ingest.transform import transform_models_to_results
+from mex.admin.models import AdminValue
 from mex.common.models import AnyExtractedModel
-from mex.editor.ingest.models import IngestResult
-from mex.editor.ingest.transform import transform_models_to_results
-from mex.editor.models import EditorValue
 
 
 def test_transform_models_to_results_single_model() -> None:
@@ -16,8 +16,8 @@ def test_transform_models_to_results_single_model() -> None:
     model.wikidataId = "wikidataId"
 
     with patch(
-        "mex.editor.ingest.transform.transform_model_to_all_properties",
-        return_value=[EditorValue(text="property")],
+        "mex.admin.ingest.transform.transform_model_to_all_properties",
+        return_value=[AdminValue(text="property")],
     ):
         result = transform_models_to_results([model])
 
@@ -25,7 +25,7 @@ def test_transform_models_to_results_single_model() -> None:
     assert isinstance(result[0], IngestResult)
     assert result[0].identifier == "id1"
     assert result[0].title == [
-        EditorValue(
+        AdminValue(
             text="name",
             badge=None,
             href=None,
@@ -34,21 +34,21 @@ def test_transform_models_to_results_single_model() -> None:
         )
     ]
     assert result[0].preview == [
-        EditorValue(
+        AdminValue(
             text="shortName",
             badge=None,
             href=None,
             external=False,
             enabled=True,
         ),
-        EditorValue(
+        AdminValue(
             text="alternativeName",
             badge=None,
             href=None,
             external=False,
             enabled=True,
         ),
-        EditorValue(
+        AdminValue(
             text="wikidataId",
             badge=None,
             href=None,
@@ -79,15 +79,15 @@ def test_transform_models_to_results_multiple_models() -> None:
     model2.wikidataId = "wikidataId2"
 
     with patch(
-        "mex.editor.ingest.transform.transform_model_to_all_properties",
-        return_value=[EditorValue(text="property")],
+        "mex.admin.ingest.transform.transform_model_to_all_properties",
+        return_value=[AdminValue(text="property")],
     ):
         result = transform_models_to_results([model1, model2])
 
     assert len(result) == 2
     assert result[0].identifier == "id1"
     assert result[0].title == [
-        EditorValue(
+        AdminValue(
             text="name1",
             badge=None,
             href=None,
@@ -96,21 +96,21 @@ def test_transform_models_to_results_multiple_models() -> None:
         )
     ]
     assert result[0].preview == [
-        EditorValue(
+        AdminValue(
             text="shortName1",
             badge=None,
             href=None,
             external=False,
             enabled=True,
         ),
-        EditorValue(
+        AdminValue(
             text="alternativeName1",
             badge=None,
             href=None,
             external=False,
             enabled=True,
         ),
-        EditorValue(
+        AdminValue(
             text="wikidataId1",
             badge=None,
             href=None,
@@ -123,7 +123,7 @@ def test_transform_models_to_results_multiple_models() -> None:
 
     assert result[1].identifier == "id2"
     assert result[1].title == [
-        EditorValue(
+        AdminValue(
             text="name2",
             badge=None,
             href=None,
@@ -132,21 +132,21 @@ def test_transform_models_to_results_multiple_models() -> None:
         )
     ]
     assert result[1].preview == [
-        EditorValue(
+        AdminValue(
             text="shortName2",
             badge=None,
             href=None,
             external=False,
             enabled=True,
         ),
-        EditorValue(
+        AdminValue(
             text="alternativeName2",
             badge=None,
             href=None,
             external=False,
             enabled=True,
         ),
-        EditorValue(
+        AdminValue(
             text="wikidataId2",
             badge=None,
             href=None,

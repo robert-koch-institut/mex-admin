@@ -614,32 +614,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mex-common"
-version = "3.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "backoff" },
-    { name = "click" },
-    { name = "langdetect" },
-    { name = "ldap3" },
-    { name = "mex-model" },
-    { name = "networkx" },
-    { name = "numpy" },
-    { name = "pandas" },
-    { name = "pyarrow" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "pytz" },
-    { name = "requests" },
-    { name = "tabulate" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/57/67/1daa9a874680b7f977dc17041b7c207da49e778d301e345725870adad2e7/mex_common-3.0.0.tar.gz", hash = "sha256:da9d56ec7e094facb372dbdb21834eeed18bfd878619c9f5f78f7bc0c2f9666e", size = 92959, upload-time = "2026-06-19T13:10:01.641Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/cb/f5a228e9aafee47ce95fbcb6a16af6d23c2c59a56589f35915dffc7cd5ed/mex_common-3.0.0-py3-none-any.whl", hash = "sha256:627c4e770c71ad327fe941f6d743c6dd59f3d18302c77728f90df5829b2f3429", size = 140048, upload-time = "2026-06-19T13:10:00.145Z" },
-]
-
-[[package]]
-name = "mex-editor"
+name = "mex-admin"
 version = "3.1.0"
 source = { editable = "." }
 dependencies = [
@@ -703,6 +678,31 @@ dev = [
     { name = "types-polib" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
+]
+
+[[package]]
+name = "mex-common"
+version = "3.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "backoff" },
+    { name = "click" },
+    { name = "langdetect" },
+    { name = "ldap3" },
+    { name = "mex-model" },
+    { name = "networkx" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pytz" },
+    { name = "requests" },
+    { name = "tabulate" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/57/67/1daa9a874680b7f977dc17041b7c207da49e778d301e345725870adad2e7/mex_common-3.0.0.tar.gz", hash = "sha256:da9d56ec7e094facb372dbdb21834eeed18bfd878619c9f5f78f7bc0c2f9666e", size = 92959, upload-time = "2026-06-19T13:10:01.641Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/be/cb/f5a228e9aafee47ce95fbcb6a16af6d23c2c59a56589f35915dffc7cd5ed/mex_common-3.0.0-py3-none-any.whl", hash = "sha256:627c4e770c71ad327fe941f6d743c6dd59f3d18302c77728f90df5829b2f3429", size = 140048, upload-time = "2026-06-19T13:10:00.145Z" },
 ]
 
 [[package]]

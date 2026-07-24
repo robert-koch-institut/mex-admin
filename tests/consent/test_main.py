@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from playwright.sync_api import Page, expect
 
-from mex.editor.settings import EditorSettings
+from mex.admin.settings import AdminSettings
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def login_ldap_user(
     page: Page,
     base_url: str,
 ) -> Page:
-    settings = EditorSettings.get()
+    settings = AdminSettings.get()
     url = urlsplit(settings.ldap_url.get_secret_value())
     page.goto(f"{base_url}/consent")
     page.get_by_test_id("input-username").fill(str(url.username))
@@ -94,7 +94,7 @@ def test_pagination(consent_page: Page) -> None:
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
 def test_index(consent_page: Page) -> None:
-    settings = EditorSettings.get()
+    settings = AdminSettings.get()
     url = urlsplit(settings.ldap_url.get_secret_value())
     page = consent_page
 
@@ -124,7 +124,7 @@ def test_submit_consent(consent_page: Page) -> None:
     denial_button = page.get_by_test_id("denial-consent-button")
     denial_button.click()
     page.screenshot(path="tests_consent_test_main-test_submit_consent_invalid.png")
-    toast = page.locator(".editor-toast").first
+    toast = page.locator(".admin-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
     expect(consent_status).to_contain_text(f"Sie haben Ihre Ablehnung am {today}")
@@ -132,7 +132,7 @@ def test_submit_consent(consent_page: Page) -> None:
     # check if given consent is submitted
     page.get_by_test_id("accept-consent-button").click()
     page.screenshot(path="tests_consent_test_main-test_submit_consent_valid.png")
-    toast = page.locator(".editor-toast").first
+    toast = page.locator(".admin-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
     expect(page.get_by_test_id("consent-status")).to_contain_text(

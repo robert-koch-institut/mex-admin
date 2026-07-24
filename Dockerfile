@@ -21,7 +21,7 @@ RUN pip wheel --no-cache-dir --wheel-dir /build/wheels --no-deps .
 FROM python:3.14-slim-trixie
 
 LABEL org.opencontainers.image.authors="mex@rki.de"
-LABEL org.opencontainers.image.description="Metadata editor web application."
+LABEL org.opencontainers.image.description="Metadata admin web application."
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.url="https://github.com/robert-koch-institut/mex-editor"
 LABEL org.opencontainers.image.vendor="robert-koch-institut"
@@ -68,4 +68,4 @@ USER mex
 EXPOSE 8030
 EXPOSE 8031
 
-ENTRYPOINT [ "editor" ]
+ENTRYPOINT [ "admin" ]

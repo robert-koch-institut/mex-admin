@@ -1,8 +1,8 @@
 import pytest
 from playwright.sync_api import Page, expect
 
+from mex.admin.ingest.models import ALL_AUX_PROVIDERS, AuxProviderKey
 from mex.common.backend_api.connector import BackendApiConnector
-from mex.editor.ingest.models import ALL_AUX_PROVIDERS, AuxProviderKey
 from tests.conftest import build_pagination_regex, build_ui_label_regex
 
 
@@ -115,7 +115,7 @@ def test_search_and_ingest_roundtrip(
     # test ingest button works
     ingest_button = page.get_by_test_id("ingest-button-0")
     ingest_button.click()
-    toast = page.locator(".editor-toast").first
+    toast = page.locator(".admin-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
     expect(ingest_button).to_be_disabled()

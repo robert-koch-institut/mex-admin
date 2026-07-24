@@ -3,6 +3,30 @@ from typing import get_args
 import pytest
 from pydantic import ValidationError
 
+from mex.admin.models import LANGUAGE_VALUE_NONE, AdminValue
+from mex.admin.rules.models import (
+    AdminField,
+    AdminPrimarySource,
+    InputConfig,
+    PublishTarget,
+    ValidationMessage,
+)
+from mex.admin.rules.transform import (
+    _get_primary_source_id_from_model,
+    _transform_admin_value_to_model_value,
+    _transform_fields_to_additive,
+    _transform_fields_to_preventive,
+    _transform_fields_to_subtractive,
+    _transform_model_to_admin_primary_sources,
+    _transform_model_to_input_config,
+    _transform_model_values_to_admin_values,
+    get_required_mergeable_field_names,
+    transform_fields_to_rule_set,
+    transform_models_to_fields,
+    transform_publish_targets_to_workflow,
+    transform_validation_error_to_messages,
+    transform_workflow_to_publish_targets,
+)
 from mex.common.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -49,30 +73,6 @@ from mex.common.types import (
     Theme,
     Year,
     YearMonthDayTime,
-)
-from mex.editor.models import LANGUAGE_VALUE_NONE, EditorValue
-from mex.editor.rules.models import (
-    EditorField,
-    EditorPrimarySource,
-    InputConfig,
-    PublishTarget,
-    ValidationMessage,
-)
-from mex.editor.rules.transform import (
-    _get_primary_source_id_from_model,
-    _transform_editor_value_to_model_value,
-    _transform_fields_to_additive,
-    _transform_fields_to_preventive,
-    _transform_fields_to_subtractive,
-    _transform_model_to_editor_primary_sources,
-    _transform_model_to_input_config,
-    _transform_model_values_to_editor_values,
-    get_required_mergeable_field_names,
-    transform_fields_to_rule_set,
-    transform_models_to_fields,
-    transform_publish_targets_to_workflow,
-    transform_validation_error_to_messages,
-    transform_workflow_to_publish_targets,
 )
 
 
@@ -130,7 +130,7 @@ def test_get_primary_source_id_from_model_error() -> None:
             "hasConsentStatus",
             SubtractiveConsent(),
             [
-                EditorValue(
+                AdminValue(
                     text="ConsentStatus",
                     badge=ConsentStatus["VALID_FOR_PROCESSING"].name,
                 )
@@ -145,8 +145,8 @@ def test_get_primary_source_id_from_model_error() -> None:
             "fullName",
             SubtractivePerson(),
             [
-                EditorValue(text="Example, Name"),
-                EditorValue(text="Dr. Example"),
+                AdminValue(text="Example, Name"),
+                AdminValue(text="Dr. Example"),
             ],
         ),
         (
@@ -160,7 +160,7 @@ def test_get_primary_source_id_from_model_error() -> None:
                 isPartOfActivity=[MergedActivityIdentifier("doesNotMatter000000000")]
             ),
             [
-                EditorValue(
+                AdminValue(
                     href="/item/gGdOIbDIHRt35He616Fv5q",
                     identifier="gGdOIbDIHRt35He616Fv5q",
                 ),
@@ -188,14 +188,14 @@ def test_get_primary_source_id_from_model_error() -> None:
                 ]
             ),
             [
-                EditorValue(
+                AdminValue(
                     text="Example Homepage",
                     badge=LinkLanguage.EN.name,
                     href="http://example",
                     external=True,
                     enabled=False,
                 ),
-                EditorValue(
+                AdminValue(
                     href="http://pavyzdys", external=True, badge=LANGUAGE_VALUE_NONE
                 ),
             ],
@@ -203,16 +203,16 @@ def test_get_primary_source_id_from_model_error() -> None:
     ],
     ids=["single value", "list", "irrelevant subtractive", "subtractive applied"],
 )
-def test_transform_model_values_to_editor_values(
+def test_transform_model_values_to_admin_values(
     model: AnyExtractedModel | AnyMergedModel | AnyAdditiveModel,
     field_name: str,
     subtractive: AnySubtractiveModel,
-    expected: list[EditorValue],
+    expected: list[AdminValue],
 ) -> None:
-    editor_value = _transform_model_values_to_editor_values(
+    admin_value = _transform_model_values_to_admin_values(
         model, field_name, subtractive
     )
-    assert editor_value == expected
+    assert admin_value == expected
 
 
 @pytest.mark.parametrize(
@@ -445,14 +445,14 @@ def test_transform_model_to_input_config(
 def test_id_shown_with_extracted_items(
     extracted_items: list[AnyExtractedModel], *, is_present: bool
 ) -> None:
-    editor_fields = transform_models_to_fields(
+    admin_fields = transform_models_to_fields(
         extracted_items=extracted_items,
         additive=AdditivePerson(),
         subtractive=SubtractivePerson(),
         preventive=PreventivePerson(),
     )
 
-    field_names = [field.name for field in editor_fields]
+    field_names = [field.name for field in admin_fields]
 
     if is_present:
         assert "identifierInPrimarySource" in field_names
@@ -478,25 +478,25 @@ def test_id_shown_with_extracted_items(
             SubtractivePerson(),
             PreventivePerson(),
             [
-                EditorPrimarySource(
-                    name=EditorValue(
+                AdminPrimarySource(
+                    name=AdminValue(
                         identifier="primarySourceId",
                         href="/item/primarySourceId",
                     ),
                     identifier=MergedPrimarySourceIdentifier("primarySourceId"),
-                    editor_values=[EditorValue(text="Example")],
+                    admin_values=[AdminValue(text="Example")],
                     input_config=InputConfig(),
                     enabled=True,
                 )
             ],
             [
-                EditorPrimarySource(
-                    name=EditorValue(
+                AdminPrimarySource(
+                    name=AdminValue(
                         identifier="primarySourceId",
                         href="/item/primarySourceId",
                     ),
                     identifier=MergedPrimarySourceIdentifier("primarySourceId"),
-                    editor_values=[],
+                    admin_values=[],
                     input_config=InputConfig(),
                     enabled=True,
                 )
@@ -516,15 +516,15 @@ def test_id_shown_with_extracted_items(
                 familyName=[MergedPrimarySourceIdentifier("primarySourceId")]
             ),
             [
-                EditorPrimarySource(
-                    name=EditorValue(
+                AdminPrimarySource(
+                    name=AdminValue(
                         identifier="primarySourceId",
                         href="/item/primarySourceId",
                     ),
                     identifier=MergedPrimarySourceIdentifier("primarySourceId"),
-                    editor_values=[
-                        EditorValue(text="Given"),
-                        EditorValue(
+                    admin_values=[
+                        AdminValue(text="Given"),
+                        AdminValue(
                             text="Gegeben",
                             enabled=False,
                         ),
@@ -534,13 +534,13 @@ def test_id_shown_with_extracted_items(
                 )
             ],
             [
-                EditorPrimarySource(
-                    name=EditorValue(
+                AdminPrimarySource(
+                    name=AdminValue(
                         identifier="primarySourceId",
                         href="/item/primarySourceId",
                     ),
                     identifier=MergedPrimarySourceIdentifier("primarySourceId"),
-                    editor_values=[EditorValue(text="Family")],
+                    admin_values=[AdminValue(text="Family")],
                     input_config=InputConfig(),
                     enabled=False,
                 )
@@ -549,22 +549,22 @@ def test_id_shown_with_extracted_items(
     ],
     ids=["without rules", "with rules"],
 )
-def test_transform_model_to_editor_primary_sources(
+def test_transform_model_to_admin_primary_sources(
     model: AnyExtractedModel | AnyAdditiveModel,
     subtractive: AnySubtractiveModel,
     preventive: AnyPreventiveModel,
-    expected_given_name: list[EditorPrimarySource],
-    expected_family_name: list[EditorPrimarySource],
+    expected_given_name: list[AdminPrimarySource],
+    expected_family_name: list[AdminPrimarySource],
 ) -> None:
-    given_name = EditorField(
+    given_name = AdminField(
         name="givenName", primary_sources=[], is_required=False, value_type=["str"]
     )
-    family_name = EditorField(
+    family_name = AdminField(
         name="familyName", primary_sources=[], is_required=False, value_type=["str"]
     )
     fields_by_name = {"givenName": given_name, "familyName": family_name}
 
-    _transform_model_to_editor_primary_sources(
+    _transform_model_to_admin_primary_sources(
         fields_by_name, model, subtractive, preventive
     )
 
@@ -573,7 +573,7 @@ def test_transform_model_to_editor_primary_sources(
 
 
 def test_transform_models_to_fields() -> None:
-    editor_fields = transform_models_to_fields(
+    admin_fields = transform_models_to_fields(
         [
             ExtractedPerson(
                 email=["person000@rki.de"],
@@ -586,8 +586,8 @@ def test_transform_models_to_fields() -> None:
         preventive=PreventivePerson(memberOf=[MEX_PRIMARY_SOURCE_STABLE_TARGET_ID]),
     )
     # identifierInPrimarySource is NOT in MERGEABLE_FIELDS_BY_CLASS_NAME and has to be added
-    assert len(editor_fields) == len(MERGEABLE_FIELDS_BY_CLASS_NAME["MergedPerson"]) + 1
-    fields_by_name = {f.name: f for f in editor_fields}
+    assert len(admin_fields) == len(MERGEABLE_FIELDS_BY_CLASS_NAME["MergedPerson"]) + 1
+    fields_by_name = {f.name: f for f in admin_fields}
     assert fields_by_name["givenName"].model_dump() == {
         "is_required": False,
         "value_type": ["str"],
@@ -617,7 +617,7 @@ def test_transform_models_to_fields() -> None:
                     "allow_subtractive": True,
                     "allow_preventive": True,
                 },
-                "editor_values": [],
+                "admin_values": [],
                 "enabled": True,
             },
             {
@@ -644,7 +644,7 @@ def test_transform_models_to_fields() -> None:
                     "allow_subtractive": True,
                     "allow_preventive": True,
                 },
-                "editor_values": [
+                "admin_values": [
                     {
                         "text": "Good",
                         "badge": None,
@@ -688,7 +688,7 @@ def test_transform_models_to_fields() -> None:
                     "allow_subtractive": True,
                     "allow_preventive": True,
                 },
-                "editor_values": [],
+                "admin_values": [],
                 "enabled": False,
             },
             {
@@ -715,7 +715,7 @@ def test_transform_models_to_fields() -> None:
                     "allow_subtractive": True,
                     "allow_preventive": True,
                 },
-                "editor_values": [],
+                "admin_values": [],
                 "enabled": True,
             },
         ],
@@ -726,16 +726,16 @@ def test_transform_models_to_fields() -> None:
     ("field", "expected"),
     [
         (
-            EditorField(
+            AdminField(
                 name="unknownField",
                 is_required=False,
                 value_type=[],
                 primary_sources=[
-                    EditorPrimarySource(
+                    AdminPrimarySource(
                         enabled=True,
                         input_config=InputConfig(),
-                        editor_values=[],
-                        name=EditorValue(text="No Input Config"),
+                        admin_values=[],
+                        name=AdminValue(text="No Input Config"),
                         identifier=MergedPrimarySourceIdentifier("PrimarySource000000"),
                     )
                 ],
@@ -743,19 +743,19 @@ def test_transform_models_to_fields() -> None:
             {},
         ),
         (
-            EditorField(
+            AdminField(
                 name="familyName",
                 is_required=False,
                 value_type=["str"],
                 primary_sources=[
-                    EditorPrimarySource(
+                    AdminPrimarySource(
                         enabled=True,
                         input_config=InputConfig(editable_text=True),
-                        name=EditorValue(text="PS2"),
+                        name=AdminValue(text="PS2"),
                         identifier=MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                        editor_values=[
-                            EditorValue(text="Duplicate"),
-                            EditorValue(text="Duplicate"),
+                        admin_values=[
+                            AdminValue(text="Duplicate"),
+                            AdminValue(text="Duplicate"),
                         ],
                     ),
                 ],
@@ -765,7 +765,7 @@ def test_transform_models_to_fields() -> None:
     ],
 )
 def test_transform_fields_to_additive(
-    field: EditorField, expected: dict[str, object]
+    field: AdminField, expected: dict[str, object]
 ) -> None:
     additive = _transform_fields_to_additive([field], "Person")
     assert additive == expected
@@ -775,16 +775,16 @@ def test_transform_fields_to_additive(
     ("field", "expected"),
     [
         (
-            EditorField(
+            AdminField(
                 name="unknownField",
                 is_required=False,
                 value_type=[],
                 primary_sources=[
-                    EditorPrimarySource(
+                    AdminPrimarySource(
                         enabled=True,
                         input_config=InputConfig(),
-                        editor_values=[],
-                        name=EditorValue(text="Enabled Primary Source"),
+                        admin_values=[],
+                        name=AdminValue(text="Enabled Primary Source"),
                         identifier=MergedPrimarySourceIdentifier(
                             "enabledPrimarySourceId"
                         ),
@@ -794,25 +794,25 @@ def test_transform_fields_to_additive(
             {},
         ),
         (
-            EditorField(
+            AdminField(
                 name="familyName",
                 is_required=False,
                 value_type=["str"],
                 primary_sources=[
-                    EditorPrimarySource(
+                    AdminPrimarySource(
                         enabled=True,
                         input_config=InputConfig(),
-                        editor_values=[],
-                        name=EditorValue(text="Enabled Primary Source"),
+                        admin_values=[],
+                        name=AdminValue(text="Enabled Primary Source"),
                         identifier=MergedPrimarySourceIdentifier(
                             "enabledPrimarySourceId"
                         ),
                     ),
-                    EditorPrimarySource(
+                    AdminPrimarySource(
                         enabled=False,
                         input_config=InputConfig(),
-                        editor_values=[],
-                        name=EditorValue(text="Prevented Primary Source"),
+                        admin_values=[],
+                        name=AdminValue(text="Prevented Primary Source"),
                         identifier=MergedPrimarySourceIdentifier(
                             "preventedPrimarySrcId"
                         ),
@@ -824,17 +824,17 @@ def test_transform_fields_to_additive(
     ],
 )
 def test_transform_fields_to_preventive(
-    field: EditorField, expected: dict[str, object]
+    field: AdminField, expected: dict[str, object]
 ) -> None:
     preventive = _transform_fields_to_preventive([field], "Person")
     assert preventive == expected
 
 
 @pytest.mark.parametrize(
-    ("editor_value", "field_name", "class_name", "stem_type", "expected"),
+    ("admin_value", "field_name", "class_name", "stem_type", "expected"),
     [
         (
-            EditorValue(
+            AdminValue(
                 text="Titel", badge=LinkLanguage.DE.name, href="https://beispiel"
             ),
             "documentation",
@@ -843,58 +843,56 @@ def test_transform_fields_to_preventive(
             Link(url="https://beispiel", language=LinkLanguage.DE, title="Titel"),
         ),
         (
-            EditorValue(text="Beispiel Text", badge=TextLanguage.DE.name),
+            AdminValue(text="Beispiel Text", badge=TextLanguage.DE.name),
             "alternativeName",
             "AdditiveOrganization",
             "Organization",
             Text(language=TextLanguage.DE, value="Beispiel Text"),
         ),
         (
-            EditorValue(text="Text", badge=LANGUAGE_VALUE_NONE),
+            AdminValue(text="Text", badge=LANGUAGE_VALUE_NONE),
             "alternativeTitle",
             "AdditivePrimarySource",
             "PrimarySource",
             Text(language=None, value="Text"),
         ),
         (
-            EditorValue(
-                text="ConsentType", badge=ConsentType["EXPRESSED_CONSENT"].name
-            ),
+            AdminValue(text="ConsentType", badge=ConsentType["EXPRESSED_CONSENT"].name),
             "hasConsentType",
             "AdditiveConsent",
             "Consent",
             ConsentType["EXPRESSED_CONSENT"],
         ),
         (
-            EditorValue(),
+            AdminValue(),
             "accrualPeriodicity",
             "AdditiveResource",
             "Resource",
             Frequency["TRIENNIAL"],
         ),
         (
-            EditorValue(text="2004", badge="year"),
+            AdminValue(text="2004", badge="year"),
             "start",
             "AdditiveActivity",
             "Activity",
             Year(2004),
         ),
         (
-            EditorValue(text="Funds for Funding e.V."),
+            AdminValue(text="Funds for Funding e.V."),
             "fundingProgram",
             "AdditiveActivity",
             "Activity",
             "Funds for Funding e.V.",
         ),
         (
-            EditorValue(identifier="abcdefhijkglmno"),
+            AdminValue(identifier="abcdefhijkglmno"),
             "hadPrimarySource",
             "ExtractedActivity",
             "Activity",
             "abcdefhijkglmno",
         ),
         (
-            EditorValue(identifier="abcdefhijkglmno", text="foo"),
+            AdminValue(identifier="abcdefhijkglmno", text="foo"),
             "hadPrimarySource",
             "ExtractedActivity",
             "Activity",
@@ -913,8 +911,8 @@ def test_transform_fields_to_preventive(
         "resolved_identifier",
     ],
 )
-def test_transform_editor_value_to_model_value(
-    editor_value: EditorValue,
+def test_transform_admin_value_to_model_value(
+    admin_value: AdminValue,
     field_name: str,
     class_name: str,
     stem_type: str,
@@ -928,8 +926,8 @@ def test_transform_editor_value_to_model_value(
     )
     assert input_config
 
-    model_value = _transform_editor_value_to_model_value(
-        editor_value,
+    model_value = _transform_admin_value_to_model_value(
+        admin_value,
         field_name,
         class_name,
         input_config,
@@ -941,15 +939,15 @@ def test_transform_editor_value_to_model_value(
     ("field", "expected"),
     [
         (
-            EditorField(
+            AdminField(
                 name="unknownField",
                 is_required=False,
                 value_type=[],
                 primary_sources=[
-                    EditorPrimarySource(
-                        name=EditorValue(text="Primary Source 1"),
+                    AdminPrimarySource(
+                        name=AdminValue(text="Primary Source 1"),
                         identifier=MergedPrimarySourceIdentifier("PrimarySource001"),
-                        editor_values=[],
+                        admin_values=[],
                         input_config=InputConfig(),
                         enabled=True,
                     )
@@ -958,27 +956,27 @@ def test_transform_editor_value_to_model_value(
             {},
         ),
         (
-            EditorField(
+            AdminField(
                 name="familyName",
                 is_required=False,
                 value_type=["str"],
                 primary_sources=[
-                    EditorPrimarySource(
-                        name=EditorValue(text="Primary Source 1"),
+                    AdminPrimarySource(
+                        name=AdminValue(text="Primary Source 1"),
                         identifier=MergedPrimarySourceIdentifier("PrimarySource001"),
-                        editor_values=[
-                            EditorValue(text="active", enabled=True),
-                            EditorValue(text="inactive", enabled=False),
+                        admin_values=[
+                            AdminValue(text="active", enabled=True),
+                            AdminValue(text="inactive", enabled=False),
                         ],
                         input_config=InputConfig(),
                         enabled=True,
                     ),
-                    EditorPrimarySource(
-                        name=EditorValue(text="Primary Source 2"),
+                    AdminPrimarySource(
+                        name=AdminValue(text="Primary Source 2"),
                         identifier=MergedPrimarySourceIdentifier("PrimarySource002"),
-                        editor_values=[
-                            EditorValue(text="inactive", enabled=False),
-                            EditorValue(text="another inactive", enabled=False),
+                        admin_values=[
+                            AdminValue(text="inactive", enabled=False),
+                            AdminValue(text="another inactive", enabled=False),
                         ],
                         input_config=InputConfig(),
                         enabled=True,
@@ -990,7 +988,7 @@ def test_transform_editor_value_to_model_value(
     ],
 )
 def test_transform_fields_to_subtractive(
-    field: EditorField, expected: dict[str, object]
+    field: AdminField, expected: dict[str, object]
 ) -> None:
     subtractive = _transform_fields_to_subtractive([field], "Person")
     assert subtractive == expected
@@ -1000,56 +998,56 @@ def test_transform_fields_to_rule_set() -> None:
     rule_set_request = transform_fields_to_rule_set(
         "Person",
         [
-            EditorField(
+            AdminField(
                 name="givenName",
                 is_required=False,
                 value_type=["str"],
                 primary_sources=[
-                    EditorPrimarySource(
-                        name=EditorValue(text="Enabled Primary Source"),
+                    AdminPrimarySource(
+                        name=AdminValue(text="Enabled Primary Source"),
                         identifier=MergedPrimarySourceIdentifier("PrimarySource001"),
-                        editor_values=[],
+                        admin_values=[],
                         input_config=InputConfig(),
                         enabled=True,
                     ),
-                    EditorPrimarySource(
-                        name=EditorValue(text="Prevented Primary Source"),
+                    AdminPrimarySource(
+                        name=AdminValue(text="Prevented Primary Source"),
                         identifier=MergedPrimarySourceIdentifier("PrimarySource002"),
-                        editor_values=[],
+                        admin_values=[],
                         enabled=False,
                         input_config=InputConfig(),
                     ),
                 ],
             ),
-            EditorField(
+            AdminField(
                 name="familyName",
                 is_required=False,
                 value_type=["str"],
                 primary_sources=[
-                    EditorPrimarySource(
-                        name=EditorValue(text="Primary Source 1"),
+                    AdminPrimarySource(
+                        name=AdminValue(text="Primary Source 1"),
                         identifier=MergedPrimarySourceIdentifier("PrimarySource001"),
-                        editor_values=[
-                            EditorValue(text="active", enabled=True),
-                            EditorValue(text="inactive", enabled=False),
+                        admin_values=[
+                            AdminValue(text="active", enabled=True),
+                            AdminValue(text="inactive", enabled=False),
                         ],
                         input_config=InputConfig(),
                         enabled=True,
                     ),
-                    EditorPrimarySource(
-                        name=EditorValue(text="Primary Source 2"),
+                    AdminPrimarySource(
+                        name=AdminValue(text="Primary Source 2"),
                         identifier=MergedPrimarySourceIdentifier("PrimarySource002"),
-                        editor_values=[
-                            EditorValue(text="another inactive", enabled=False),
+                        admin_values=[
+                            AdminValue(text="another inactive", enabled=False),
                         ],
                         input_config=InputConfig(),
                         enabled=True,
                     ),
-                    EditorPrimarySource(
-                        name=EditorValue(text="Primary Source 3"),
+                    AdminPrimarySource(
+                        name=AdminValue(text="Primary Source 3"),
                         identifier=MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
-                        editor_values=[
-                            EditorValue(text="SomeName", enabled=True),
+                        admin_values=[
+                            AdminValue(text="SomeName", enabled=True),
                         ],
                         input_config=InputConfig(editable_text=True),
                         enabled=True,

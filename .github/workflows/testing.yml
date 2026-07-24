@@ -102,11 +102,11 @@ jobs:
 
       - name: Run test suite
         env:
-          MEX_EDITOR_USER_DATABASE: '{"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}'
+          MEX_ADMIN_USER_DATABASE: '{"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}'
           MEX_BACKEND_API_KEY: write_key
           MEX_IDENTITY_PROVIDER: backend
         run: |
-          uv run editor &
+          uv run admin &
           echo `date -Iseconds` INFO checking service readiness &&
           curl --connect-timeout 10 --retry 10 --retry-delay 10 --retry-all-errors http://localhost:8000/_system/check &&
           curl --connect-timeout 10 --retry 10 --retry-delay 10 --retry-all-errors http://localhost:8080/v0/_system/check &&

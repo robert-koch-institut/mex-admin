@@ -221,7 +221,7 @@ def test_reference_filter_combinations(
 
 
 @pytest.mark.integration
-def test_reference_filter_combinations_with_editor_added_involved_unit(
+def test_reference_filter_combinations_with_admin_added_involved_unit(
     advanced_search_page: Page,
     extracted_activity: ExtractedActivity,
     dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
@@ -253,7 +253,7 @@ def test_reference_filter_combinations_with_editor_added_involved_unit(
     page.wait_for_timeout(5000)
     _make_screenshot(
         page,
-        "test_reference_filter_combinations_with_editor_added_involved_unit_contact_set",
+        "test_reference_filter_combinations_with_admin_added_involved_unit_contact_set",
     )
     expect(page.get_by_test_id(search_result_item_regex)).to_have_count(3)
 
@@ -271,6 +271,6 @@ def test_reference_filter_combinations_with_editor_added_involved_unit(
     page.wait_for_timeout(5000)
     _make_screenshot(
         page,
-        "test_reference_filter_combinations_with_editor_added_involved_unit_contact_involvedUnit_set",
+        "test_reference_filter_combinations_with_admin_added_involved_unit_contact_involvedUnit_set",
     )
     expect(page.get_by_test_id(search_result_item_regex)).to_have_count(1)

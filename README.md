@@ -1,6 +1,6 @@
-# MEx editor
+# MEx admin
 
-Metadata editor web application.
+Metadata admin web application.
 
 [![cookiecutter](https://github.com/robert-koch-institut/mex-editor/actions/workflows/cookiecutter.yml/badge.svg)](https://github.com/robert-koch-institut/mex-template)
 [![cve-scan](https://github.com/robert-koch-institut/mex-editor/actions/workflows/cve-scan.yml/badge.svg)](https://github.com/robert-koch-institut/mex-editor/actions/workflows/cve-scan.yml)
@@ -48,7 +48,7 @@ Germany
 
 ## Package
 
-The `mex-editor` is a browser application that allows creating and editing rules to
+The `mex-admin` is a browser application that allows creating and editing rules to
 non-destructively manipulate metadata. This can be used to enrich data with manual input
 or insert new data from scratch.
 
@@ -70,7 +70,7 @@ components of the MEx project are open-sourced under the same license as well.
 - run all linters with `make lint` or `.\mex.bat lint`
 - run unit and integration tests with `make test` or `.\mex.bat test`
 - run just the unit tests with `make unit` or `.\mex.bat unit`
-  - for integration tests you need a local `mex-backend`, `neo4j` and `mex-editor`
+  - for integration tests you need a local `mex-backend`, `neo4j` and `mex-admin`
 
 ### Updating dependencies
 
@@ -103,6 +103,6 @@ To verify an image manually:
 - run `uv run {command} --help` to print instructions
 - run `uv run {command} --debug` for interactive debugging
 
-### editor
+### admin
 
-- `editor` starts the editor service
+- `admin` starts the admin service

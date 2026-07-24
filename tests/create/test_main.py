@@ -151,7 +151,7 @@ def test_create_page_submit_item(create_page: Page) -> None:
         path="tests_create_test_main-test_edit_page_save_item_input_submit_pressed.png"
     )
 
-    toast = page.locator(".editor-toast").first
+    toast = page.locator(".admin-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
 
