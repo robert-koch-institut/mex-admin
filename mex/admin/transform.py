@@ -142,7 +142,7 @@ def transform_models_to_preview(
 def transform_model_to_all_properties(
     model: AnyExtractedModel | AnyPreviewModel | AnyMergedModel,
 ) -> list[EditorValue]:
-    """Transform all properties of a model into a list of AdminValues."""
+    """Transform all properties of a model into a list of EditorValues."""
     return [
         value
         for field_name in type(model).model_fields

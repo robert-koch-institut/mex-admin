@@ -12,7 +12,7 @@ from mex.admin.transform import transform_fields_to_title
 
 
 class LocalStorageMixinState(rx.State, mixin=True):
-    """State-Mixin for handling local drafts and edits of AdminFields."""
+    """State-Mixin for handling local drafts and edits of EditorFields."""
 
     local_draft_store: str = rx.LocalStorage('{"value": {}}', sync=True)
     local_edit_store: str = rx.LocalStorage('{"value": {}}', sync=True)

@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- rename mex-editor to mex-admin, including all relevant files, logos and configuration
-- BREAKING: the settings prefix changed from `MEX_EDITOR_` to `MEX_ADMIN_`
+- rename mex-editor to mex-admin, at least on the surface: package, logo and settings
+- BREAKING: the environment variable prefix changed from `MEX_EDITOR_` to `MEX_ADMIN_`
 
 ### Deprecated
 
