@@ -413,7 +413,7 @@ class RuleState(State, LocalStorageMixinState):
     def set_text_value(
         self, field_name: str, index: int, value: str
     ) -> Generator[EventSpec]:
-        """Set the text attribute on an additive admin value."""
+        """Set the text attribute on an additive editor value."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
         primary_source.editor_values[index].text = value
         yield RuleState.update_local_state  # type: ignore[misc]
@@ -422,7 +422,7 @@ class RuleState(State, LocalStorageMixinState):
     async def set_identifier_value(
         self, field_name: str, index: int, value: str
     ) -> AsyncGenerator[EventSpec]:
-        """Set the identifier attribute on an additive admin value."""
+        """Set the identifier attribute on an additive editor value."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
         primary_source.editor_values[index].identifier = value
         primary_source.editor_values[index].href = f"/item/{value}"
@@ -433,7 +433,7 @@ class RuleState(State, LocalStorageMixinState):
     def set_badge_value(
         self, field_name: str, index: int, value: str
     ) -> Generator[EventSpec]:
-        """Set the badge attribute on an additive admin value."""
+        """Set the badge attribute on an additive editor value."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
         primary_source.editor_values[index].badge = value
         yield RuleState.update_local_state  # type: ignore[misc]
@@ -442,7 +442,7 @@ class RuleState(State, LocalStorageMixinState):
     def set_href_value(
         self, field_name: str, index: int, value: str
     ) -> Generator[EventSpec]:
-        """Set an external href on an additive admin value."""
+        """Set an external href on an additive editor value."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
         primary_source.editor_values[index].href = value
         primary_source.editor_values[index].external = True

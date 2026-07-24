@@ -25,7 +25,7 @@ def sequence_is_equal(
 
 
 class EditorValue(BaseModel):
-    """Model for describing atomic values in the admin."""
+    """Model for describing atomic values in the editor."""
 
     text: str | None = None
     identifier: str | None = None

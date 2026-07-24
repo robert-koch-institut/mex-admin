@@ -203,7 +203,7 @@ def test_get_primary_source_id_from_model_error() -> None:
     ],
     ids=["single value", "list", "irrelevant subtractive", "subtractive applied"],
 )
-def test_transform_model_values_to_admin_values(
+def test_transform_model_values_to_editor_values(
     model: AnyExtractedModel | AnyMergedModel | AnyAdditiveModel,
     field_name: str,
     subtractive: AnySubtractiveModel,
@@ -445,14 +445,14 @@ def test_transform_model_to_input_config(
 def test_id_shown_with_extracted_items(
     extracted_items: list[AnyExtractedModel], *, is_present: bool
 ) -> None:
-    admin_fields = transform_models_to_fields(
+    editor_fields = transform_models_to_fields(
         extracted_items=extracted_items,
         additive=AdditivePerson(),
         subtractive=SubtractivePerson(),
         preventive=PreventivePerson(),
     )
 
-    field_names = [field.name for field in admin_fields]
+    field_names = [field.name for field in editor_fields]
 
     if is_present:
         assert "identifierInPrimarySource" in field_names
@@ -549,7 +549,7 @@ def test_id_shown_with_extracted_items(
     ],
     ids=["without rules", "with rules"],
 )
-def test_transform_model_to_admin_primary_sources(
+def test_transform_model_to_editor_primary_sources(
     model: AnyExtractedModel | AnyAdditiveModel,
     subtractive: AnySubtractiveModel,
     preventive: AnyPreventiveModel,
@@ -573,7 +573,7 @@ def test_transform_model_to_admin_primary_sources(
 
 
 def test_transform_models_to_fields() -> None:
-    admin_fields = transform_models_to_fields(
+    editor_fields = transform_models_to_fields(
         [
             ExtractedPerson(
                 email=["person000@rki.de"],
@@ -586,8 +586,8 @@ def test_transform_models_to_fields() -> None:
         preventive=PreventivePerson(memberOf=[MEX_PRIMARY_SOURCE_STABLE_TARGET_ID]),
     )
     # identifierInPrimarySource is NOT in MERGEABLE_FIELDS_BY_CLASS_NAME and has to be added
-    assert len(admin_fields) == len(MERGEABLE_FIELDS_BY_CLASS_NAME["MergedPerson"]) + 1
-    fields_by_name = {f.name: f for f in admin_fields}
+    assert len(editor_fields) == len(MERGEABLE_FIELDS_BY_CLASS_NAME["MergedPerson"]) + 1
+    fields_by_name = {f.name: f for f in editor_fields}
     assert fields_by_name["givenName"].model_dump() == {
         "is_required": False,
         "value_type": ["str"],
@@ -913,7 +913,7 @@ def test_transform_fields_to_preventive(
         "resolved_identifier",
     ],
 )
-def test_transform_admin_value_to_model_value(
+def test_transform_editor_value_to_model_value(
     editor_value: EditorValue,
     field_name: str,
     class_name: str,

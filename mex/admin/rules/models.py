@@ -29,7 +29,7 @@ class ValidationMessage(BaseModel):
 
 
 class EditorPrimarySource(BaseModel):
-    """Model for describing the admin state for one primary source."""
+    """Model for describing the editor state for one primary source."""
 
     name: EditorValue
     identifier: MergedPrimarySourceIdentifier
@@ -49,7 +49,7 @@ class EditorPrimarySource(BaseModel):
 
 
 class EditorField(BaseModel):
-    """Model for describing the admin state for a single field."""
+    """Model for describing the editor state for a single field."""
 
     name: str
     value_type: list[str]
@@ -74,7 +74,7 @@ class PublishTarget(BaseModel):
 
 
 class FieldTranslation(BaseModel):
-    """Wraps an admin field to add translated label and description."""
+    """Wraps an editor field to add translated label and description."""
 
     field: EditorField
     label: str

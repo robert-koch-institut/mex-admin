@@ -38,7 +38,7 @@ def test_resolve_identifier(
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
-def test_resolve_admin_value(
+def test_resolve_editor_value(
     dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
 ) -> None:
     dummy_primary_source = dummy_data_by_identifier_in_primary_source["ps-1"]

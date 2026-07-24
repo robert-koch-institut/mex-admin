@@ -10,7 +10,7 @@ def render_value(
     value: EditorValue,
     truncate_text: bool | rx.Var[bool] = True,  # noqa: FBT001, FBT002
 ) -> rx.Component:
-    """Render a single admin value."""
+    """Render a single editor value."""
     return rx.hstack(
         rx.cond(
             value.href,
@@ -59,7 +59,7 @@ def render_additional_titles(titles: list[EditorValue]) -> rx.Component:
 
 
 def render_search_preview(values: list[EditorValue]) -> rx.Component:
-    """Render a horizontal stack of admin values for a search preview."""
+    """Render a horizontal stack of editor values for a search preview."""
     return rx.hstack(
         rx.foreach(
             values,
@@ -77,7 +77,7 @@ def render_search_preview(values: list[EditorValue]) -> rx.Component:
 
 
 def render_identifier(value: EditorValue) -> rx.Component:
-    """Render an admin value as a clickable internal link that loads the edit page."""
+    """Render an editor value as a clickable internal link that loads the edit page."""
     return rx.skeleton(
         rx.link(
             rx.cond(value.text, value.text, ""),
@@ -94,7 +94,7 @@ def render_identifier(value: EditorValue) -> rx.Component:
 
 
 def render_external_link(value: EditorValue) -> rx.Component:
-    """Render an admin value as a clickable external link that opens in a new tab."""
+    """Render an editor value as a clickable external link that opens in a new tab."""
     return rx.link(
         rx.cond(
             value.text,
@@ -111,7 +111,7 @@ def render_external_link(value: EditorValue) -> rx.Component:
 
 
 def render_link(value: EditorValue) -> rx.Component:
-    """Render an admin value as an internal or external link."""
+    """Render an editor value as an internal or external link."""
     return rx.cond(
         value.identifier,
         render_identifier(value),
@@ -136,7 +136,7 @@ def render_text(
     value: EditorValue,
     truncate_text: bool | rx.Var[bool] = True,  # noqa: FBT001, FBT002
 ) -> rx.Component:
-    """Render an admin value as a text span."""
+    """Render an editor value as a text span."""
     return rx.skeleton(
         render_span(value.text, truncate_text),
         min_width="16ch",

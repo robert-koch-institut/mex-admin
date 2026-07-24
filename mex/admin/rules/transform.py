@@ -82,7 +82,7 @@ def _transform_model_values_to_editor_values(
     field_name: str,
     subtractive: AnySubtractiveModel,
 ) -> list[EditorValue]:
-    """Given a model, a field and a subtractive rule, create admin values."""
+    """Given a model, a field and a subtractive rule, create editor values."""
     model_values = ensure_list(getattr(model, field_name))
     editor_values = []
     for model_value in model_values:
@@ -207,7 +207,7 @@ def _transform_model_to_editor_primary_sources(
     subtractive: AnySubtractiveModel,
     preventive: AnyPreventiveModel,
 ) -> None:
-    """With a model and rules, attach an admin primary source to the field."""
+    """With a model and rules, attach an editor primary source to the field."""
     primary_source_id = _get_primary_source_id_from_model(model)
     primary_source_name = transform_value(primary_source_id)
 
@@ -241,7 +241,7 @@ def transform_models_to_fields(
     subtractive: AnySubtractiveModel,
     preventive: AnyPreventiveModel,
 ) -> list[EditorField]:
-    """Convert the given models and rules into admin field models.
+    """Convert the given models and rules into editor field models.
 
     Args:
         extracted_items: A list of extracted models
@@ -250,7 +250,7 @@ def transform_models_to_fields(
         preventive: A preventive rule model
 
     Returns:
-        A list of admin field instances
+        A list of editor field instances
     """
     mergeable_fields = sorted(
         {
@@ -316,7 +316,7 @@ def _transform_fields_to_additive(
     fields: list[EditorField],
     stem_type: str,
 ) -> dict[str, list[AnyModelValue]]:
-    """Transform a list of admin fields back to a raw additive rule."""
+    """Transform a list of editor fields back to a raw additive rule."""
     raw_rule: dict[str, list[AnyModelValue]] = {}
     additive_class_name = ensure_prefix(stem_type, "Additive")
     field_names = MERGEABLE_FIELDS_BY_CLASS_NAME[additive_class_name]
@@ -343,7 +343,7 @@ def _transform_fields_to_preventive(
     fields: list[EditorField],
     stem_type: str,
 ) -> dict[str, list[MergedPrimarySourceIdentifier]]:
-    """Transform a list of admin fields back to a raw preventive rule."""
+    """Transform a list of editor fields back to a raw preventive rule."""
     raw_rule: dict[str, list[MergedPrimarySourceIdentifier]] = {}
     preventive_class_name = ensure_prefix(stem_type, "Preventive")
     field_names = MERGEABLE_FIELDS_BY_CLASS_NAME[preventive_class_name]
@@ -365,7 +365,7 @@ def _transform_editor_value_to_model_value(
     class_name: str,
     input_config: InputConfig,
 ) -> AnyModelValue:
-    """Transform an admin value back to a value to be used in mex.common.models."""
+    """Transform an editor value back to a value to be used in mex.common.models."""
     if field_name in LINK_FIELDS_BY_CLASS_NAME[class_name] and value.href:
         return Link(
             url=value.href,
@@ -398,7 +398,7 @@ def _transform_fields_to_subtractive(
     fields: list[EditorField],
     stem_type: str,
 ) -> dict[str, list[str]]:
-    """Transform a list of admin fields back to a raw subtractive rule."""
+    """Transform a list of editor fields back to a raw subtractive rule."""
     raw_rule: dict[str, list[str]] = {}
     merged_class_name = ensure_prefix(stem_type, "Merged")
     subtractive_class_name = ensure_prefix(stem_type, "Subtractive")
@@ -429,7 +429,7 @@ def transform_fields_to_rule_set(
 
     Args:
         stem_type: The stemType the resulting rule set should have
-        fields: A list of admin fields to convert into rules
+        fields: A list of editor fields to convert into rules
 
     Returns:
         Any rule set request model

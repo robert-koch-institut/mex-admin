@@ -25,13 +25,13 @@ def resolve_identifier(identifier: str) -> str:
 
 
 async def resolve_editor_value(editor_value: EditorValue) -> None:
-    """Resolve admin text values to human readable display values."""
+    """Resolve editor text values to human readable display values."""
     if editor_value.identifier:
         editor_value.text = await asyncio.to_thread(
             resolve_identifier, editor_value.identifier
         )
     else:
-        msg = f"Cannot resolve admin value: {editor_value}"
+        msg = f"Cannot resolve editor value: {editor_value}"
         raise MExError(msg)
 
 

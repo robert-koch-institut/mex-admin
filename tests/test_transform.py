@@ -94,7 +94,7 @@ def test_transform_values(
 
 def test_transform_value_none_error() -> None:
     with pytest.raises(
-        NotImplementedError, match="cannot transform NoneType to admin value"
+        NotImplementedError, match="cannot transform NoneType to editor value"
     ):
         transform_value(None)
 

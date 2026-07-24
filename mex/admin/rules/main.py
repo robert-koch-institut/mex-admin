@@ -326,7 +326,7 @@ def editor_value_card(
     index: int,
     value: EditorValue,
 ) -> rx.Component:
-    """Return a card containing a single admin value."""
+    """Return a card containing a single editor value."""
     field_name = field_translation.field.name
     return rx.card(
         rx.cond(
@@ -428,7 +428,7 @@ def editor_primary_source_stack(
     field_translation: FieldTranslation,
     primary_source: EditorPrimarySource,
 ) -> rx.Component:
-    """Render a stack of admin value cards and input elements for a primary source."""
+    """Render a stack of editor value cards and input elements for a primary source."""
     return rx.vstack(
         rx.foreach(
             primary_source.editor_values,

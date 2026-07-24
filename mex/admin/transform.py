@@ -29,7 +29,7 @@ def transform_values(
     values: object,
     allow_link: bool = True,  # noqa: FBT001, FBT002
 ) -> list[EditorValue]:
-    """Convert a single object or a list of objects into a list of admin values."""
+    """Convert a single object or a list of objects into a list of editor values."""
     return [transform_value(v, allow_link) for v in ensure_list(values)]
 
 
@@ -37,7 +37,7 @@ def transform_value(
     value: object,
     allow_link: bool = True,  # noqa: FBT001, FBT002
 ) -> EditorValue:
-    """Transform a single object into an admin value ready for rendering."""
+    """Transform a single object into an editor value ready for rendering."""
     if isinstance(value, Text):
         return EditorValue(
             text=value.value,
@@ -69,7 +69,7 @@ def transform_value(
         return EditorValue(
             text=str(value),
         )
-    msg = f"cannot transform {type(value).__name__} to admin value"
+    msg = f"cannot transform {type(value).__name__} to editor value"
     raise NotImplementedError(msg)
 
 
@@ -87,7 +87,7 @@ def transform_models_to_stem_type(
 def transform_fields_to_title(
     stem_type: str, fields: Sequence[EditorField]
 ) -> list[EditorValue]:
-    """Convert a list of fields into admin values based on the title config."""
+    """Convert a list of fields into editor values based on the title config."""
     config = MODEL_CONFIG_BY_STEM_TYPE[stem_type]
     titles = [
         value
@@ -104,7 +104,7 @@ def transform_models_to_title(
         AnyRuleModel | AnyExtractedModel | AnyPreviewModel | AnyMergedModel
     ],
 ) -> list[EditorValue]:
-    """Convert a list of models into admin values based on the title config."""
+    """Convert a list of models into editor values based on the title config."""
     if not models:
         return []
     titles: list[EditorValue] = []
@@ -123,7 +123,7 @@ def transform_models_to_preview(
         AnyRuleModel | AnyExtractedModel | AnyPreviewModel | AnyMergedModel
     ],
 ) -> list[EditorValue]:
-    """Converts a list of models into admin values based on the preview config."""
+    """Converts a list of models into editor values based on the preview config."""
     if not models:
         return []
     previews: list[EditorValue] = []
