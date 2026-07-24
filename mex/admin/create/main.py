@@ -3,7 +3,7 @@ import reflex as rx
 from mex.admin.create.state import CreateState
 from mex.admin.layout import page
 from mex.admin.rules.main import (
-    admin_primary_source_stack,
+    editor_primary_source_stack,
     field_name_card,
     rule_page_header,
     submit_button,
@@ -20,7 +20,7 @@ from mex.admin.style_helper import (
 from mex.admin.value_label_select import value_label_select
 
 
-def admin_field(field_translation: FieldTranslation) -> rx.Component:
+def editor_field(field_translation: FieldTranslation) -> rx.Component:
     """Return a horizontal grid of cards for editing one field."""
     field = field_translation.field
     return rx.hstack(
@@ -30,7 +30,7 @@ def admin_field(field_translation: FieldTranslation) -> rx.Component:
                 field.primary_sources,
                 lambda primary_source: rx.hstack(
                     add_component_style(
-                        admin_primary_source_stack(
+                        editor_primary_source_stack(
                             field_translation,
                             primary_source,
                         ),
@@ -136,7 +136,7 @@ def index() -> rx.Component:
             ),
             rx.foreach(
                 RuleState.translated_fields,
-                admin_field,
+                editor_field,
             ),
             validation_errors(),
             align="stretch",

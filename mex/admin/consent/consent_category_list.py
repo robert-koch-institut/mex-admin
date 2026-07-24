@@ -14,7 +14,7 @@ from mex.admin.models import MergedLoginPerson, SearchResult
 from mex.admin.pagination_component import PaginationStateMixin, pagination
 from mex.admin.search_results_component import search_results_list
 from mex.admin.transform import transform_models_to_search_results
-from mex.admin.utils import resolve_admin_value
+from mex.admin.utils import resolve_editor_value
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.models import AnyMergedModel
 
@@ -32,7 +32,7 @@ CATEGORY_CONFIG: dict[str, CategoryListConfig] = {
         "MergedResource", ["contact", "contributor", "creator"]
     ),
     "publications": CategoryListConfig(
-        "MergedBibliographicResource", ["creator", "admin", "adminOfSeries"]
+        "MergedBibliographicResource", ["creator", "editor", "editorOfSeries"]
     ),
     "projects": CategoryListConfig("MergedActivity", ["contact", "involvedPerson"]),
 }
@@ -102,7 +102,7 @@ class ConsentCategoryList(rx.ComponentState, PaginationStateMixin):
             for preview in result.preview:
                 if preview.identifier and not preview.text:
                     async with self:
-                        await resolve_admin_value(preview)
+                        await resolve_editor_value(preview)
 
     @rx.event
     def initialize(

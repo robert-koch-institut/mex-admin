@@ -4,9 +4,9 @@ import reflex as rx
 
 from mex.admin.components import icon_by_stem_type, render_span, render_value
 from mex.admin.locale_service import LocaleService
-from mex.admin.models import AdminValue
+from mex.admin.models import EditorValue
 from mex.admin.rules.models import (
-    AdminPrimarySource,
+    EditorPrimarySource,
     FieldTranslation,
     InputConfig,
     ValidationMessage,
@@ -24,10 +24,10 @@ from mex.admin.style_helper import (
 locale_service = LocaleService.get()
 
 
-def admin_value_switch(
+def editor_value_switch(
     field_name: str,
-    primary_source: AdminPrimarySource,
-    value: AdminValue,
+    primary_source: EditorPrimarySource,
+    value: EditorValue,
     index: int,
 ) -> rx.Component:
     """Return a switch for toggling subtractive rules."""
@@ -41,10 +41,10 @@ def admin_value_switch(
     )
 
 
-def admin_edit_button(
+def editor_edit_button(
     field_name: str,
-    primary_source: AdminPrimarySource,
-    value: AdminValue,
+    primary_source: EditorPrimarySource,
+    value: EditorValue,
     index: int,
 ) -> rx.Component:
     """Return a button for toggling editing."""
@@ -76,11 +76,11 @@ def admin_edit_button(
     )
 
 
-def admin_static_value(
+def editor_static_value(
     field_name: str,
-    primary_source: AdminPrimarySource,
+    primary_source: EditorPrimarySource,
     index: int,
-    value: AdminValue,
+    value: EditorValue,
 ) -> rx.Component:
     """Render a static value with an optional subtractive rule switch."""
     return rx.hstack(
@@ -90,7 +90,7 @@ def admin_static_value(
         ),
         rx.cond(
             primary_source.input_config.allow_subtractive,
-            admin_value_switch(
+            editor_value_switch(
                 field_name,
                 primary_source,
                 value,
@@ -101,11 +101,11 @@ def admin_static_value(
     )
 
 
-def admin_additive_value(
+def editor_additive_value(
     field_translation: FieldTranslation,
-    primary_source: AdminPrimarySource,
+    primary_source: EditorPrimarySource,
     index: int,
-    value: AdminValue,
+    value: EditorValue,
 ) -> rx.Component:
     """Render an additive value with buttons for editing and removal."""
     field_name = field_translation.field.name
@@ -132,7 +132,7 @@ def admin_additive_value(
                     )
                 ),
             ),
-            admin_edit_button(field_name, primary_source, value, index),
+            editor_edit_button(field_name, primary_source, value, index),
             style=flex1_style,
         ),
         remove_additive_button(
@@ -292,7 +292,7 @@ def additive_rule_input(
     field_translation: FieldTranslation,
     input_config: InputConfig,
     index: int,
-    value: AdminValue,
+    value: EditorValue,
 ) -> rx.Component:
     """Return an input mask for additive rules."""
     field = field_translation.field
@@ -320,24 +320,24 @@ def additive_rule_input(
     )
 
 
-def admin_value_card(
+def editor_value_card(
     field_translation: FieldTranslation,
-    primary_source: AdminPrimarySource,
+    primary_source: EditorPrimarySource,
     index: int,
-    value: AdminValue,
+    value: EditorValue,
 ) -> rx.Component:
     """Return a card containing a single admin value."""
     field_name = field_translation.field.name
     return rx.card(
         rx.cond(
             primary_source.input_config.allow_additive,
-            admin_additive_value(
+            editor_additive_value(
                 field_translation,
                 primary_source,
                 index,
                 value,
             ),
-            admin_static_value(
+            editor_static_value(
                 field_name,
                 primary_source,
                 index,
@@ -355,7 +355,7 @@ def admin_value_card(
 
 def primary_source_switch(
     field_name: str,
-    primary_source: AdminPrimarySource,
+    primary_source: EditorPrimarySource,
 ) -> rx.Component:
     """Return a switch for toggling preventive rules."""
     return rx.switch(
@@ -373,7 +373,7 @@ def primary_source_switch(
 
 def primary_source_name(
     field_name: str,
-    primary_source: AdminPrimarySource,
+    primary_source: EditorPrimarySource,
 ) -> rx.Component:
     """Return the name of a primary source as a card with a preventive rule toggle."""
     return rx.card(
@@ -424,15 +424,15 @@ def new_additive_button(
     )
 
 
-def admin_primary_source_stack(
+def editor_primary_source_stack(
     field_translation: FieldTranslation,
-    primary_source: AdminPrimarySource,
+    primary_source: EditorPrimarySource,
 ) -> rx.Component:
     """Render a stack of admin value cards and input elements for a primary source."""
     return rx.vstack(
         rx.foreach(
-            primary_source.admin_values,
-            lambda value, index: admin_value_card(
+            primary_source.editor_values,
+            lambda value, index: editor_value_card(
                 field_translation,
                 primary_source,
                 index,
@@ -450,9 +450,9 @@ def admin_primary_source_stack(
     )
 
 
-def admin_primary_source(
+def editor_primary_source(
     field_translation: FieldTranslation,
-    primary_source: AdminPrimarySource,
+    primary_source: EditorPrimarySource,
 ) -> rx.Component:
     """Return a horizontal grid of cards for editing one primary source."""
     field_name = field_translation.field.name
@@ -465,7 +465,7 @@ def admin_primary_source(
             flex1_col_style,
         ),
         add_component_style(
-            admin_primary_source_stack(field_translation, primary_source),
+            editor_primary_source_stack(field_translation, primary_source),
             flex3_style,
         ),
         custom_attrs={
@@ -493,7 +493,7 @@ def field_name_card(
     )
 
 
-def admin_field(field_translation: FieldTranslation) -> rx.Component:
+def editor_field(field_translation: FieldTranslation) -> rx.Component:
     """Return a horizontal grid of cards for editing one field."""
     field = field_translation.field
     return rx.hstack(
@@ -501,7 +501,7 @@ def admin_field(field_translation: FieldTranslation) -> rx.Component:
         rx.vstack(
             rx.foreach(
                 field.primary_sources,
-                lambda primary_source: admin_primary_source(
+                lambda primary_source: editor_primary_source(
                     field_translation, primary_source
                 ),
             ),

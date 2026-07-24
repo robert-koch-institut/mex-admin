@@ -124,7 +124,7 @@ def test_submit_consent(consent_page: Page) -> None:
     denial_button = page.get_by_test_id("denial-consent-button")
     denial_button.click()
     page.screenshot(path="tests_consent_test_main-test_submit_consent_invalid.png")
-    toast = page.locator(".admin-toast").first
+    toast = page.locator(".editor-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
     expect(consent_status).to_contain_text(f"Sie haben Ihre Ablehnung am {today}")
@@ -132,7 +132,7 @@ def test_submit_consent(consent_page: Page) -> None:
     # check if given consent is submitted
     page.get_by_test_id("accept-consent-button").click()
     page.screenshot(path="tests_consent_test_main-test_submit_consent_valid.png")
-    toast = page.locator(".admin-toast").first
+    toast = page.locator(".editor-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
     expect(page.get_by_test_id("consent-status")).to_contain_text(

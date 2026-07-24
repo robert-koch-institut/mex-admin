@@ -10,7 +10,7 @@ from mex.admin.components import (
     render_title,
     render_value,
 )
-from mex.admin.models import AdminValue, SearchResult
+from mex.admin.models import EditorValue, SearchResult
 from mex.admin.pagination_component import PaginationOptions, pagination
 
 
@@ -38,7 +38,7 @@ class SearchResultsListOptions:
 
 
 def _render_properties(
-    properties: list[AdminValue], property_type: str
+    properties: list[EditorValue], property_type: str
 ) -> rx.Component:
     """Render a list of properties."""
     return rx.hstack(

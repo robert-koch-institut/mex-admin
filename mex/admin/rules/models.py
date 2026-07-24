@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from mex.admin.models import AdminValue, EqualityDetector, sequence_is_equal
+from mex.admin.models import EditorValue, EqualityDetector, sequence_is_equal
 from mex.common.types import MergedPrimarySourceIdentifier
 
 
@@ -28,37 +28,37 @@ class ValidationMessage(BaseModel):
     input: str
 
 
-class AdminPrimarySource(BaseModel):
+class EditorPrimarySource(BaseModel):
     """Model for describing the admin state for one primary source."""
 
-    name: AdminValue
+    name: EditorValue
     identifier: MergedPrimarySourceIdentifier
     input_config: InputConfig
-    admin_values: list[AdminValue]
+    editor_values: list[EditorValue]
     enabled: bool
 
     def is_equal(self, other: EqualityDetector) -> bool:
         """Check if self and other are equal."""
-        if isinstance(other, AdminPrimarySource):
+        if isinstance(other, EditorPrimarySource):
             return (
                 self.identifier == other.identifier
                 and self.enabled == other.enabled
-                and sequence_is_equal(self.admin_values, other.admin_values)
+                and sequence_is_equal(self.editor_values, other.editor_values)
             )
         return False
 
 
-class AdminField(BaseModel):
+class EditorField(BaseModel):
     """Model for describing the admin state for a single field."""
 
     name: str
     value_type: list[str]
-    primary_sources: list[AdminPrimarySource]
+    primary_sources: list[EditorPrimarySource]
     is_required: bool
 
     def is_equal(self, other: EqualityDetector) -> bool:
         """Check if self and other are equal."""
-        if isinstance(other, AdminField):
+        if isinstance(other, EditorField):
             return self.name == other.name and sequence_is_equal(
                 self.primary_sources, other.primary_sources
             )
@@ -76,7 +76,7 @@ class PublishTarget(BaseModel):
 class FieldTranslation(BaseModel):
     """Wraps an admin field to add translated label and description."""
 
-    field: AdminField
+    field: EditorField
     label: str
     description: str
 
@@ -84,7 +84,7 @@ class FieldTranslation(BaseModel):
 class LocalEdit(BaseModel):
     """Model to store local edits in the browser."""
 
-    fields: list[AdminField]
+    fields: list[EditorField]
 
 
 class LocalDraft(LocalEdit):
@@ -103,7 +103,7 @@ class UserDraft(LocalDraft):
     """Model to represent local drafts."""
 
     identifier: str
-    title: AdminValue
+    title: EditorValue
 
 
 class LocalDraftStorageObject(BaseModel):

@@ -21,7 +21,7 @@ from mex.admin.search_results_component import (
 )
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
-from mex.admin.utils import resolve_admin_value
+from mex.admin.utils import resolve_editor_value
 from mex.common.backend_api.connector import BackendApiConnector
 
 
@@ -111,7 +111,7 @@ class SearchReferenceDialogState(State, PaginationStateMixin):
             for value in [*result.preview, *result.title, *result.all_properties]:
                 if value.identifier and not value.text:
                     async with self:
-                        await resolve_admin_value(value)
+                        await resolve_editor_value(value)
 
     @rx.event
     def search(self) -> Generator[EventSpec | None]:

@@ -9,7 +9,7 @@ from mex.admin.label_var import label_var
 from mex.admin.models import SearchResult
 from mex.admin.rules.state import RuleState
 from mex.admin.transform import transform_models_to_search_results
-from mex.admin.utils import resolve_admin_value
+from mex.admin.utils import resolve_editor_value
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.logging import logger
 from mex.common.types import PublishingTarget
@@ -47,7 +47,7 @@ class EditState(RuleState):
         for result in results:
             for preview in result.preview:
                 if preview.identifier and not preview.text:
-                    await resolve_admin_value(preview)
+                    await resolve_editor_value(preview)
 
         return results
 
@@ -76,7 +76,7 @@ class EditState(RuleState):
                 yield rx.toast.success(
                     title=self.label_delete_rules_success_toast_title,
                     description=self.label_delete_rules_success_toast_text,
-                    class_name="admin-toast",
+                    class_name="editor-toast",
                     close_button=True,
                     dismissible=True,
                     duration=5000,
@@ -86,7 +86,7 @@ class EditState(RuleState):
                 yield rx.toast.success(
                     title=self.label_reset_rules_success_toast_title,
                     description=self.label_reset_rules_success_toast_text,
-                    class_name="admin-toast",
+                    class_name="editor-toast",
                     close_button=True,
                     dismissible=True,
                     duration=5000,

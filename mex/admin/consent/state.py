@@ -168,7 +168,7 @@ class ConsentState(State):
         return rx.toast.success(
             title=self.label_save_success_dialog_title,
             description=self.label_save_success_dialog_content,
-            class_name="admin-toast",
+            class_name="editor-toast",
             close_button=True,
             dismissible=True,
             duration=5000,

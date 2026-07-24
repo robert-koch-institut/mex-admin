@@ -23,7 +23,7 @@ def escalate_error(
     yield rx.toast.error(
         title=f"{namespace} Error",
         description=summary,
-        class_name="admin-toast",
+        class_name="editor-toast",
         close_button=True,
         dismissible=True,
         duration=5000,

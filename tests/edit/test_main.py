@@ -155,7 +155,7 @@ def test_edit_page_delete_reset_button(
         path="tests_edit_test_main-test_edit_page_delete_reset_button-reset_clicked.png"
     )
     page.wait_for_url(f"{base_url}/item/{reset_id}")
-    expect(page.locator(".admin-toast")).to_be_visible()
+    expect(page.locator(".editor-toast")).to_be_visible()
     expect(page.get_by_test_id("delete-reset-button")).not_to_be_visible()
 
     delete_id = load_delete_reset_data["delete"]
@@ -167,7 +167,7 @@ def test_edit_page_delete_reset_button(
         path="tests_edit_test_main-test_edit_page_delete_reset_button-delete_clicked.png"
     )
     page.wait_for_url(f"{base_url}/")
-    expect(page.locator(".admin-toast")).to_be_visible()
+    expect(page.locator(".editor-toast")).to_be_visible()
 
 
 @pytest.mark.integration
@@ -375,7 +375,7 @@ def test_edit_page_switch_roundtrip(
     submit = page.get_by_test_id("submit-button")
     submit.scroll_into_view_if_needed()
     submit.click()
-    toast = page.locator(".admin-toast").first
+    toast = page.locator(".editor-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
     page.screenshot(path=f"{test_id}-toast_1.png")
@@ -400,7 +400,7 @@ def test_edit_page_switch_roundtrip(
     submit = page.get_by_test_id("submit-button")
     submit.scroll_into_view_if_needed()
     submit.click()
-    toast = page.locator(".admin-toast").first
+    toast = page.locator(".editor-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
@@ -686,7 +686,7 @@ def test_edit_page_additive_rule_roundtrip(
     submit_button.click()
 
     # click on the save button and verify the toast
-    toast = page.locator(".admin-toast").first
+    toast = page.locator(".editor-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
     page.screenshot(path=f"{test_id}-toast.png")
@@ -850,7 +850,7 @@ def test_no_invenio_publish_target_to_publish_invenio(
         path="tests_edit_test_no_invenio_publish_target_to_publish_invenio_clicked.png"
     )
     page.get_by_test_id("submit-button").click()
-    toast = page.locator(".admin-toast").first
+    toast = page.locator(".editor-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
 

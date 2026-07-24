@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from mex.admin.models import LANGUAGE_VALUE_NONE, AdminValue
+from mex.admin.models import LANGUAGE_VALUE_NONE, EditorValue
 from mex.admin.transform import (
     transform_model_to_all_properties,
     transform_models_to_preview,
@@ -36,12 +36,12 @@ from mex.common.types import (
         (
             "foo",
             True,
-            [AdminValue(text="foo")],
+            [EditorValue(text="foo")],
         ),
         (
             Text(value="Text", language=None),
             True,
-            [AdminValue(text="Text", badge=LANGUAGE_VALUE_NONE)],
+            [EditorValue(text="Text", badge=LANGUAGE_VALUE_NONE)],
         ),
         (
             [
@@ -52,10 +52,10 @@ from mex.common.types import (
             ],
             True,
             [
-                AdminValue(text="bar"),
-                AdminValue(text="APIType", badge=APIType["REST"].name),
-                AdminValue(text="hi there", badge=TextLanguage.EN.name),
-                AdminValue(
+                EditorValue(text="bar"),
+                EditorValue(text="APIType", badge=APIType["REST"].name),
+                EditorValue(text="hi there", badge=TextLanguage.EN.name),
+                EditorValue(
                     text="homepage",
                     badge=LinkLanguage.EN.name,
                     href="http://mex",
@@ -67,7 +67,7 @@ from mex.common.types import (
             Identifier("cWWm02l1c6cucKjIhkFqY4"),
             True,
             [
-                AdminValue(
+                EditorValue(
                     href="/item/cWWm02l1c6cucKjIhkFqY4",
                     identifier="cWWm02l1c6cucKjIhkFqY4",
                 )
@@ -77,7 +77,7 @@ from mex.common.types import (
             Identifier("cWWm02l1c6cucKjIhkFqY4"),
             False,
             [
-                AdminValue(
+                EditorValue(
                     identifier="cWWm02l1c6cucKjIhkFqY4",
                 )
             ],
@@ -87,7 +87,7 @@ from mex.common.types import (
 def test_transform_values(
     values: object,
     allow_link: bool,  # noqa: FBT001
-    expected: list[AdminValue],
+    expected: list[EditorValue],
 ) -> None:
     assert transform_values(values, allow_link=allow_link) == expected
 
@@ -116,46 +116,46 @@ def test_transform_models_to_title(dummy_data: list[AnyExtractedModel]) -> None:
     assert dummy_titles == [
         [
             # ps-1 primary source renders title as text
-            AdminValue(text="Primary Source One", badge=TextLanguage.EN.name)
+            EditorValue(text="Primary Source One", badge=TextLanguage.EN.name)
         ],
         [
             # ps-2 primary source renders title as text
-            AdminValue(text="Primary Source Two", badge=TextLanguage.EN.name)
+            EditorValue(text="Primary Source Two", badge=TextLanguage.EN.name)
         ],
         [
             # contact-point renders email as text
-            AdminValue(text="info@contact-point.one")
+            EditorValue(text="info@contact-point.one")
         ],
         [
             # contact-point renders email as text
-            AdminValue(text="help@contact-point.two")
+            EditorValue(text="help@contact-point.two")
         ],
         [
             # unit renders shortName as text (no language badge)
-            AdminValue(text="OU1", badge=LANGUAGE_VALUE_NONE)
+            EditorValue(text="OU1", badge=LANGUAGE_VALUE_NONE)
         ],
         [
             # activity renders title as text (with language badge)
-            AdminValue(text="Aktivität 1", badge=TextLanguage.DE.name)
+            EditorValue(text="Aktivität 1", badge=TextLanguage.DE.name)
         ],
         [
             # resource renders title as text
-            AdminValue(text="Bioinformatics Resource 1", badge=LANGUAGE_VALUE_NONE),
+            EditorValue(text="Bioinformatics Resource 1", badge=LANGUAGE_VALUE_NONE),
         ],
         [
-            AdminValue(
+            EditorValue(
                 text="Some Resource with many titles 1",
                 badge=LANGUAGE_VALUE_NONE,
             ),
-            AdminValue(
+            EditorValue(
                 text="Some Resource with many titles 2",
                 badge=TextLanguage.EN.name,
             ),
-            AdminValue(
+            EditorValue(
                 text="Eine Resource mit vielen Titeln 3",
                 badge=TextLanguage.DE.name,
             ),
-            AdminValue(
+            EditorValue(
                 text="Some Resource with many titles 4",
                 badge=LANGUAGE_VALUE_NONE,
             ),
@@ -165,7 +165,7 @@ def test_transform_models_to_title(dummy_data: list[AnyExtractedModel]) -> None:
 
 def test_test_transform_models_to_title_fallback() -> None:
     assert transform_models_to_title([AdditiveContactPoint()]) == [
-        AdminValue(text="ContactPoint"),
+        EditorValue(text="ContactPoint"),
     ]
 
 
@@ -176,30 +176,30 @@ def test_transform_models_to_preview_empty() -> None:
 def test_transform_models_to_preview(dummy_data: list[AnyExtractedModel]) -> None:
     dummy_previews = [transform_models_to_preview([d]) for d in dummy_data]
     assert dummy_previews == [
-        [AdminValue(text="PrimarySource")],
-        [AdminValue(text="PrimarySource")],
-        [AdminValue(text="info@contact-point.one")],
-        [AdminValue(text="help@contact-point.two")],
-        [AdminValue(text="Unit 1", badge=TextLanguage.EN.name, enabled=True)],
+        [EditorValue(text="PrimarySource")],
+        [EditorValue(text="PrimarySource")],
+        [EditorValue(text="info@contact-point.one")],
+        [EditorValue(text="help@contact-point.two")],
+        [EditorValue(text="Unit 1", badge=TextLanguage.EN.name, enabled=True)],
         [
-            AdminValue(text="A1", enabled=True, badge=LANGUAGE_VALUE_NONE),
-            AdminValue(identifier="wEvxYRPlmGVQCbZx9GAbn"),
-            AdminValue(identifier="cWWm02l1c6cucKjIhkFqY4"),
-            AdminValue(identifier="cWWm02l1c6cucKjIhkFqY4"),
-            AdminValue(text="1999-12-24", badge="day"),
-            AdminValue(text="2023-01-01", badge="day"),
+            EditorValue(text="A1", enabled=True, badge=LANGUAGE_VALUE_NONE),
+            EditorValue(identifier="wEvxYRPlmGVQCbZx9GAbn"),
+            EditorValue(identifier="cWWm02l1c6cucKjIhkFqY4"),
+            EditorValue(identifier="cWWm02l1c6cucKjIhkFqY4"),
+            EditorValue(text="1999-12-24", badge="day"),
+            EditorValue(text="2023-01-01", badge="day"),
         ],
         [
-            AdminValue(identifier="cWWm02l1c6cucKjIhkFqY4"),
-            AdminValue(
+            EditorValue(identifier="cWWm02l1c6cucKjIhkFqY4"),
+            EditorValue(
                 text="Theme", badge=Theme["BIOINFORMATICS_AND_SYSTEMS_BIOLOGY"].name
             ),
-            AdminValue(text="AccessRestriction", badge=AccessRestriction["OPEN"].name),
+            EditorValue(text="AccessRestriction", badge=AccessRestriction["OPEN"].name),
         ],
         [
-            AdminValue(identifier="cWWm02l1c6cucKjIhkFqY4"),
-            AdminValue(text="Theme", badge=Theme["PUBLIC_HEALTH"].name),
-            AdminValue(text="AccessRestriction", badge=AccessRestriction["OPEN"].name),
+            EditorValue(identifier="cWWm02l1c6cucKjIhkFqY4"),
+            EditorValue(text="Theme", badge=Theme["PUBLIC_HEALTH"].name),
+            EditorValue(text="AccessRestriction", badge=AccessRestriction["OPEN"].name),
         ],
     ]
 
@@ -212,7 +212,7 @@ def test_model_to_all_properties() -> None:
 
     with patch(
         "mex.admin.transform.transform_model_to_all_properties",
-        side_effect=lambda x, allow_link: [AdminValue(text=f"value{x}")],
+        side_effect=lambda x, allow_link: [EditorValue(text=f"value{x}")],
     ):
         result = transform_model_to_all_properties(model)
 

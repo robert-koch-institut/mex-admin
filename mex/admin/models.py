@@ -24,7 +24,7 @@ def sequence_is_equal(
         return False  # sequences don't have same length
 
 
-class AdminValue(BaseModel):
+class EditorValue(BaseModel):
     """Model for describing atomic values in the admin."""
 
     text: str | None = None
@@ -37,7 +37,7 @@ class AdminValue(BaseModel):
 
     def is_equal(self, other: EqualityDetector) -> bool:
         """Check if self and other are equal."""
-        if isinstance(other, AdminValue):
+        if isinstance(other, EditorValue):
             exclude = {"text"} if other.identifier and not other.text else set()
             self_dict = self.model_dump(exclude=exclude)
             other_dict = other.model_dump(exclude=exclude)
@@ -97,7 +97,7 @@ class SearchResult(BaseModel):
 
     identifier: str
     stem_type: str
-    title: list[AdminValue]
-    preview: list[AdminValue]
+    title: list[EditorValue]
+    preview: list[EditorValue]
     show_all_properties: bool = False
-    all_properties: list[AdminValue]
+    all_properties: list[EditorValue]

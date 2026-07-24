@@ -4,10 +4,10 @@ from collections.abc import Coroutine
 
 import pytest
 
-from mex.admin.models import AdminValue
+from mex.admin.models import EditorValue
 from mex.admin.utils import (
     replace_url_params,
-    resolve_admin_value,
+    resolve_editor_value,
     resolve_identifier,
 )
 from mex.common.exceptions import EmptySearchResultError, MExError
@@ -43,18 +43,18 @@ def test_resolve_admin_value(
 ) -> None:
     dummy_primary_source = dummy_data_by_identifier_in_primary_source["ps-1"]
     assert isinstance(dummy_primary_source, ExtractedPrimarySource)
-    admin_value = AdminValue(
+    editor_value = EditorValue(
         identifier=dummy_primary_source.stableTargetId,
     )
-    expected = AdminValue(
+    expected = EditorValue(
         identifier=dummy_primary_source.stableTargetId,
         text=dummy_primary_source.title[0].value,
     )
-    run_async(resolve_admin_value(admin_value))
-    assert admin_value == expected
+    run_async(resolve_editor_value(editor_value))
+    assert editor_value == expected
 
     with pytest.raises(MExError):
-        run_async(resolve_admin_value(AdminValue(identifier=None)))
+        run_async(resolve_editor_value(EditorValue(identifier=None)))
 
 
 @pytest.mark.parametrize(

@@ -4,7 +4,7 @@ from mex.admin.components import render_value
 from mex.admin.edit.state import EditState
 from mex.admin.layout import page
 from mex.admin.rules.main import (
-    admin_field,
+    editor_field,
     rule_page_header,
     submit_button,
     validation_errors,
@@ -186,7 +186,7 @@ def index() -> rx.Component:
             ),
             rx.foreach(
                 RuleState.translated_fields,
-                admin_field,
+                editor_field,
             ),
             superseding_by_backward_card(),
             validation_errors(),

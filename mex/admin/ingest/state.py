@@ -11,7 +11,7 @@ from mex.admin.ingest.transform import transform_models_to_results
 from mex.admin.label_var import label_var
 from mex.admin.pagination_component import PaginationStateMixin
 from mex.admin.state import State
-from mex.admin.utils import resolve_admin_value
+from mex.admin.utils import resolve_editor_value
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 
@@ -75,7 +75,7 @@ class IngestState(State, PaginationStateMixin):
                 description=self.label_toast_success_message_format.format(
                     model.stemType
                 ),
-                class_name="admin-toast",
+                class_name="editor-toast",
                 close_button=True,
                 dismissible=True,
                 duration=5000,
@@ -99,7 +99,7 @@ class IngestState(State, PaginationStateMixin):
             for value in [*result.title, *result.preview, *result.all_properties]:
                 if value.identifier and not value.text:
                     async with self:
-                        await resolve_admin_value(value)
+                        await resolve_editor_value(value)
 
     @rx.event(background=True)
     async def flag_ingested_items(self) -> None:

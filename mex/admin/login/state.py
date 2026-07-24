@@ -76,7 +76,7 @@ class LoginLdapState(LoginState):
             yield rx.redirect(target_path_after_login, replace=True)
         else:
             yield rx.toast.error(
-                self.label_invalid_credentials, class_name="admin-toast"
+                self.label_invalid_credentials, class_name="editor-toast"
             )
 
 
@@ -99,5 +99,5 @@ class LoginMExState(LoginState):
             yield rx.redirect(target_path_after_login, replace=True)
         else:
             yield rx.toast.error(
-                self.label_invalid_credentials, class_name="admin-toast"
+                self.label_invalid_credentials, class_name="editor-toast"
             )

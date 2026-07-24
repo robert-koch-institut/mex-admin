@@ -15,7 +15,7 @@ from mex.admin.models import SearchResult
 from mex.admin.pagination_component import PaginationStateMixin
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
-from mex.admin.utils import resolve_admin_value
+from mex.admin.utils import resolve_editor_value
 from mex.admin.value_label_select import ValueLabelSelectItem
 from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.fields import REFERENCE_FIELDS_BY_CLASS_NAME
@@ -166,7 +166,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
             for preview in result.preview:
                 if preview.identifier and not preview.text:
                     async with self:
-                        await resolve_admin_value(preview)
+                        await resolve_editor_value(preview)
 
     @rx.event
     def set_query(self, query: str) -> None:

@@ -8,11 +8,11 @@ from mex.admin.fields import STRINGIFIED_TYPES_BY_FIELD_BY_CLASS_NAME
 from mex.admin.models import (
     LANGUAGE_VALUE_NONE,
     MODEL_CONFIG_BY_STEM_TYPE,
-    AdminValue,
+    EditorValue,
 )
 from mex.admin.rules.models import (
-    AdminField,
-    AdminPrimarySource,
+    EditorField,
+    EditorPrimarySource,
     InputConfig,
     PublishTarget,
     ValidationMessage,
@@ -77,25 +77,25 @@ def _get_primary_source_id_from_model(
     raise RuntimeError(msg)
 
 
-def _transform_model_values_to_admin_values(
+def _transform_model_values_to_editor_values(
     model: AnyExtractedModel | AnyMergedModel | AnyAdditiveModel,
     field_name: str,
     subtractive: AnySubtractiveModel,
-) -> list[AdminValue]:
+) -> list[EditorValue]:
     """Given a model, a field and a subtractive rule, create admin values."""
     model_values = ensure_list(getattr(model, field_name))
-    admin_values = []
+    editor_values = []
     for model_value in model_values:
-        admin_value = transform_value(model_value)
+        editor_value = transform_value(model_value)
         # we disable the value, when either:
-        admin_value.enabled = (
+        editor_value.enabled = (
             # - the field is not supposed to be edited anyway, like type or id fields
             field_name not in MERGEABLE_FIELDS_BY_CLASS_NAME[subtractive.entityType]
             # - the value of the field in our model is subtracted by the given rule
             or model_value not in getattr(subtractive, field_name)
         )
-        admin_values.append(admin_value)
-    return admin_values
+        editor_values.append(editor_value)
+    return editor_values
 
 
 @lru_cache(maxsize=5000)
@@ -177,19 +177,19 @@ def _transform_model_to_input_config(  # noqa: PLR0911
     return InputConfig()
 
 
-def _create_admin_primary_source(  # noqa: PLR0913
-    primary_source_name: AdminValue,
+def _create_editor_primary_source(  # noqa: PLR0913
+    primary_source_name: EditorValue,
     primary_source_id: MergedPrimarySourceIdentifier,
-    admin_values: list[AdminValue],
+    editor_values: list[EditorValue],
     field_name: str,
     preventive: AnyPreventiveModel,
     input_config: InputConfig,
-) -> AdminPrimarySource:
+) -> EditorPrimarySource:
     """Create a new primary source from the given parameters."""
-    return AdminPrimarySource(
+    return EditorPrimarySource(
         name=primary_source_name,
         identifier=primary_source_id,
-        admin_values=admin_values,
+        editor_values=editor_values,
         # we disable the primary source, when either:
         enabled=(
             # - the field is not supposed to be edited anyway
@@ -201,8 +201,8 @@ def _create_admin_primary_source(  # noqa: PLR0913
     )
 
 
-def _transform_model_to_admin_primary_sources(
-    fields_by_name: dict[str, AdminField],
+def _transform_model_to_editor_primary_sources(
+    fields_by_name: dict[str, EditorField],
     model: AnyExtractedModel | AnyAdditiveModel,
     subtractive: AnySubtractiveModel,
     preventive: AnyPreventiveModel,
@@ -213,7 +213,7 @@ def _transform_model_to_admin_primary_sources(
 
     for field_name in type(model).model_fields:
         if field_name in fields_by_name:
-            admin_values = _transform_model_values_to_admin_values(
+            editor_values = _transform_model_values_to_editor_values(
                 model,
                 field_name,
                 subtractive,
@@ -224,10 +224,10 @@ def _transform_model_to_admin_primary_sources(
                 model.stemType,
                 editable=isinstance(model, AnyAdditiveModel),
             )
-            primary_source = _create_admin_primary_source(
+            primary_source = _create_editor_primary_source(
                 primary_source_name,
                 primary_source_id,
-                admin_values,
+                editor_values,
                 field_name,
                 preventive,
                 input_config,
@@ -240,7 +240,7 @@ def transform_models_to_fields(
     additive: AnyAdditiveModel,
     subtractive: AnySubtractiveModel,
     preventive: AnyPreventiveModel,
-) -> list[AdminField]:
+) -> list[EditorField]:
     """Convert the given models and rules into admin field models.
 
     Args:
@@ -262,7 +262,7 @@ def transform_models_to_fields(
 
     required_fields = get_required_mergeable_field_names(additive)
     fields_by_name = {
-        field_name: AdminField(
+        field_name: EditorField(
             name=field_name,
             value_type=STRINGIFIED_TYPES_BY_FIELD_BY_CLASS_NAME[entity_type][
                 field_name
@@ -273,20 +273,20 @@ def transform_models_to_fields(
         for (field_name, entity_type) in mergeable_fields
     }
     if extracted_items:
-        fields_by_name["identifierInPrimarySource"] = AdminField(
+        fields_by_name["identifierInPrimarySource"] = EditorField(
             name="identifierInPrimarySource",
             value_type=["str"],
             primary_sources=[],
             is_required=False,
         )
     for extracted in extracted_items:
-        _transform_model_to_admin_primary_sources(
+        _transform_model_to_editor_primary_sources(
             fields_by_name,
             extracted,
             subtractive,
             preventive,
         )
-    _transform_model_to_admin_primary_sources(
+    _transform_model_to_editor_primary_sources(
         fields_by_name,
         additive,
         subtractive,
@@ -313,7 +313,7 @@ def get_required_mergeable_field_names(
 
 
 def _transform_fields_to_additive(
-    fields: list[AdminField],
+    fields: list[EditorField],
     stem_type: str,
 ) -> dict[str, list[AnyModelValue]]:
     """Transform a list of admin fields back to a raw additive rule."""
@@ -327,9 +327,9 @@ def _transform_fields_to_additive(
         for primary_source in field.primary_sources:
             if primary_source.identifier != MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID:
                 continue
-            for admin_value in primary_source.admin_values:
-                additive_value = _transform_admin_value_to_model_value(
-                    admin_value,
+            for editor_value in primary_source.editor_values:
+                additive_value = _transform_editor_value_to_model_value(
+                    editor_value,
                     field.name,
                     additive_class_name,
                     primary_source.input_config,
@@ -340,7 +340,7 @@ def _transform_fields_to_additive(
 
 
 def _transform_fields_to_preventive(
-    fields: list[AdminField],
+    fields: list[EditorField],
     stem_type: str,
 ) -> dict[str, list[MergedPrimarySourceIdentifier]]:
     """Transform a list of admin fields back to a raw preventive rule."""
@@ -359,8 +359,8 @@ def _transform_fields_to_preventive(
     return raw_rule
 
 
-def _transform_admin_value_to_model_value(
-    value: AdminValue,
+def _transform_editor_value_to_model_value(
+    value: EditorValue,
     field_name: str,
     class_name: str,
     input_config: InputConfig,
@@ -395,7 +395,7 @@ def _transform_admin_value_to_model_value(
 
 
 def _transform_fields_to_subtractive(
-    fields: list[AdminField],
+    fields: list[EditorField],
     stem_type: str,
 ) -> dict[str, list[str]]:
     """Transform a list of admin fields back to a raw subtractive rule."""
@@ -408,10 +408,10 @@ def _transform_fields_to_subtractive(
             continue
         raw_rule[field.name] = field_values = []
         for primary_source in field.primary_sources:
-            for admin_value in primary_source.admin_values:
-                if not admin_value.enabled:
-                    subtracted_value = _transform_admin_value_to_model_value(
-                        admin_value,
+            for editor_value in primary_source.editor_values:
+                if not editor_value.enabled:
+                    subtracted_value = _transform_editor_value_to_model_value(
+                        editor_value,
                         field.name,
                         merged_class_name,
                         primary_source.input_config,
@@ -423,7 +423,7 @@ def _transform_fields_to_subtractive(
 
 def transform_fields_to_rule_set(
     stem_type: str,
-    fields: list[AdminField],
+    fields: list[EditorField],
 ) -> AnyRuleSetRequest:
     """Transform the given fields to a rule set of the given stem type.
 

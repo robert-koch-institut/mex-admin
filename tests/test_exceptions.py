@@ -11,6 +11,6 @@ def test_escalate_error(caplog: LogCaptureFixture) -> None:
     assert len(events) == 2
     assert "console" in str(events[0])
     assert "[galaxy] expansion complete: {'remaining_iau': 0}" in str(events[0])
-    assert "admin-toast" in str(events[1])
+    assert "editor-toast" in str(events[1])
     assert "galaxy Error" in str(events[1])
     assert "expansion complete" in str(events[1])

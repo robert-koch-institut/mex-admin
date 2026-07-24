@@ -3,7 +3,7 @@ from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from urllib.parse import urlencode, urlparse, urlunparse
 
-from mex.admin.models import AdminValue
+from mex.admin.models import EditorValue
 from mex.admin.settings import AdminSettings
 from mex.admin.transform import transform_models_to_title
 from mex.common.backend_api.connector import BackendApiConnector
@@ -24,14 +24,14 @@ def resolve_identifier(identifier: str) -> str:
     return f"{title.text}"
 
 
-async def resolve_admin_value(admin_value: AdminValue) -> None:
+async def resolve_editor_value(editor_value: EditorValue) -> None:
     """Resolve admin text values to human readable display values."""
-    if admin_value.identifier:
-        admin_value.text = await asyncio.to_thread(
-            resolve_identifier, admin_value.identifier
+    if editor_value.identifier:
+        editor_value.text = await asyncio.to_thread(
+            resolve_identifier, editor_value.identifier
         )
     else:
-        msg = f"Cannot resolve admin value: {admin_value}"
+        msg = f"Cannot resolve admin value: {editor_value}"
         raise MExError(msg)
 
 

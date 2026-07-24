@@ -2,12 +2,12 @@ from typing import Any
 
 import reflex as rx
 
-from mex.admin.models import AdminValue
+from mex.admin.models import EditorValue
 from mex.admin.state import State
 
 
 def render_value(
-    value: AdminValue,
+    value: EditorValue,
     truncate_text: bool | rx.Var[bool] = True,  # noqa: FBT001, FBT002
 ) -> rx.Component:
     """Render a single admin value."""
@@ -25,7 +25,7 @@ def render_value(
     )
 
 
-def render_title(title: AdminValue) -> rx.Component:
+def render_title(title: EditorValue) -> rx.Component:
     """Render one title in a container with hidden overflow."""
     return rx.box(
         render_value(title),
@@ -37,7 +37,7 @@ def render_title(title: AdminValue) -> rx.Component:
     )
 
 
-def render_additional_titles(titles: list[AdminValue]) -> rx.Component:
+def render_additional_titles(titles: list[EditorValue]) -> rx.Component:
     """Render one title and if necessary a badge with tooltip and additional titles."""
     return rx.cond(
         titles,
@@ -58,7 +58,7 @@ def render_additional_titles(titles: list[AdminValue]) -> rx.Component:
     )
 
 
-def render_search_preview(values: list[AdminValue]) -> rx.Component:
+def render_search_preview(values: list[EditorValue]) -> rx.Component:
     """Render a horizontal stack of admin values for a search preview."""
     return rx.hstack(
         rx.foreach(
@@ -76,7 +76,7 @@ def render_search_preview(values: list[AdminValue]) -> rx.Component:
     )
 
 
-def render_identifier(value: AdminValue) -> rx.Component:
+def render_identifier(value: EditorValue) -> rx.Component:
     """Render an admin value as a clickable internal link that loads the edit page."""
     return rx.skeleton(
         rx.link(
@@ -93,7 +93,7 @@ def render_identifier(value: AdminValue) -> rx.Component:
     )
 
 
-def render_external_link(value: AdminValue) -> rx.Component:
+def render_external_link(value: EditorValue) -> rx.Component:
     """Render an admin value as a clickable external link that opens in a new tab."""
     return rx.link(
         rx.cond(
@@ -110,7 +110,7 @@ def render_external_link(value: AdminValue) -> rx.Component:
     )
 
 
-def render_link(value: AdminValue) -> rx.Component:
+def render_link(value: EditorValue) -> rx.Component:
     """Render an admin value as an internal or external link."""
     return rx.cond(
         value.identifier,
@@ -133,7 +133,7 @@ def render_span(
 
 
 def render_text(
-    value: AdminValue,
+    value: EditorValue,
     truncate_text: bool | rx.Var[bool] = True,  # noqa: FBT001, FBT002
 ) -> rx.Component:
     """Render an admin value as a text span."""

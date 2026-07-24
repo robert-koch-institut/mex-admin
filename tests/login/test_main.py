@@ -46,7 +46,7 @@ def test_login_failure(base_url: str, page: Page) -> None:
 
     page.get_by_test_id("login-button").click()
 
-    toast = page.locator(".admin-toast").first
+    toast = page.locator(".editor-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "error")
     page.screenshot(path="tests_login_test_main-test_login_failure-on-toast.png")

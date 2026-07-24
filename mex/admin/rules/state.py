@@ -11,11 +11,11 @@ from starlette import status
 from mex.admin.exceptions import escalate_error
 from mex.admin.label_var import label_var
 from mex.admin.locale_service import LocaleService
-from mex.admin.models import AdminValue, sequence_is_equal
+from mex.admin.models import EditorValue, sequence_is_equal
 from mex.admin.rules.local_storage_mixin_state import LocalStorageMixinState
 from mex.admin.rules.models import (
-    AdminField,
-    AdminPrimarySource,
+    EditorField,
+    EditorPrimarySource,
     FieldTranslation,
     LocalDraft,
     LocalEdit,
@@ -34,7 +34,7 @@ from mex.admin.transform import (
     transform_models_to_stem_type,
     transform_models_to_title,
 )
-from mex.admin.utils import resolve_admin_value, resolve_identifier
+from mex.admin.utils import resolve_editor_value, resolve_identifier
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
@@ -55,12 +55,12 @@ locale_service = LocaleService.get()
 class RuleState(State, LocalStorageMixinState):
     """Base state for the edit and create components."""
 
-    _api_fields: list[AdminField] = []
+    _api_fields: list[EditorField] = []
 
     is_submitting: bool = False
     delete_reset_mode: None | Literal["delete", "reset"] = None
-    item_title: list[AdminValue] = []
-    fields: list[AdminField] = []
+    item_title: list[EditorValue] = []
+    fields: list[EditorField] = []
     stem_type: str | None = None
     validation_messages: list[ValidationMessage] = []
     workflow_rule: AnyWorkflowModel | None = None
@@ -77,8 +77,8 @@ class RuleState(State, LocalStorageMixinState):
             Returns True if the current edit state differs from the original
             loaded state; otherwise False.
         """
-        fields: list[AdminField] = self.get_value("fields")
-        api_fields: list[AdminField] = self.get_value("_api_fields")
+        fields: list[EditorField] = self.get_value("fields")
+        api_fields: list[EditorField] = self.get_value("_api_fields")
 
         return not sequence_is_equal(fields, api_fields)
 
@@ -121,7 +121,7 @@ class RuleState(State, LocalStorageMixinState):
             Translated fields containing label and description translation.
         """
         if self.stem_type:
-            fields = cast("list[AdminField]", self.get_value("fields"))
+            fields = cast("list[EditorField]", self.get_value("fields"))
             return [
                 FieldTranslation(
                     field=field,
@@ -144,11 +144,11 @@ class RuleState(State, LocalStorageMixinState):
                 name = primary_source.name
                 if name.identifier and not name.text:
                     async with self:
-                        await resolve_admin_value(name)
-                for admin_value in primary_source.admin_values:
-                    if admin_value.identifier and not admin_value.text:
+                        await resolve_editor_value(name)
+                for editor_value in primary_source.editor_values:
+                    if editor_value.identifier and not editor_value.text:
                         async with self:
-                            await resolve_admin_value(admin_value)
+                            await resolve_editor_value(editor_value)
 
     @classmethod
     def _contains_any_rule(
@@ -322,7 +322,7 @@ class RuleState(State, LocalStorageMixinState):
         yield rx.toast.success(
             title=self.label_save_success_dialog_title,
             description=self.label_save_success_dialog_message_format,
-            class_name="admin-toast",
+            class_name="editor-toast",
             close_button=True,
             dismissible=True,
             duration=5000,
@@ -335,7 +335,7 @@ class RuleState(State, LocalStorageMixinState):
 
     def _get_primary_sources_by_field_name(
         self, field_name: str
-    ) -> list[AdminPrimarySource]:
+    ) -> list[EditorPrimarySource]:
         """Get all primary sources for the given field name."""
         for field in self.fields:
             if field.name == field_name:
@@ -345,7 +345,7 @@ class RuleState(State, LocalStorageMixinState):
 
     def _get_editable_primary_source_by_field_name(
         self, field_name: str
-    ) -> AdminPrimarySource:
+    ) -> EditorPrimarySource:
         """Get the (first) primary source that allows an editable rule."""
         for primary_source in self._get_primary_sources_by_field_name(field_name):
             if primary_source.input_config.allow_additive:
@@ -370,14 +370,14 @@ class RuleState(State, LocalStorageMixinState):
     def toggle_field_value(
         self,
         field_name: str,
-        value: AdminValue,
+        value: EditorValue,
         enabled: bool,  # noqa: FBT001
     ) -> Generator[EventSpec]:
         """Toggle the `enabled` flag of a field value."""
         for primary_source in self._get_primary_sources_by_field_name(field_name):
-            for admin_value in primary_source.admin_values:
-                if admin_value == value:
-                    admin_value.enabled = enabled
+            for editor_value in primary_source.editor_values:
+                if editor_value == value:
+                    editor_value.enabled = enabled
                     yield RuleState.update_local_state  # type: ignore[misc]
 
     @rx.event
@@ -388,16 +388,16 @@ class RuleState(State, LocalStorageMixinState):
     ) -> Generator[EventSpec]:
         """Toggle editing of a field value."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
-        primary_source.admin_values[
+        primary_source.editor_values[
             index
-        ].being_edited = not primary_source.admin_values[index].being_edited
+        ].being_edited = not primary_source.editor_values[index].being_edited
         yield RuleState.update_local_state  # type: ignore[misc]
 
     @rx.event
     def add_additive_value(self, field_name: str) -> Generator[EventSpec]:
         """Add an additive rule to the given field."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
-        primary_source.admin_values.append(AdminValue(being_edited=True))
+        primary_source.editor_values.append(EditorValue(being_edited=True))
         yield RuleState.update_local_state  # type: ignore[misc]
 
     @rx.event
@@ -406,7 +406,7 @@ class RuleState(State, LocalStorageMixinState):
     ) -> Generator[EventSpec]:
         """Remove an additive rule from the given field."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
-        primary_source.admin_values.pop(index)
+        primary_source.editor_values.pop(index)
         yield RuleState.update_local_state  # type: ignore[misc]
 
     @rx.event
@@ -415,7 +415,7 @@ class RuleState(State, LocalStorageMixinState):
     ) -> Generator[EventSpec]:
         """Set the text attribute on an additive admin value."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
-        primary_source.admin_values[index].text = value
+        primary_source.editor_values[index].text = value
         yield RuleState.update_local_state  # type: ignore[misc]
 
     @rx.event
@@ -424,9 +424,9 @@ class RuleState(State, LocalStorageMixinState):
     ) -> AsyncGenerator[EventSpec]:
         """Set the identifier attribute on an additive admin value."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
-        primary_source.admin_values[index].identifier = value
-        primary_source.admin_values[index].href = f"/item/{value}"
-        await resolve_admin_value(primary_source.admin_values[index])
+        primary_source.editor_values[index].identifier = value
+        primary_source.editor_values[index].href = f"/item/{value}"
+        await resolve_editor_value(primary_source.editor_values[index])
         yield RuleState.update_local_state  # type: ignore[misc]
 
     @rx.event
@@ -435,7 +435,7 @@ class RuleState(State, LocalStorageMixinState):
     ) -> Generator[EventSpec]:
         """Set the badge attribute on an additive admin value."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
-        primary_source.admin_values[index].badge = value
+        primary_source.editor_values[index].badge = value
         yield RuleState.update_local_state  # type: ignore[misc]
 
     @rx.event
@@ -444,8 +444,8 @@ class RuleState(State, LocalStorageMixinState):
     ) -> Generator[EventSpec]:
         """Set an external href on an additive admin value."""
         primary_source = self._get_editable_primary_source_by_field_name(field_name)
-        primary_source.admin_values[index].href = value
-        primary_source.admin_values[index].external = True
+        primary_source.editor_values[index].href = value
+        primary_source.editor_values[index].external = True
         yield RuleState.update_local_state  # type: ignore[misc]
 
     @label_var(label_id="rules.additive_rule.add_button_prefix")

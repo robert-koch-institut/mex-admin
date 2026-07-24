@@ -21,7 +21,7 @@ from mex.admin.search.models import (
 )
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
-from mex.admin.utils import resolve_admin_value
+from mex.admin.utils import resolve_editor_value
 from mex.admin.value_label_select import ValueLabelSelectItem
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.exceptions import MExError
@@ -288,7 +288,7 @@ class SearchState(State, PaginationStateMixin):
             for preview in result.preview:
                 if preview.identifier and not preview.text:
                     async with self:
-                        await resolve_admin_value(preview)
+                        await resolve_editor_value(preview)
 
     @rx.event
     def refresh(self) -> Generator[EventSpec | None]:

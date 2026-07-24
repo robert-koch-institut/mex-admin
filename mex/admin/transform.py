@@ -3,10 +3,10 @@ from collections.abc import Iterable, Sequence
 from mex.admin.models import (
     LANGUAGE_VALUE_NONE,
     MODEL_CONFIG_BY_STEM_TYPE,
-    AdminValue,
+    EditorValue,
     SearchResult,
 )
-from mex.admin.rules.models import AdminField
+from mex.admin.rules.models import EditorField
 from mex.common.models import (
     AnyExtractedModel,
     AnyMergedModel,
@@ -28,7 +28,7 @@ def ensure_list(values: object) -> list[object]:
 def transform_values(
     values: object,
     allow_link: bool = True,  # noqa: FBT001, FBT002
-) -> list[AdminValue]:
+) -> list[EditorValue]:
     """Convert a single object or a list of objects into a list of admin values."""
     return [transform_value(v, allow_link) for v in ensure_list(values)]
 
@@ -36,37 +36,37 @@ def transform_values(
 def transform_value(
     value: object,
     allow_link: bool = True,  # noqa: FBT001, FBT002
-) -> AdminValue:
+) -> EditorValue:
     """Transform a single object into an admin value ready for rendering."""
     if isinstance(value, Text):
-        return AdminValue(
+        return EditorValue(
             text=value.value,
             badge=value.language.name if value.language else LANGUAGE_VALUE_NONE,
         )
     if isinstance(value, Link):
-        return AdminValue(
+        return EditorValue(
             text=value.title,
             href=value.url if allow_link else None,
             badge=value.language.name if value.language else LANGUAGE_VALUE_NONE,
             external=True,
         )
     if isinstance(value, Identifier):
-        return AdminValue(
+        return EditorValue(
             identifier=str(value),
             href=f"/item/{value}" if allow_link else None,
         )
     if isinstance(value, VocabularyEnum):
-        return AdminValue(
+        return EditorValue(
             text=type(value).__name__,
             badge=value.name,
         )
     if isinstance(value, TemporalEntity):
-        return AdminValue(
+        return EditorValue(
             text=str(value),
             badge=value.precision.value,
         )
     if isinstance(value, str | int):
-        return AdminValue(
+        return EditorValue(
             text=str(value),
         )
     msg = f"cannot transform {type(value).__name__} to admin value"
@@ -85,16 +85,16 @@ def transform_models_to_stem_type(
 
 
 def transform_fields_to_title(
-    stem_type: str, fields: Sequence[AdminField]
-) -> list[AdminValue]:
+    stem_type: str, fields: Sequence[EditorField]
+) -> list[EditorValue]:
     """Convert a list of fields into admin values based on the title config."""
     config = MODEL_CONFIG_BY_STEM_TYPE[stem_type]
     titles = [
         value
         for f in fields
         for ps in f.primary_sources
-        for value in ps.admin_values
-        if f.name == config.title and ps.admin_values
+        for value in ps.editor_values
+        if f.name == config.title and ps.editor_values
     ]
     return titles if titles and titles[0].text else [transform_value(stem_type)]
 
@@ -103,11 +103,11 @@ def transform_models_to_title(
     models: Sequence[
         AnyRuleModel | AnyExtractedModel | AnyPreviewModel | AnyMergedModel
     ],
-) -> list[AdminValue]:
+) -> list[EditorValue]:
     """Convert a list of models into admin values based on the title config."""
     if not models:
         return []
-    titles: list[AdminValue] = []
+    titles: list[EditorValue] = []
     for model in models:
         config = MODEL_CONFIG_BY_STEM_TYPE[model.stemType]
         titles.extend(
@@ -122,11 +122,11 @@ def transform_models_to_preview(
     models: Sequence[
         AnyRuleModel | AnyExtractedModel | AnyPreviewModel | AnyMergedModel
     ],
-) -> list[AdminValue]:
+) -> list[EditorValue]:
     """Converts a list of models into admin values based on the preview config."""
     if not models:
         return []
-    previews: list[AdminValue] = []
+    previews: list[EditorValue] = []
     for model in models:
         config = MODEL_CONFIG_BY_STEM_TYPE[model.stemType]
         previews.extend(
@@ -141,7 +141,7 @@ def transform_models_to_preview(
 
 def transform_model_to_all_properties(
     model: AnyExtractedModel | AnyPreviewModel | AnyMergedModel,
-) -> list[AdminValue]:
+) -> list[EditorValue]:
     """Transform all properties of a model into a list of AdminValues."""
     return [
         value
