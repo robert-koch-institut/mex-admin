@@ -17,7 +17,7 @@ dependencies = [
     "reflex>=0.8,<0.9",
     "requests>=2.32,<3",
     "starlette>=1,<1.4",
-    "typer>=0.26,<0.27",
+    "typer>=0.27,<0.28",
     "uvicorn>=0.51,<0.52",
 ]
 
