@@ -26,6 +26,6 @@ jobs:
           fetch-depth: 0
       - name: Push main branch
         run: |
-          git remote add opencode https://RKIMetadataExchange:${{ secrets.MEX_OPENCODE_TOKEN }}@gitlab.opencode.de/robert-koch-institut/mex/mex-editor.git
+          git remote add opencode https://RKIMetadataExchange:${{ secrets.MEX_OPENCODE_TOKEN }}@gitlab.opencode.de/robert-koch-institut/mex/mex-admin.git
           git push opencode -f
           git push opencode -f --tags
