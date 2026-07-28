@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- search page summary now shows the item range and the backend response time,
+  e.g. "Showing items 701-750 of 5801 total. Took 3.8 seconds."
+
 ### Changes
 
 - rename mex-editor to mex-admin, at least on the surface: package, logo and settings

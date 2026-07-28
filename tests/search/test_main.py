@@ -10,7 +10,7 @@ from mex.common.models import (
     ExtractedPrimarySource,
     ExtractedResource,
 )
-from tests.conftest import build_pagination_regex, build_ui_label_regex
+from tests.conftest import build_search_summary_regex, build_ui_label_regex
 
 
 @pytest.fixture
@@ -116,7 +116,7 @@ def test_search_input(search_page: Page) -> None:
         path="tests_search_test_main-test_search_input-on-search-input-1-found.png"
     )
     expect(page.get_by_test_id("search-results-summary")).to_have_text(
-        build_pagination_regex(1, 1)
+        build_search_summary_regex(1, 1, 1)
     )
 
     search_input.fill("totally random search dPhGDHu3uiEcU6VNNs0UA74bBdubC3")
@@ -125,7 +125,7 @@ def test_search_input(search_page: Page) -> None:
         path="tests_search_test_main-test_search_input-on-search-input-0-found.png"
     )
     expect(page.get_by_test_id("search-results-summary")).to_have_text(
-        build_pagination_regex(0, 0)
+        build_search_summary_regex(0, 0, 0)
     )
 
 
@@ -142,7 +142,7 @@ def test_entity_types(search_page: Page) -> None:
     entity_types = page.get_by_test_id("entity-types")
     expect(entity_types).to_be_visible()
     entity_types.get_by_test_id("entity-type-Activity").click()
-    expect(page.get_by_text(build_pagination_regex(1, 1))).to_be_visible()
+    expect(page.get_by_text(build_search_summary_regex(1, 1, 1))).to_be_visible()
     page.screenshot(
         path="tests_search_test_main-test_entity_types-on-select-entity-1-found.png"
     )
@@ -181,7 +181,7 @@ def test_had_primary_sources(
     primary_sources.get_by_text("Primary Source One").click()
     summary = page.get_by_test_id("search-results-summary")
     expect(summary).to_be_visible()
-    expect(summary).to_contain_text(build_pagination_regex(4, 4))
+    expect(summary).to_contain_text(build_search_summary_regex(1, 4, 4))
     page.screenshot(
         path="tests_search_test_main-test_had_primary_sources-on-select-primary-source-1-found.png"
     )
@@ -204,7 +204,7 @@ def test_load_search_params(
     )
 
     # check 1 item is showing
-    expect(page.get_by_text(build_pagination_regex(1, 1))).to_be_visible()
+    expect(page.get_by_text(build_search_summary_regex(1, 1, 1))).to_be_visible()
     page.screenshot(
         path="tests_search_test_main-test_load_search_params-on-params-loaded.png"
     )
@@ -343,7 +343,7 @@ def test_reference_filter(
     page.screenshot(
         path="tests_search_test_main-test_reference_filter-reference_filter_valid_search.png"
     )
-    expect(page.get_by_text(build_pagination_regex(3, 3))).to_be_visible()
+    expect(page.get_by_text(build_search_summary_regex(1, 3, 3))).to_be_visible()
 
 
 @pytest.mark.integration
