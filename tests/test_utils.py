@@ -4,14 +4,14 @@ from collections.abc import Coroutine
 
 import pytest
 
-from mex.common.exceptions import EmptySearchResultError, MExError
-from mex.common.models import AnyExtractedModel, ExtractedPrimarySource
-from mex.editor.models import EditorValue
-from mex.editor.utils import (
+from mex.admin.models import EditorValue
+from mex.admin.utils import (
     replace_url_params,
     resolve_editor_value,
     resolve_identifier,
 )
+from mex.common.exceptions import EmptySearchResultError, MExError
+from mex.common.models import AnyExtractedModel, ExtractedPrimarySource
 
 
 def run_async[T](coro: Coroutine[object, object, T]) -> T:

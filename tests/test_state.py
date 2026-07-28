@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 from pytest import MonkeyPatch
 
-from mex.editor.models import User
-from mex.editor.state import State
+from mex.admin.models import User
+from mex.admin.state import State
 
 
 def test_state_logout(monkeypatch: MonkeyPatch) -> None:

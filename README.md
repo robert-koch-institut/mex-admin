@@ -1,13 +1,13 @@
-# MEx editor
+# MEx admin
 
-Metadata editor web application.
+Metadata admin web application.
 
-[![cookiecutter](https://github.com/robert-koch-institut/mex-editor/actions/workflows/cookiecutter.yml/badge.svg)](https://github.com/robert-koch-institut/mex-template)
-[![cve-scan](https://github.com/robert-koch-institut/mex-editor/actions/workflows/cve-scan.yml/badge.svg)](https://github.com/robert-koch-institut/mex-editor/actions/workflows/cve-scan.yml)
-[![documentation](https://github.com/robert-koch-institut/mex-editor/actions/workflows/documentation.yml/badge.svg)](https://robert-koch-institut.github.io/mex-editor)
-[![linting](https://github.com/robert-koch-institut/mex-editor/actions/workflows/linting.yml/badge.svg)](https://github.com/robert-koch-institut/mex-editor/actions/workflows/linting.yml)
-[![opencode](https://github.com/robert-koch-institut/mex-editor/actions/workflows/opencode.yml/badge.svg)](https://gitlab.opencode.de/robert-koch-institut/mex/mex-editor)
-[![testing](https://github.com/robert-koch-institut/mex-editor/actions/workflows/testing.yml/badge.svg)](https://github.com/robert-koch-institut/mex-editor/actions/workflows/testing.yml)
+[![cookiecutter](https://github.com/robert-koch-institut/mex-admin/actions/workflows/cookiecutter.yml/badge.svg)](https://github.com/robert-koch-institut/mex-template)
+[![cve-scan](https://github.com/robert-koch-institut/mex-admin/actions/workflows/cve-scan.yml/badge.svg)](https://github.com/robert-koch-institut/mex-admin/actions/workflows/cve-scan.yml)
+[![documentation](https://github.com/robert-koch-institut/mex-admin/actions/workflows/documentation.yml/badge.svg)](https://robert-koch-institut.github.io/mex-admin)
+[![linting](https://github.com/robert-koch-institut/mex-admin/actions/workflows/linting.yml/badge.svg)](https://github.com/robert-koch-institut/mex-admin/actions/workflows/linting.yml)
+[![opencode](https://github.com/robert-koch-institut/mex-admin/actions/workflows/opencode.yml/badge.svg)](https://gitlab.opencode.de/robert-koch-institut/mex/mex-admin)
+[![testing](https://github.com/robert-koch-institut/mex-admin/actions/workflows/testing.yml/badge.svg)](https://github.com/robert-koch-institut/mex-admin/actions/workflows/testing.yml)
 
 ## Project
 
@@ -48,7 +48,7 @@ Germany
 
 ## Package
 
-The `mex-editor` is a browser application that allows creating and editing rules to
+The `mex-admin` is a browser application that allows creating and editing rules to
 non-destructively manipulate metadata. This can be used to enrich data with manual input
 or insert new data from scratch.
 
@@ -70,7 +70,7 @@ components of the MEx project are open-sourced under the same license as well.
 - run all linters with `make lint` or `.\mex.bat lint`
 - run unit and integration tests with `make test` or `.\mex.bat test`
 - run just the unit tests with `make unit` or `.\mex.bat unit`
-  - for integration tests you need a local `mex-backend`, `neo4j` and `mex-editor`
+  - for integration tests you need a local `mex-backend`, `neo4j` and `mex-admin`
 
 ### Updating dependencies
 
@@ -96,13 +96,13 @@ components of the MEx project are open-sourced under the same license as well.
 Images released to GHCR are signed using [cosign](https://github.com/sigstore/cosign).
 
 To verify an image manually:
-`cosign verify --certificate-identity-regexp "https://github.com/robert-koch-institut/mex-editor/.github/workflows/release.yml@refs/heads/main" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/robert-koch-institut/mex-editor:<tag>`
+`cosign verify --certificate-identity-regexp "https://github.com/robert-koch-institut/mex-admin/.github/workflows/release.yml@refs/heads/main" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/robert-koch-institut/mex-admin:<tag>`
 
 ## Commands
 
 - run `uv run {command} --help` to print instructions
 - run `uv run {command} --debug` for interactive debugging
 
-### editor
+### admin
 
-- `editor` starts the editor service
+- `admin` starts the admin service

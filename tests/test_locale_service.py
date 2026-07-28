@@ -1,6 +1,6 @@
 import pytest
 
-from mex.editor.locale_service import LocaleService
+from mex.admin.locale_service import LocaleService
 
 
 @pytest.mark.parametrize(

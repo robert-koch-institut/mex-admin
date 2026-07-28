@@ -2,6 +2,16 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from mex.admin.models import LANGUAGE_VALUE_NONE, EditorValue
+from mex.admin.transform import (
+    transform_model_to_all_properties,
+    transform_models_to_preview,
+    transform_models_to_search_results,
+    transform_models_to_stem_type,
+    transform_models_to_title,
+    transform_value,
+    transform_values,
+)
 from mex.common.models import (
     AdditiveContactPoint,
     AnyExtractedModel,
@@ -16,16 +26,6 @@ from mex.common.types import (
     Text,
     TextLanguage,
     Theme,
-)
-from mex.editor.models import LANGUAGE_VALUE_NONE, EditorValue
-from mex.editor.transform import (
-    transform_model_to_all_properties,
-    transform_models_to_preview,
-    transform_models_to_search_results,
-    transform_models_to_stem_type,
-    transform_models_to_title,
-    transform_value,
-    transform_values,
 )
 
 
@@ -211,7 +211,7 @@ def test_model_to_all_properties() -> None:
     type(model).model_fields = {"field1": Mock(), "field2": Mock()}
 
     with patch(
-        "mex.editor.transform.transform_model_to_all_properties",
+        "mex.admin.transform.transform_model_to_all_properties",
         side_effect=lambda x, allow_link: [EditorValue(text=f"value{x}")],
     ):
         result = transform_model_to_all_properties(model)

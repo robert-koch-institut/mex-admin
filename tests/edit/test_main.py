@@ -4,6 +4,7 @@ from typing import Literal
 import pytest
 from playwright.sync_api import Page, expect
 
+from mex.admin.rules.transform import get_required_mergeable_field_names
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.fields import (
     MERGEABLE_FIELDS_BY_CLASS_NAME,
@@ -32,7 +33,6 @@ from mex.common.types import (
     TextLanguage,
     Theme,
 )
-from mex.editor.rules.transform import get_required_mergeable_field_names
 
 
 @pytest.fixture

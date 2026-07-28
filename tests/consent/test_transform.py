@@ -1,5 +1,5 @@
-from mex.editor.consent.transform import add_external_links_to_results
-from mex.editor.models import EditorValue, SearchResult
+from mex.admin.consent.transform import add_external_links_to_results
+from mex.admin.models import EditorValue, SearchResult
 
 
 def test_add_external_links_to_results() -> None:

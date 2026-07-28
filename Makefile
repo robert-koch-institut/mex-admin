@@ -43,24 +43,24 @@ wheel:
 
 image:
 	# build the docker image
-	@ echo building docker image mex-editor:${LATEST}; \
+	@ echo building docker image mex-admin:${LATEST}; \
 	docker build \
-		--tag rki/mex-editor:${LATEST} \
-		--tag rki/mex-editor:latest .; \
+		--tag rki/mex-admin:${LATEST} \
+		--tag rki/mex-admin:latest .; \
 
 run: image
 	# run the service as a docker container
-	@ echo running docker container mex-editor:${LATEST}; \
+	@ echo running docker container mex-admin:${LATEST}; \
 	docker run \
-		--env MEX_EDITOR_API_HOST=0.0.0.0 \
-		--env MEX_EDITOR_USER_DATABASE='{"mex":["mex"]}' \
+		--env MEX_ADMIN_API_HOST=0.0.0.0 \
+		--env MEX_ADMIN_USER_DATABASE='{"mex":["mex"]}' \
 		--publish 8030:8030 \
 		--publish 8031:8031 \
-		rki/mex-editor:${LATEST}; \
+		rki/mex-admin:${LATEST}; \
 
 start:
 	# start the service using docker compose
-	@ echo start mex-editor:${LATEST} with compose; \
+	@ echo start mex-admin:${LATEST} with compose; \
 	docker compose up --remove-orphans; \
 
 docs:

@@ -11,6 +11,10 @@ from playwright.sync_api import Page, expect
 from pydantic import SecretStr
 from pytest import LogCaptureFixture
 
+from mex.admin.api.main import api
+from mex.admin.locale_service import LocaleService
+from mex.admin.settings import AdminSettings
+from mex.admin.types import AdminUserDatabase, AdminUserPassword
 from mex.common.backend_api.connector import (
     BackendApiConnector,
     LDAPBackendApiConnector,
@@ -39,10 +43,6 @@ from mex.common.types import (
     Theme,
     YearMonthDay,
 )
-from mex.editor.api.main import api
-from mex.editor.locale_service import LocaleService
-from mex.editor.settings import EditorSettings
-from mex.editor.types import EditorUserDatabase, EditorUserPassword
 
 pytest_plugins = ("mex.common.testing.plugin",)
 
@@ -74,34 +74,34 @@ def settings(
     request: pytest.FixtureRequest,
     is_integration_test: bool,  # noqa: FBT001
     isolate_settings: None,  # noqa: ARG001
-) -> EditorSettings:
-    """Load and return the correct editor settings."""
+) -> AdminSettings:
+    """Load and return the correct admin settings."""
     verbosity = request.config.option.verbose
     cutoff_level = logging.INFO if verbosity >= 2 else logging.WARNING
     with caplog.at_level(cutoff_level, logger=logger.name):
-        settings = EditorSettings.get()
+        settings = AdminSettings.get()
         if is_integration_test:
             settings.identity_provider = IdentityProvider.BACKEND
         else:
             settings.identity_provider = IdentityProvider.MEMORY
-            settings.editor_user_database = EditorUserDatabase(
-                read={"reader": EditorUserPassword("read_pw")},
-                write={"writer": EditorUserPassword("write_pw")},
+            settings.admin_user_database = AdminUserDatabase(
+                read={"reader": AdminUserPassword("read_pw")},
+                write={"writer": AdminUserPassword("write_pw")},
             )
     return settings
 
 
 @pytest.fixture
-def reader_user_credentials(settings: EditorSettings) -> tuple[str, SecretStr]:
-    for username, password in settings.editor_user_database["read"].items():
+def reader_user_credentials(settings: AdminSettings) -> tuple[str, SecretStr]:
+    for username, password in settings.admin_user_database["read"].items():
         return username, password
     msg = "No reader configured"  # pragma: no cover
     raise RuntimeError(msg)  # pragma: no cover
 
 
 @pytest.fixture
-def writer_user_credentials(settings: EditorSettings) -> tuple[str, SecretStr]:
-    for username, password in settings.editor_user_database["write"].items():
+def writer_user_credentials(settings: AdminSettings) -> tuple[str, SecretStr]:
+    for username, password in settings.admin_user_database["write"].items():
         return username, password
     msg = "No writer configured"  # pragma: no cover
     raise RuntimeError(msg)  # pragma: no cover
@@ -361,7 +361,7 @@ def build_ui_label_regex(label_id: str) -> Pattern[str]:
 
 def get_logged_in_user_id() -> MergedPersonIdentifier:
     """Return the merged person identifier of the currently logged in user."""
-    settings = EditorSettings.get()
+    settings = AdminSettings.get()
     url = urlsplit(settings.ldap_url.get_secret_value())
     connector = LDAPBackendApiConnector.get()
     persons = connector.merged_person_from_login(
