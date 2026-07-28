@@ -1,4 +1,5 @@
 import json
+import time
 from collections.abc import Generator
 from dataclasses import dataclass
 from typing import Any
@@ -71,6 +72,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
     all_entity_types = [k.stemType for k in MERGED_MODEL_CLASSES]
 
     is_searching: bool = False
+    search_duration_seconds: float = 0.0
     search_results: list[SearchResult] = []
 
     @rx.var
@@ -136,6 +138,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
         yield None
 
         connector = BackendApiConnector.get()
+        start_time = time.monotonic()
         try:
             fetch_result = connector.search_preview_items(
                 query_string=self.query or None,
@@ -145,6 +148,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
                 limit=self.limit,
             )
         except HTTPError as exc:
+            self.search_duration_seconds = time.monotonic() - start_time
             self.search_results = []
             self.total = 0
             self.current_page = 1
@@ -154,6 +158,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
                 exc.response.text,
             )
         else:
+            self.search_duration_seconds = time.monotonic() - start_time
             self.search_results = transform_models_to_search_results(fetch_result.items)
             self.total = fetch_result.total
 
@@ -279,11 +284,24 @@ class AdvancedSearchState(State, PaginationStateMixin):
 
     @label_var(
         label_id="search.result_summary.format",
-        deps=["search_results_length", "total"],
+        deps=[
+            "search_results_length",
+            "total",
+            "current_page",
+            "limit",
+            "search_duration_seconds",
+        ],
     )
-    def label_result_summary_format(self) -> list[int]:
+    def label_result_summary_format(self) -> list[float]:
         """Label for result_summary.format."""
-        return [self.search_results_length, self.total]
+        # the range is 1-based and inclusive, but collapses to 0-0 without results
+        first_item = self.skip + 1 if self.search_results_length else 0
+        return [
+            first_item,
+            self.skip + self.search_results_length,
+            self.total,
+            self.search_duration_seconds,
+        ]
 
     @label_var(label_id="advanced_search.reference_filter.add_value")
     def label_reference_filter_add_value(self) -> None:

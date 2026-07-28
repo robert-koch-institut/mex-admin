@@ -355,9 +355,9 @@ def build_search_summary_regex(first: int, last: int, total: int) -> Pattern[str
     service = LocaleService.get()
     summaries = (
         re.escape(
-            service.get_ui_label(
-                locale.id, "search.result_summary.detailed_format"
-            ).format(first, last, total, 0.0)
+            service.get_ui_label(locale.id, "search.result_summary.format").format(
+                first, last, total, 0.0
+            )
         ).replace(r"0\.0", r"\d+\.\d+")
         for locale in service.get_available_locales()
     )

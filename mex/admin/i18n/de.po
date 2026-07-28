@@ -18,9 +18,6 @@ msgid "search.reference_filter.primarysource_tab"
 msgstr "Primärquelle"
 
 msgid "search.result_summary.format"
-msgstr "Zeige {0} von {1} Einträgen"
-
-msgid "search.result_summary.detailed_format"
 msgstr "Zeige Einträge {0}-{1} von insgesamt {2}. Dauer: {3:.1f} Sekunden."
 
 msgid "search.reference_field_filter.placeholder"

@@ -277,7 +277,7 @@ def search_results() -> rx.Component:
         search_results_component(
             SearchState.results,
             SearchResultsComponentOptions(
-                summary_text=SearchState.label_result_summary_detailed_format,
+                summary_text=SearchState.label_result_summary_format,
                 list_options=SearchResultsListOptions(
                     item_options=SearchResultsListItemOptions(enable_title_href=True)
                 ),

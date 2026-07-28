@@ -391,7 +391,7 @@ class SearchState(State, PaginationStateMixin):
         """Label for reference_filter.primarysource_tab."""
 
     @label_var(
-        label_id="search.result_summary.detailed_format",
+        label_id="search.result_summary.format",
         deps=[
             "current_results_length",
             "total",
@@ -400,8 +400,8 @@ class SearchState(State, PaginationStateMixin):
             "search_duration_seconds",
         ],
     )
-    def label_result_summary_detailed_format(self) -> list[float]:
-        """Label for result_summary.detailed_format."""
+    def label_result_summary_format(self) -> list[float]:
+        """Label for result_summary.format."""
         # the range is 1-based and inclusive, but collapses to 0-0 without results
         first_item = self.skip + 1 if self.current_results_length else 0
         return [
