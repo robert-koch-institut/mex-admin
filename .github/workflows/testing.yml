@@ -35,7 +35,7 @@ jobs:
         ports:
           - 7687:7687
       backend:
-        image: ghcr.io/robert-koch-institut/mex-backend:4.0.3@sha256:1557cfa843c42c0401eb812c5c518a9bfdd98d520fe0ab5fd82499a61132cdec
+        image: ghcr.io/robert-koch-institut/mex-backend:4.2.0@sha256:fc3ff50af87344068b6210a56f942ae83710ee2079774d1ba4bc68d6e0d65494
         env:
           MEX_BACKEND_API_KEY_DATABASE: '{"read":["read_key"],"write":["write_key"]}'
           MEX_IDENTITY_PROVIDER: graph
@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
 
