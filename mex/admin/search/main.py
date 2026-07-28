@@ -262,8 +262,11 @@ def sidebar() -> rx.Component:
 
 def search_results() -> rx.Component:
     """Render the search results with a summary, result list, and pagination."""
+    # `is_hydrated` is only true once all on_load events have run. Without it, the
+    # results of the previous visit would be painted from the hydrate delta before
+    # the on_load `refresh` gets a chance to set `is_loading`.
     return rx.cond(
-        SearchState.is_loading,
+        SearchState.is_loading | ~SearchState.is_hydrated,
         rx.center(
             rx.spinner(size="3"),
             style=rx.Style(

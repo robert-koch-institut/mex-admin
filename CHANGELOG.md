@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- stop the search page from briefly showing the results of the previous visit
+  before the on-load refresh replaces them
+
 ### Security
 
 ## [3.1.1] - 2026-07-22
