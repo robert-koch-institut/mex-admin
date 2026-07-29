@@ -53,8 +53,6 @@ class EditState(RuleState):
                     exc_info=False,
                 )
 
-        # resolve before assigning, so the results reach the frontend in one
-        # update instead of one per resolved value
         for result in results:
             for preview in result.preview:
                 if preview.identifier and not preview.text:
