@@ -272,6 +272,27 @@ msgstr "Item deleted"
 msgid "edit.delete_rules.success_toast_text"
 msgstr "Item successfully deleted."
 
+msgid "edit.delete_rules_dialog.title"
+msgstr "Delete item?"
+
+msgid "edit.delete_rules_dialog.description"
+msgstr "Are you sure you want to delete this item? You are not able to revert the deletion."
+
+msgid "edit.delete_rules_dialog.confirm_button"
+msgstr "Delete item"
+
+msgid "edit.reset_rules_dialog.title"
+msgstr "Reset rules?"
+
+msgid "edit.reset_rules_dialog.description"
+msgstr "Are you sure you want to reset all rules of this item? You are not able to revert the reset."
+
+msgid "edit.reset_rules_dialog.confirm_button"
+msgstr "Reset rules"
+
+msgid "edit.delete_reset_dialog.cancel_button"
+msgstr "Cancel"
+
 msgid "edit.reset_rules.success_toast_title"
 msgstr "Rules reset"
 

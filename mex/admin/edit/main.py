@@ -66,24 +66,85 @@ def render_publish_target() -> rx.Component:
 
 
 def delete_reset_button() -> rx.Component:
-    """Render a button to delete or reset rules."""
+    """Render a button to show the delete or reset rules dialog."""
     return rx.cond(
         EditState.delete_reset_mode != None,  # noqa: E711
-        rx.button(
-            rx.cond(EditState.is_deleting, rx.spinner()),
-            rx.match(
-                EditState.delete_reset_mode,
-                ("reset", EditState.label_reset_rules_button),
-                ("delete", EditState.label_delete_rules_button),
-                "",
+        rx.alert_dialog.root(
+            rx.alert_dialog.trigger(
+                rx.button(
+                    rx.cond(EditState.is_deleting, rx.spinner()),
+                    rx.match(
+                        EditState.delete_reset_mode,
+                        ("reset", EditState.label_reset_rules_button),
+                        ("delete", EditState.label_delete_rules_button),
+                        "",
+                    ),
+                    disabled=EditState.is_deleting,
+                    size="3",
+                    color_scheme="tomato",
+                    variant="outline",
+                    style=rx.Style(margin="var(--line-height-1) 0"),
+                ),
+                custom_attrs={"data-testid": "delete-reset-dialog-button"},
             ),
-            disabled=EditState.is_deleting,
-            on_click=EditState.delete_reset,
-            size="3",
-            color_scheme="tomato",
-            variant="outline",
-            style=rx.Style(margin="var(--line-height-1) 0"),
-            custom_attrs={"data-testid": "delete-reset-button"},
+            rx.alert_dialog.content(
+                rx.alert_dialog.title(
+                    rx.match(
+                        EditState.delete_reset_mode,
+                        ("reset", EditState.label_reset_rules_dialog_title),
+                        ("delete", EditState.label_delete_rules_dialog_title),
+                        "",
+                    ),
+                ),
+                rx.alert_dialog.description(
+                    rx.match(
+                        EditState.delete_reset_mode,
+                        ("reset", EditState.label_reset_rules_dialog_description),
+                        ("delete", EditState.label_delete_rules_dialog_description),
+                        "",
+                    ),
+                    size="2",
+                ),
+                rx.flex(
+                    rx.alert_dialog.cancel(
+                        # the flex wrapper is required, because alert_dialog.cancel
+                        # renders with `asChild` and can only pass its close handler
+                        # to a child that forwards props to the DOM
+                        rx.flex(
+                            rx.button(
+                                EditState.label_delete_reset_dialog_cancel_button,
+                                variant="soft",
+                                color_scheme="gray",
+                            ),
+                        ),
+                        custom_attrs={"data-testid": "delete-reset-cancel-button"},
+                    ),
+                    rx.alert_dialog.action(
+                        rx.button(
+                            rx.match(
+                                EditState.delete_reset_mode,
+                                (
+                                    "reset",
+                                    EditState.label_reset_rules_dialog_confirm_button,
+                                ),
+                                (
+                                    "delete",
+                                    EditState.label_delete_rules_dialog_confirm_button,
+                                ),
+                                "",
+                            ),
+                            color_scheme="tomato",
+                            variant="solid",
+                            on_click=EditState.delete_reset,
+                            custom_attrs={"data-testid": "delete-reset-button"},
+                        ),
+                    ),
+                    spacing="3",
+                    margin_top="16px",
+                    justify="end",
+                ),
+                style=rx.Style(max_width=450),
+            ),
         ),
     )
 
@@ -111,11 +172,17 @@ def discard_changes_button() -> rx.Component:
                 ),
                 rx.flex(
                     rx.alert_dialog.cancel(
-                        rx.button(
-                            EditState.label_discard_changes_dialog_cancel_button,
-                            variant="soft",
-                            color_scheme="gray",
+                        # the flex wrapper is required, because alert_dialog.cancel
+                        # renders with `asChild` and can only pass its close handler
+                        # to a child that forwards props to the DOM
+                        rx.flex(
+                            rx.button(
+                                EditState.label_discard_changes_dialog_cancel_button,
+                                variant="soft",
+                                color_scheme="gray",
+                            ),
                         ),
+                        custom_attrs={"data-testid": "discard-changes-cancel-button"},
                     ),
                     rx.alert_dialog.action(
                         rx.button(

@@ -164,6 +164,34 @@ class EditState(RuleState):
     def label_delete_rules_success_toast_text(self) -> None:
         """Label for delete_rules.success_toast_text."""
 
+    @label_var(label_id="edit.delete_rules_dialog.title")
+    def label_delete_rules_dialog_title(self) -> None:
+        """Label for delete_rules_dialog.title."""
+
+    @label_var(label_id="edit.delete_rules_dialog.description")
+    def label_delete_rules_dialog_description(self) -> None:
+        """Label for delete_rules_dialog.description."""
+
+    @label_var(label_id="edit.delete_rules_dialog.confirm_button")
+    def label_delete_rules_dialog_confirm_button(self) -> None:
+        """Label for delete_rules_dialog.confirm_button."""
+
+    @label_var(label_id="edit.reset_rules_dialog.title")
+    def label_reset_rules_dialog_title(self) -> None:
+        """Label for reset_rules_dialog.title."""
+
+    @label_var(label_id="edit.reset_rules_dialog.description")
+    def label_reset_rules_dialog_description(self) -> None:
+        """Label for reset_rules_dialog.description."""
+
+    @label_var(label_id="edit.reset_rules_dialog.confirm_button")
+    def label_reset_rules_dialog_confirm_button(self) -> None:
+        """Label for reset_rules_dialog.confirm_button."""
+
+    @label_var(label_id="edit.delete_reset_dialog.cancel_button")
+    def label_delete_reset_dialog_cancel_button(self) -> None:
+        """Label for delete_reset_dialog.cancel_button."""
+
     @label_var(label_id="edit.reset_rules.success_toast_title")
     def label_reset_rules_success_toast_title(self) -> None:
         """Label for reset_rules.success_toast_title."""

@@ -274,6 +274,27 @@ msgstr "Eintrag gelöscht"
 msgid "edit.delete_rules.success_toast_text"
 msgstr "Der Eintrag wurde erfolgreich gelöscht."
 
+msgid "edit.delete_rules_dialog.title"
+msgstr "Eintrag wirklich löschen?"
+
+msgid "edit.delete_rules_dialog.description"
+msgstr "Sind Sie sicher, dass Sie diesen Eintrag löschen möchten? Es ist nicht möglich das Löschen rückgängig zu machen."
+
+msgid "edit.delete_rules_dialog.confirm_button"
+msgstr "Eintrag löschen"
+
+msgid "edit.reset_rules_dialog.title"
+msgstr "Regeln wirklich zurücksetzen?"
+
+msgid "edit.reset_rules_dialog.description"
+msgstr "Sind Sie sicher, dass Sie alle Regeln dieses Eintrags zurücksetzen möchten? Es ist nicht möglich das Zurücksetzen rückgängig zu machen."
+
+msgid "edit.reset_rules_dialog.confirm_button"
+msgstr "Regeln zurücksetzen"
+
+msgid "edit.delete_reset_dialog.cancel_button"
+msgstr "Abbrechen"
+
 msgid "edit.reset_rules.success_toast_title"
 msgstr "Regeln zurückgesetzt"
 
