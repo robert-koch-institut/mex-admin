@@ -66,11 +66,12 @@ def _search_results_item(
         icon_by_stem_type(
             item.stem_type,
             size=22,
-            style=rx.Style(color=rx.color("accent", 11)),
+            style=rx.Style(color=rx.color("accent", 11), flexShrink="0"),
         ),
         rx.link(
             title,
             href=f"/item/{item.identifier}",
+            style=rx.Style(minWidth="0", overflow="hidden"),
         )
         if options.enable_title_href
         else title,
@@ -96,6 +97,7 @@ def _search_results_item(
                 color_scheme="gray",
                 variant="surface",
                 size="1",
+                style=rx.Style(flexShrink="0"),
                 on_click=options.on_toggle_show_all_properties(item, index),
                 custom_attrs={"data-testid": "toggle-show-all-properties-button"},
             )
@@ -133,6 +135,14 @@ def _search_results_item(
     if options.render_append_fn:
         card_content.append(options.render_append_fn(item, index))
 
+    # give every card the height of a single-line snippet, so that the list reads
+    # as an even stack: vertical card padding + vstack gap + title and preview row
+    # (each 1.5em, the line height of the text they contain)
+    height: str | rx.Var[str] = "calc(2 * var(--card-padding) + var(--space-3) + 3em)"
+    if options.enable_show_all_properties:
+        # ... unless the item is expanded, which is meant to reveal every property
+        height = rx.cond(item.show_all_properties, "auto", height)
+
     return rx.card(
         rx.hstack(
             *card_content,
@@ -142,9 +152,8 @@ def _search_results_item(
         custom_attrs={"data-testid": f"search-result-{item.identifier}"},
         style=rx.Style(
             width="100%",
-            flex="1 0 auto",
-            min_height="0",
-            max_height="6em",
+            flex="0 0 auto",
+            height=height,
         ),
     )
 

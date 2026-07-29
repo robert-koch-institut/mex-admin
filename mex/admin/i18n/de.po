@@ -15,7 +15,7 @@ msgid "search.primarysource_filter.title"
 msgstr "Primärquelle"
 
 msgid "search.result_summary.format"
-msgstr "Zeige {0}-{1} von insgesamt {2} Einträgen. Dauer: {3:.1f} Sekunden."
+msgstr "Zeige {0}-{1} von insgesamt {2} Einträgen. Gefunden in {3:.1f} Sekunden."
 
 msgid "search.reference_field_filter.placeholder"
 msgstr "Feld zum Filtern"

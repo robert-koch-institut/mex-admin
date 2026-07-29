@@ -141,12 +141,12 @@ def render_draft_menu_item(dict_entry: tuple[str, UserDraft]) -> rx.Component:
                 icon_by_stem_type(
                     draft.stem_type,
                     size=22,
-                    style=rx.Style(color=rx.color("accent", 11)),
+                    style=rx.Style(color=rx.color("accent", 11), flexShrink="0"),
                 ),
                 render_title(draft.title),
             ),
             href=f"/create/{draft.identifier}",
-            style=rx.Style({"flex": "1"}),
+            style=rx.Style({"flex": "1", "minWidth": "0", "overflow": "hidden"}),
         ),
         custom_attrs={"data-testid": f"draft-{draft.identifier}-menu-item"},
     )
