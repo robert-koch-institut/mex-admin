@@ -141,13 +141,11 @@ def ref_filter(ref: RefFilter, index: int) -> rx.Component:
                 items=AdvancedSearchState.all_fields_for_entity_types,
                 value=ref.field_descriptor_json,
                 placeholder=AdvancedSearchState.label_reference_field_filter_placeholder,
-                on_change=[
-                    lambda value: AdvancedSearchState.set_ref_filter_field(
-                        index, value
-                    ),  # type: ignore[operator]
-                    AdvancedSearchState.search,
-                    AdvancedSearchState.resolve_identifiers,
-                ],
+                # changing the field does not search: the results are only
+                # refreshed when values are added, changed or removed below
+                on_change=lambda value: AdvancedSearchState.set_ref_filter_field(
+                    index, value
+                ),  # type: ignore[operator]
                 custom_attrs={"data-testid": f"ref-filter-{index}-field"},
                 item_testid_prefix="ref-filter-",
             ),
