@@ -1057,3 +1057,22 @@ def test_superseded_by_backward_visibility(
         superseded_by_backward.get_by_test_id(
             f"search-result-{item.stableTargetId}"
         ).is_visible()
+
+
+@pytest.mark.integration
+def test_edit_page_renders_not_found_for_unknown_identifier(
+    base_url: str, edit_page: Page
+) -> None:
+    # navigating away from a loaded item must not leak its stem type into the
+    # next item, otherwise an unknown identifier opens an empty editor
+    page = edit_page
+    expect(page.get_by_test_id("edit-heading")).to_be_visible()
+
+    page.goto(f"{base_url}/item/{Identifier.generate()}")
+
+    load_error = page.get_by_test_id("edit-load-error")
+    expect(load_error).to_be_visible()
+    page.screenshot(
+        path="tests_edit_test_main-test_edit_page_renders_not_found_for_unknown_identifier.png"
+    )
+    expect(page.get_by_test_id("edit-heading")).not_to_be_visible()

@@ -213,8 +213,8 @@ class RuleState(State, LocalStorageMixinState):
         self.fields.clear()
         self.validation_messages.clear()
         self.load_error = None
+        self.stem_type = None if self.item_id else self.stem_type
         self.is_loading = True
-        # flush the loading state to the frontend before the blocking calls below
         yield None
 
         if not self.item_id and not self.draft_id:
