@@ -18,7 +18,7 @@ msgid "search.reference_filter.primarysource_tab"
 msgstr "Primary pource"
 
 msgid "search.result_summary.format"
-msgstr "Showing {0} of {1} items"
+msgstr "Showing items {0}-{1} of {2} total. Took {3:.1f} seconds."
 
 msgid "search.reference_field_filter.placeholder"
 msgstr "Field to filter by"
@@ -286,6 +286,12 @@ msgstr "Show the entities that references this entity by the field 'superseded b
 
 msgid "edit.field_supersededBy.empty"
 msgstr "There are no supersedes items."
+
+msgid "edit.load_error.not_found"
+msgstr "This item could not be found."
+
+msgid "edit.load_error.backend"
+msgstr "This item could not be loaded."
 
 msgid "edit.publish_targets"
 msgstr "Publish on/in"

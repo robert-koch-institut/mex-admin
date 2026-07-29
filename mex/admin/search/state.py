@@ -1,3 +1,4 @@
+import time
 from collections.abc import Generator
 from typing import Any, Literal
 from urllib.parse import parse_qs, urlparse
@@ -72,6 +73,7 @@ class SearchState(State, PaginationStateMixin):
         field="", identifiers=[]
     )
     is_loading: bool = True
+    search_duration_seconds: float = 0.0
     _locale_service = LocaleService.get()
 
     @rx.var
@@ -307,6 +309,7 @@ class SearchState(State, PaginationStateMixin):
         skip = self.limit * (self.current_page - 1)
         self.is_loading = True
         yield None
+        start_time = time.monotonic()
         try:
             response = connector.fetch_preview_items(
                 query_string=self.query_string,
@@ -316,6 +319,7 @@ class SearchState(State, PaginationStateMixin):
                 **filter_strategy_params,
             )
         except HTTPError as exc:
+            self.search_duration_seconds = time.monotonic() - start_time
             self.is_loading = False
             self.results = []
             yield SearchState.set_total(0)  # type: ignore[operator]
@@ -324,6 +328,7 @@ class SearchState(State, PaginationStateMixin):
                 "backend", "error fetching merged items", exc.response.text
             )
         else:
+            self.search_duration_seconds = time.monotonic() - start_time
             self.is_loading = False
             self.results = transform_models_to_search_results(response.items)
             yield SearchState.set_total(response.total)  # type: ignore[operator]
@@ -387,11 +392,24 @@ class SearchState(State, PaginationStateMixin):
 
     @label_var(
         label_id="search.result_summary.format",
-        deps=["current_results_length", "total"],
+        deps=[
+            "current_results_length",
+            "total",
+            "current_page",
+            "limit",
+            "search_duration_seconds",
+        ],
     )
-    def label_result_summary_format(self) -> list[int]:
+    def label_result_summary_format(self) -> list[float]:
         """Label for result_summary.format."""
-        return [self.current_results_length, self.total]
+        # the range is 1-based and inclusive, but collapses to 0-0 without results
+        first_item = self.skip + 1 if self.current_results_length else 0
+        return [
+            first_item,
+            self.skip + self.current_results_length,
+            self.total,
+            self.search_duration_seconds,
+        ]
 
     @label_var(label_id="search.reference_field_filter.placeholder")
     def label_reference_field_filter_placeholder(self) -> None:

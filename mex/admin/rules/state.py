@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Literal, cast
 import reflex as rx
 from pydantic import ValidationError
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import HTTPError, RequestException
 from starlette import status
 
 from mex.admin.exceptions import escalate_error
@@ -52,13 +52,22 @@ from mex.common.types import Identifier, Validation
 locale_service = LocaleService.get()
 
 
+def _error_payload(exc: RequestException) -> str:
+    """Return the response body of a failed request, or the error itself."""
+    if exc.response is not None:
+        return exc.response.text
+    return str(exc)
+
+
 class RuleState(State, LocalStorageMixinState):
     """Base state for the edit and create components."""
 
     _api_fields: list[EditorField] = []
 
     is_submitting: bool = False
-    delete_reset_mode: None | Literal["delete", "reset"] = None
+    is_loading: bool = True
+    load_error: Literal["not_found", "backend"] | None = None
+    delete_reset_mode: Literal["delete", "reset"] | None = None
     item_title: list[EditorValue] = []
     fields: list[EditorField] = []
     stem_type: str | None = None
@@ -198,21 +207,28 @@ class RuleState(State, LocalStorageMixinState):
         return rule_set_request_class()
 
     @rx.event
-    def refresh(self) -> Generator[EventSpec]:
+    def refresh(self) -> Generator[EventSpec | None]:
         """Refresh the edit or create page."""
         self.delete_reset_mode = None
         self.fields.clear()
         self.validation_messages.clear()
+        self.load_error = None
+        self.is_loading = True
+        # flush the loading state to the frontend before the blocking calls below
+        yield None
 
         if not self.item_id and not self.draft_id:
+            self.is_loading = False
             yield rx.redirect(path=f"/create/{Identifier.generate()}")
             return
 
         try:
             extracted_items = self._get_extracted_items()
-        except HTTPError as exc:
+        except RequestException as exc:
+            self.is_loading = False
+            self.load_error = "backend"
             yield from escalate_error(
-                "backend", "error fetching extracted items", exc.response.text
+                "backend", "error fetching extracted items", _error_payload(exc)
             )
             return
 
@@ -220,9 +236,19 @@ class RuleState(State, LocalStorageMixinState):
             self.stem_type = transform_models_to_stem_type(extracted_items)
         try:
             rule_set = self._get_rule_set()
-        except HTTPError as exc:
+        except RequestException as exc:
+            self.is_loading = False
+            # a missing rule-set for an item without any extracted items means
+            # there is nothing to edit under this identifier at all
+            self.load_error = (
+                "not_found"
+                if exc.response is not None
+                and exc.response.status_code == status.HTTP_404_NOT_FOUND
+                and not extracted_items
+                else "backend"
+            )
             yield from escalate_error(
-                "backend", "error fetching rule items", exc.response.text
+                "backend", "error fetching rule items", _error_payload(exc)
             )
             return
 
@@ -263,6 +289,7 @@ class RuleState(State, LocalStorageMixinState):
             self.fields = loaded_fields
 
         self._api_fields = copy.deepcopy(loaded_fields)
+        self.is_loading = False
 
     def _send_rule_set_request(self, rule_set: AnyRuleSetRequest) -> AnyRuleSetResponse:
         """Send the rule set to the backend."""

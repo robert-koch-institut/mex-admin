@@ -102,6 +102,7 @@ app.add_page(
         RuleState.refresh,
         EditState.show_submit_success_toast_on_redirect,
         RuleState.resolve_identifiers,
+        EditState.resolve_superseded_by_backward,
     ],
 )
 app.add_page(

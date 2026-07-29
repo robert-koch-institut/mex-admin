@@ -140,7 +140,12 @@ def _search_results_item(
         ),
         class_name="search-result-card",
         custom_attrs={"data-testid": f"search-result-{item.identifier}"},
-        style=rx.Style(width="100%", flex="1 0 auto", min_height="0"),
+        style=rx.Style(
+            width="100%",
+            flex="1 0 auto",
+            min_height="0",
+            max_height="6em",
+        ),
     )
 
 
@@ -172,8 +177,6 @@ def search_results_summary(summary_text: rx.Var[str]) -> rx.Component:
     return rx.text(
         summary_text,
         style=rx.Style(
-            color="var(--gray-12)",
-            fontWeight="var(--font-weight-bold)",
             margin="var(--space-4)",
             userSelect="none",
         ),

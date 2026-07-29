@@ -18,7 +18,7 @@ msgid "search.reference_filter.primarysource_tab"
 msgstr "Primärquelle"
 
 msgid "search.result_summary.format"
-msgstr "Zeige {0} von {1} Einträgen"
+msgstr "Zeige {0}-{1} von insgesamt {2} Einträgen. Dauer: {3:.1f} Sekunden."
 
 msgid "search.reference_field_filter.placeholder"
 msgstr "Feld zum Filtern"
@@ -288,6 +288,12 @@ msgstr "Zeigt die Entitäten, die auf diese Entität mit dem Feld 'ersetzt durch
 
 msgid "edit.field_supersededBy.empty"
 msgstr "Keine Dubletten vorhanden."
+
+msgid "edit.load_error.not_found"
+msgstr "Dieser Eintrag wurde nicht gefunden."
+
+msgid "edit.load_error.backend"
+msgstr "Dieser Eintrag konnte nicht geladen werden."
 
 msgid "edit.publish_targets"
 msgstr "Publizieren auf/in"

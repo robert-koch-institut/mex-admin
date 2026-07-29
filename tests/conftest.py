@@ -350,6 +350,20 @@ def build_pagination_regex(current: int, total: int) -> Pattern[str]:
     return re.compile(rf"\w+\s{current}\s\w+\s{total}\s\w+")
 
 
+def build_search_summary_regex(first: int, last: int, total: int) -> Pattern[str]:
+    """Match the search page summary in any locale, ignoring the measured duration."""
+    service = LocaleService.get()
+    summaries = (
+        re.escape(
+            service.get_ui_label(locale.id, "search.result_summary.format").format(
+                first, last, total, 0.0
+            )
+        ).replace(r"0\.0", r"\d+\.\d+")
+        for locale in service.get_available_locales()
+    )
+    return re.compile(f"({'|'.join(summaries)})")
+
+
 def build_ui_label_regex(label_id: str) -> Pattern[str]:
     service = LocaleService.get()
     ui_labels = (

@@ -151,16 +151,20 @@ def superseding_by_backward_card() -> rx.Component:
         ),
         rx.card(
             rx.cond(
-                EditState.superseded_by_backward,
-                search_results_list(
+                EditState.is_loading_superseded_by_backward,
+                rx.spinner(),
+                rx.cond(
                     EditState.superseded_by_backward,
-                    SearchResultsListOptions(
-                        item_options=SearchResultsListItemOptions(
-                            enable_title_href=True
-                        )
+                    search_results_list(
+                        EditState.superseded_by_backward,
+                        SearchResultsListOptions(
+                            item_options=SearchResultsListItemOptions(
+                                enable_title_href=True
+                            )
+                        ),
                     ),
+                    rx.text(EditState.label_field_superseded_by_empty),
                 ),
-                rx.text(EditState.label_field_superseded_by_empty),
             ),
             style=flex3_style,
         ),
@@ -168,33 +172,81 @@ def superseding_by_backward_card() -> rx.Component:
     )
 
 
+def loading_spinner() -> rx.Component:
+    """Render a spinner while the item is being loaded."""
+    return rx.center(
+        rx.spinner(size="3"),
+        custom_attrs={"data-testid": "edit-loading"},
+        style=rx.Style(
+            flex="1",
+            marginTop="var(--space-6)",
+            width="100%",
+        ),
+    )
+
+
+def load_error_message() -> rx.Component:
+    """Render why the item could not be loaded, instead of an unusable editor."""
+    return rx.center(
+        rx.heading(
+            rx.match(
+                RuleState.load_error,
+                ("not_found", EditState.label_load_error_not_found),
+                ("backend", EditState.label_load_error_backend),
+                EditState.label_load_error_backend,
+            ),
+            size="6",
+            align="center",
+        ),
+        custom_attrs={"data-testid": "edit-load-error"},
+        style=rx.Style(
+            flex="1",
+            minHeight="60vh",
+            width="100%",
+        ),
+    )
+
+
+def editor() -> rx.Component:
+    """Render the editor for a successfully loaded item."""
+    return rx.vstack(
+        rule_page_header(
+            edit_title(),
+        ),
+        rx.hstack(
+            rx.spacer(),
+            render_publish_target(),
+            delete_reset_button(),
+            discard_changes_button(),
+            submit_button(),
+            align="stretch",
+            justify="start",
+        ),
+        rx.foreach(
+            RuleState.translated_fields,
+            editor_field,
+        ),
+        superseding_by_backward_card(),
+        validation_errors(),
+        align="stretch",
+        style=rx.Style(
+            flex="1",
+            marginTop="calc(2 * var(--space-6))",
+            overflow="auto",
+        ),
+    )
+
+
 def index() -> rx.Component:
     """Return the index for the edit component."""
     return page(
-        rx.vstack(
-            rule_page_header(
-                edit_title(),
-            ),
-            rx.hstack(
-                rx.spacer(),
-                render_publish_target(),
-                delete_reset_button(),
-                discard_changes_button(),
-                submit_button(),
-                align="stretch",
-                justify="start",
-            ),
-            rx.foreach(
-                RuleState.translated_fields,
-                editor_field,
-            ),
-            superseding_by_backward_card(),
-            validation_errors(),
-            align="stretch",
-            style=rx.Style(
-                flex="1",
-                marginTop="calc(2 * var(--space-6))",
-                overflow="auto",
+        rx.cond(
+            RuleState.is_loading,
+            loading_spinner(),
+            rx.cond(
+                RuleState.load_error != None,  # noqa: E711
+                load_error_message(),
+                editor(),
             ),
         ),
     )

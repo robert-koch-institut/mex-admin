@@ -21,7 +21,7 @@ services:
       - 8031:8031
     environment:
       - MEX_ADMIN_API_HOST=0.0.0.0
-      - MEX_ADMIN_USER_DATABASE='{"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}'
+      - MEX_ADMIN_USER_DATABASE={"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}
       - MEX_BACKEND_API_KEY=write_key
       - MEX_BACKEND_API_URL=http://mex-backend:8080/
       - MEX_IDENTITY_PROVIDER=backend
@@ -40,7 +40,7 @@ services:
     ports:
       - 8080:8080
     environment:
-      - MEX_BACKEND_API_KEY_DATABASE='{"read":["read_key"],"write":["write_key"]}'
+      - MEX_BACKEND_API_KEY_DATABASE={"read":["read_key"],"write":["write_key"]}
       - MEX_BACKEND_VALKEY_URL=valkey://valkey:6379
       - MEX_GRAPH_URL=neo4j://neo4j:7687
       - MEX_IDENTITY_PROVIDER=graph
