@@ -25,13 +25,7 @@ class EditState(RuleState):
 
     @rx.event(background=True)
     async def resolve_superseded_by_backward(self) -> None:
-        """Load the superseding items for the current item.
-
-        This runs in the background, because fetching the superseding items and
-        resolving their identifiers takes several backend round-trips. As a
-        computed var it was awaited while building the state delta, which
-        delayed every on-load update until it was done.
-        """
+        """Load the superseding items for the current item."""
         async with self:
             self.superseded_by_backward = []
             self.is_loading_superseded_by_backward = True

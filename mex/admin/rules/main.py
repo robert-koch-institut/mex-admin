@@ -378,8 +378,6 @@ def primary_source_name(
     """Return the name of a primary source as a card with a preventive rule toggle."""
     return rx.card(
         rx.hstack(
-            # no spacer here: it would grow like the name and claim half the row,
-            # truncating the name while leaving the freed space empty
             add_flex1(render_value(primary_source.name)),
             rx.cond(
                 ~cast("rx.vars.BooleanVar", primary_source.input_config.allow_additive)
