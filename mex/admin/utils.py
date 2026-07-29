@@ -3,6 +3,9 @@ from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from urllib.parse import urlencode, urlparse, urlunparse
 
+from requests import HTTPError
+from starlette import status
+
 from mex.admin.models import EditorValue
 from mex.admin.settings import AdminSettings
 from mex.admin.transform import transform_models_to_title
@@ -14,13 +17,18 @@ from mex.common.settings import SETTINGS_STORE
 @lru_cache(maxsize=5000)
 def resolve_identifier(identifier: str) -> str:
     """Resolve identifiers to human readable display values."""
-    # TODO(ND): use proper connector method when available (stop-gap MX-1984)
     connector = BackendApiConnector.get()
-    response = connector.fetch_preview_items(identifier=identifier, limit=1)
-    if len(response.items) != 1:
-        msg = f"No item found for identifier '{identifier}'"
-        raise EmptySearchResultError(msg)
-    title = transform_models_to_title(response.items)[0]
+    try:
+        item = connector.get_preview_item(identifier)
+    except HTTPError as exc:
+        if (
+            exc.response is not None
+            and exc.response.status_code == status.HTTP_404_NOT_FOUND
+        ):
+            msg = f"No item found for identifier '{identifier}'"
+            raise EmptySearchResultError(msg) from exc
+        raise
+    title = transform_models_to_title([item])[0]
     return f"{title.text}"
 
 
