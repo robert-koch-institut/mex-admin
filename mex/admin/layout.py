@@ -197,25 +197,14 @@ def nav_link(item: NavItem) -> rx.Component:
 
 def app_logo() -> rx.Component:
     """Return the app logo with icon and label."""
-    return rx.hover_card.root(
-        rx.hover_card.trigger(
-            rx.hstack(
-                rx.icon("circuit-board", size=28),
-                rx.heading(
-                    "MEx Admin",
-                    weight="medium",
-                    style=rx.Style(userSelect="none"),
-                ),
-                custom_attrs={"data-testid": "app-logo"},
-            )
+    return rx.hstack(
+        rx.icon("circuit-board", size=28),
+        rx.heading(
+            "MEx Admin",
+            weight="medium",
+            style=rx.Style(userSelect="none"),
         ),
-        rx.hover_card.content(
-            rx.vstack(
-                rx.code(f"mex-admin=={State.admin_version}", variant="outline"),
-                rx.code(f"mex-backend=={State.backend_version}", variant="outline"),
-            ),
-        ),
-        open_delay=500,
+        custom_attrs={"data-testid": "app-logo"},
     )
 
 
