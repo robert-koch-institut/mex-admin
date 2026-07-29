@@ -107,9 +107,6 @@ def delete_reset_button() -> rx.Component:
                 ),
                 rx.flex(
                     rx.alert_dialog.cancel(
-                        # the flex wrapper is required, because alert_dialog.cancel
-                        # renders with `asChild` and can only pass its close handler
-                        # to a child that forwards props to the DOM
                         rx.flex(
                             rx.button(
                                 EditState.label_delete_reset_dialog_cancel_button,
@@ -172,9 +169,6 @@ def discard_changes_button() -> rx.Component:
                 ),
                 rx.flex(
                     rx.alert_dialog.cancel(
-                        # the flex wrapper is required, because alert_dialog.cancel
-                        # renders with `asChild` and can only pass its close handler
-                        # to a child that forwards props to the DOM
                         rx.flex(
                             rx.button(
                                 EditState.label_discard_changes_dialog_cancel_button,
