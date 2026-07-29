@@ -224,9 +224,15 @@ def test_search_reference_dialog(
     expect(
         create_page.get_by_test_id(f"{dialog_prefix}-query-input")
     ).not_to_be_visible()
+    # selecting a reference closes the edit mode and shows the resolved title
     expect(
         field_contact.get_by_test_id("additive-rule-contact-0-identifier")
-    ).to_have_value(ou.stableTargetId)
+    ).not_to_be_visible()
+    contact_value = field_contact.get_by_test_id("additive-rule-contact-0")
+    expect(contact_value).to_contain_text("OU1")
+    expect(contact_value.get_by_role("link")).to_have_attribute(
+        "href", f"/item/{ou.stableTargetId}"
+    )
 
     field_uic = create_page.get_by_test_id("field-unitInCharge")
     field_uic.get_by_test_id(

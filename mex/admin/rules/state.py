@@ -445,15 +445,32 @@ class RuleState(State, LocalStorageMixinState):
         primary_source.editor_values[index].text = value
         yield RuleState.update_local_state  # type: ignore[misc]
 
+    async def _apply_identifier_value(
+        self, field_name: str, index: int, value: str
+    ) -> EditorValue:
+        """Set and resolve the identifier attribute on an additive editor value."""
+        primary_source = self._get_editable_primary_source_by_field_name(field_name)
+        editor_value = primary_source.editor_values[index]
+        editor_value.identifier = value
+        editor_value.href = f"/item/{value}"
+        await resolve_editor_value(editor_value)
+        return editor_value
+
     @rx.event
     async def set_identifier_value(
         self, field_name: str, index: int, value: str
     ) -> AsyncGenerator[EventSpec]:
         """Set the identifier attribute on an additive editor value."""
-        primary_source = self._get_editable_primary_source_by_field_name(field_name)
-        primary_source.editor_values[index].identifier = value
-        primary_source.editor_values[index].href = f"/item/{value}"
-        await resolve_editor_value(primary_source.editor_values[index])
+        await self._apply_identifier_value(field_name, index, value)
+        yield RuleState.update_local_state  # type: ignore[misc]
+
+    @rx.event
+    async def select_identifier_value(
+        self, field_name: str, index: int, value: str
+    ) -> AsyncGenerator[EventSpec]:
+        """Set the identifier on an additive editor value and stop editing it."""
+        editor_value = await self._apply_identifier_value(field_name, index, value)
+        editor_value.being_edited = False
         yield RuleState.update_local_state  # type: ignore[misc]
 
     @rx.event
