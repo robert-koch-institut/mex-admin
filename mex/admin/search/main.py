@@ -159,10 +159,9 @@ def reference_field_filter() -> rx.Component:
                 items=SearchState.all_fields_for_entity_types,
                 value=SearchState.reference_field_filter.field,
                 placeholder=SearchState.label_reference_field_filter_placeholder,
-                on_change=[
-                    SearchState.set_reference_filter_field,
-                    *full_refresh,
-                ],
+                # changing the field does not refresh: the results are only
+                # refreshed when identifiers are added or removed below
+                on_change=SearchState.set_reference_filter_field,
                 width="80%",
                 custom_attrs={"data-testid": "reference-field-filter-field"},
             ),
@@ -170,10 +169,7 @@ def reference_field_filter() -> rx.Component:
                 rx.icon("x"),
                 variant="surface",
                 color_scheme="gray",
-                on_click=[
-                    SearchState.set_reference_filter_field(""),  # type: ignore[operator]
-                    *full_refresh,
-                ],
+                on_click=SearchState.set_reference_filter_field(""),  # type: ignore[operator]
             ),
             spacing="1",
             style=rx.Style(width="100%"),
