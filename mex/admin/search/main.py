@@ -2,9 +2,7 @@ from typing import Any
 
 import reflex as rx
 
-from mex.admin.component_option_helper import (
-    build_pagination_for_state_options,
-)
+from mex.admin.component_option_helper import build_pagination_for_state_options
 from mex.admin.layout import page
 from mex.admin.search.models import SearchPrimarySource
 from mex.admin.search.state import SearchState, full_refresh

@@ -12,9 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - search and advanced search summaries now show the item range and the backend
   response time, e.g. "Showing items 701-750 of 5801 total. Took 3.8 seconds."
 - guard the delete/reset rules button on the edit page with a confirmation dialog
+- add a start page on `/` with a single centered search box that submits to the
+  search page
 
 ### Changes
 
+- BREAKING: move the search page from `/` to `/search`
+- the nav bar logo links to the start page now
 - rename mex-editor to mex-admin, at least on the surface: package, logo and settings
 - BREAKING: the environment variable prefix changed from `MEX_EDITOR_` to `MEX_ADMIN_`
 

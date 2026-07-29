@@ -17,7 +17,7 @@ def search_page(
     reader_user_page: Page,
 ) -> Page:
     page = reader_user_page
-    page.goto(base_url)
+    page.goto(f"{base_url}/search")
     page_body = page.get_by_test_id("page-body")
     expect(page_body).to_be_visible()
     return page
@@ -193,7 +193,7 @@ def test_load_search_params(
     expected_model = dummy_data_by_identifier_in_primary_source["cp-2"]
 
     page.goto(
-        f"{base_url}?q=help&page=1&entityType=ContactPoint&entityType=Consent"
+        f"{base_url}/search?q=help&page=1&entityType=ContactPoint&entityType=Consent"
         f"&hadPrimarySource={expected_model.hadPrimarySource}"
     )
 
@@ -234,8 +234,8 @@ def test_push_search_params(
     assert type(primary_source) is ExtractedPrimarySource
 
     # load page and verify url
-    page.goto(base_url)
-    page.wait_for_url(base_url)
+    page.goto(f"{base_url}/search")
+    page.wait_for_url(f"{base_url}/search")
 
     # select an entity type
     entity_types = page.get_by_test_id("entity-types")
@@ -259,7 +259,7 @@ def test_push_search_params(
     expect(page.get_by_test_id("search-results-component")).to_be_visible()
 
     # expect parameter change to be reflected in url
-    page.wait_for_url("**/?q=&page=1&entityType=Activity")
+    page.wait_for_url("**/search?q=&page=1&entityType=Activity")
 
     # add a query string to the search constraints
     search_input = page.get_by_test_id("search-input")
@@ -271,7 +271,7 @@ def test_push_search_params(
     expect(page.get_by_test_id("search-results-component")).to_be_visible()
 
     # expect parameter change to be reflected in url
-    page.wait_for_url("**?q=Une+activit%C3%A9+active&page=1&entityType=Activity")
+    page.wait_for_url("**/search?q=Une+activit%C3%A9+active&page=1&entityType=Activity")
 
     # select a primary source
     primary_sources = page.get_by_test_id("primary-source-filter")
@@ -300,7 +300,7 @@ def test_push_search_params(
 
     # expect parameter change to be reflected in url
     page.wait_for_url(
-        "**/?q=Une+activit%C3%A9+active&page=1&entityType=Activity&"
+        "**/search?q=Une+activit%C3%A9+active&page=1&entityType=Activity&"
         f"hadPrimarySource={primary_source.stableTargetId}"
     )
 
@@ -314,7 +314,7 @@ def test_additional_titles_badge(
 ) -> None:
     # search for resources
     page = search_page
-    page.goto(f"{base_url}?entityType=Resource")
+    page.goto(f"{base_url}/search?entityType=Resource")
 
     resource_r2 = dummy_data_by_identifier_in_primary_source["r-2"]
     assert isinstance(resource_r2, ExtractedResource)

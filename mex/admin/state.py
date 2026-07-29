@@ -32,8 +32,8 @@ class State(rx.State):
     _nav_items: list[NavItem] = [
         NavItem(
             title="layout.nav_bar.search_navitem",
-            route_ids=["/", "/index"],
-            raw_path="/",
+            route_ids=["/search"],
+            raw_path="/search",
         ),
         NavItem(
             title="layout.nav_bar.advanced_search_navitem",

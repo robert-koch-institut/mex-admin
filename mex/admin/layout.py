@@ -196,15 +196,21 @@ def nav_link(item: NavItem) -> rx.Component:
 
 
 def app_logo() -> rx.Component:
-    """Return the app logo with icon and label."""
-    return rx.hstack(
-        rx.icon("circuit-board", size=28),
-        rx.heading(
-            "MEx Admin",
-            weight="medium",
-            style=rx.Style(userSelect="none"),
+    """Return the app logo with icon and label, linking to the start page."""
+    return rx.link(
+        rx.hstack(
+            rx.icon("circuit-board", size=28),
+            rx.heading(
+                "MEx Admin",
+                weight="medium",
+                style=rx.Style(userSelect="none"),
+            ),
+            custom_attrs={"data-testid": "app-logo"},
         ),
-        custom_attrs={"data-testid": "app-logo"},
+        href="/",
+        underline="none",
+        # keep the ambient colors, so linking does not change the logo's looks
+        style=rx.Style(color="inherit"),
     )
 
 
