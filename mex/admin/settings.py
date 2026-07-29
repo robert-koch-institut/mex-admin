@@ -37,7 +37,7 @@ class AdminSettings(BaseSettings):
     admin_user_database: AdminUserDatabase = Field(
         AdminUserDatabase(),
         description="Database of users.",
-        validation_alias="MEX_BACKEND_API_USER_DATABASE",
+        validation_alias="MEX_ADMIN_USER_DATABASE",
     )
     admin_assets_dir: AssetsPath = Field(
         AssetsPath(""),

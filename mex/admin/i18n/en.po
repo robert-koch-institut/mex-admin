@@ -11,20 +11,14 @@ msgstr "Search here..."
 msgid "search.entitytype_filter.title"
 msgstr "Entity type"
 
-msgid "search.reference_filter.dynamic_tab"
-msgstr "Dynamic"
-
-msgid "search.reference_filter.primarysource_tab"
-msgstr "Primary pource"
+msgid "search.primarysource_filter.title"
+msgstr "Primary source"
 
 msgid "search.result_summary.format"
 msgstr "Showing items {0}-{1} of {2} total. Took {3:.1f} seconds."
 
 msgid "search.reference_field_filter.placeholder"
 msgstr "Field to filter by"
-
-msgid "search.reference_field_filter.add"
-msgstr "Add filter"
 
 msgid "create.title.create_new"
 msgstr "Create new"
@@ -272,6 +266,27 @@ msgstr "Item deleted"
 msgid "edit.delete_rules.success_toast_text"
 msgstr "Item successfully deleted."
 
+msgid "edit.delete_rules_dialog.title"
+msgstr "Delete item?"
+
+msgid "edit.delete_rules_dialog.description"
+msgstr "Are you sure you want to delete this item? You are not able to revert the deletion."
+
+msgid "edit.delete_rules_dialog.confirm_button"
+msgstr "Delete item"
+
+msgid "edit.reset_rules_dialog.title"
+msgstr "Reset rules?"
+
+msgid "edit.reset_rules_dialog.description"
+msgstr "Are you sure you want to reset all rules of this item? You are not able to revert the reset."
+
+msgid "edit.reset_rules_dialog.confirm_button"
+msgstr "Reset rules"
+
+msgid "edit.delete_reset_dialog.cancel_button"
+msgstr "Cancel"
+
 msgid "edit.reset_rules.success_toast_title"
 msgstr "Rules reset"
 
@@ -286,6 +301,12 @@ msgstr "Show the entities that references this entity by the field 'superseded b
 
 msgid "edit.field_supersededBy.empty"
 msgstr "There are no supersedes items."
+
+msgid "edit.load_error.not_found"
+msgstr "This item could not be found."
+
+msgid "edit.load_error.backend"
+msgstr "This item could not be loaded."
 
 msgid "edit.publish_targets"
 msgstr "Publish on/in"

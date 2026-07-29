@@ -6,7 +6,7 @@ from mex.admin.component_option_helper import (
     build_pagination_for_state_options,
 )
 from mex.admin.layout import page
-from mex.admin.search.models import ReferenceFieldIdentifierFilter, SearchPrimarySource
+from mex.admin.search.models import SearchPrimarySource
 from mex.admin.search.state import SearchState, full_refresh
 from mex.admin.search_results_component import (
     SearchResultsComponentOptions,
@@ -14,8 +14,6 @@ from mex.admin.search_results_component import (
     SearchResultsListOptions,
     search_results_component,
 )
-from mex.admin.value_label_select import value_label_select
-from mex.common.types import IDENTIFIER_PATTERN
 
 
 def search_input() -> rx.Component:
@@ -100,148 +98,20 @@ def primary_source_choice(choice: tuple[str, SearchPrimarySource]) -> rx.Compone
 
 def primary_source_filter() -> rx.Component:
     """Render checkboxes for filtering the search results by primary source."""
-    return rx.vstack(
-        rx.foreach(
-            SearchState.had_primary_sources,
-            primary_source_choice,
-        ),
-        custom_attrs={"data-testid": "primary-source-filter"},
-        style=rx.Style(width="100%"),
-    )
-
-
-def reference_field_filter_identifier(
-    identifier: ReferenceFieldIdentifierFilter, index: int
-) -> rx.Component:
-    """Render input and remove button for given reference field filter identifier."""
-    return rx.vstack(
-        rx.hstack(
-            rx.input(
-                value=identifier.value,
-                on_change=[
-                    SearchState.set_reference_field_filter_identifier(index),  # type: ignore[operator]
-                    *full_refresh,
-                ],
-                required=True,
-                pattern=IDENTIFIER_PATTERN,
-                class_name=rx.cond(identifier.validation_msg, "bg-tomato-500", ""),
-                custom_attrs={"data-testid": f"reference-field-filter-id-{index}"},
-                width="80%",
-            ),
-            rx.button(
-                rx.icon("circle-minus"),
-                variant="surface",
-                color_scheme="gray",
-                on_click=[
-                    SearchState.remove_reference_field_filter_identifier(index),  # type: ignore[operator]
-                    *full_refresh,
-                ],
-                custom_attrs={
-                    "data-testid": f"reference-field-filter-remove-id-{index}"
-                },
-            ),
-            spacing="1",
-            style=rx.Style(width="100%"),
-        ),
-        rx.text(
-            identifier.validation_msg,
-            class_name="text-tomato-500",
-        ),
-        style=rx.Style(width="100%"),
-    )
-
-
-def reference_field_filter() -> rx.Component:
-    """Render dropdown and text inputs for reference filtering the search result."""
-    return rx.vstack(
-        rx.hstack(
-            value_label_select(
-                items=SearchState.all_fields_for_entity_types,
-                value=SearchState.reference_field_filter.field,
-                placeholder=SearchState.label_reference_field_filter_placeholder,
-                on_change=[
-                    SearchState.set_reference_filter_field,
-                    *full_refresh,
-                ],
-                width="80%",
-                custom_attrs={"data-testid": "reference-field-filter-field"},
-            ),
-            rx.button(
-                rx.icon("x"),
-                variant="surface",
-                color_scheme="gray",
-                on_click=[
-                    SearchState.set_reference_filter_field(""),  # type: ignore[operator]
-                    *full_refresh,
-                ],
-            ),
-            spacing="1",
-            style=rx.Style(width="100%"),
-        ),
-        rx.foreach(
-            SearchState.reference_field_filter.identifiers,
-            reference_field_filter_identifier,
-        ),
-        rx.hstack(
-            rx.button(
-                rx.icon("circle-plus"),
-                rx.text(SearchState.label_reference_field_filter_add),
-                variant="surface",
-                color_scheme="gray",
-                on_click=[
-                    SearchState.add_reference_field_filter_identifier,
-                ],
-                custom_attrs={"data-testid": "reference-field-filter-add-id"},
-            ),
-        ),
-        custom_attrs={"data-testid": "reference-field-filter"},
-    )
-
-
-def reference_filter_tab() -> rx.Component:
-    """Renders tab list for reference filtering.
-
-    Containing two tabs for dynamic filtering and filtering by primary source.
-
-    Returns:
-        The tab list component containing two tabs.
-    """
     return rx.card(
-        rx.tabs.root(
-            rx.tabs.list(
-                rx.tabs.trigger(
-                    SearchState.label_reference_filter_dynamic_tab,
-                    value="dynamic",
-                    custom_attrs={
-                        "data-testid": "reference-filter-strategy-dynamic-tab"
-                    },
-                ),
-                rx.tabs.trigger(
-                    SearchState.label_reference_filter_primarysource_tab,
-                    value="had_primary_source",
-                    custom_attrs={
-                        "data-testid": (
-                            "reference-filter-strategy-had-primary-source-tab"
-                        )
-                    },
-                ),
-                style=rx.Style(marginBottom="1rem"),
+        rx.text(
+            SearchState.label_primarysource_filter_title,
+            style=rx.Style(
+                marginBottom="var(--space-4)",
+                userSelect="none",
             ),
-            rx.tabs.content(
-                reference_field_filter(),
-                value="dynamic",
+        ),
+        rx.vstack(
+            rx.foreach(
+                SearchState.had_primary_sources,
+                primary_source_choice,
             ),
-            rx.tabs.content(
-                primary_source_filter(),
-                value="had_primary_source",
-            ),
-            default_value="dynamic",
-            value=f"{SearchState.reference_filter_strategy}",
-            on_change=[
-                SearchState.set_reference_filter_strategy,
-                *full_refresh,
-            ],
-            disabled=SearchState.is_loading,
+            custom_attrs={"data-testid": "primary-source-filter"},
         ),
         style=rx.Style(width="100%"),
     )
@@ -252,7 +122,7 @@ def sidebar() -> rx.Component:
     return rx.vstack(
         search_input(),
         entity_type_filter(),
-        reference_filter_tab(),
+        primary_source_filter(),
         spacing="4",
         align="stretch",
         custom_attrs={"data-testid": "search-sidebar"},

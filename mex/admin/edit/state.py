@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Generator
 from urllib.parse import parse_qs, urlparse
 
@@ -19,22 +20,36 @@ class EditState(RuleState):
     """State for the edit component."""
 
     is_deleting: bool = False
+    is_loading_superseded_by_backward: bool = True
+    superseded_by_backward: list[SearchResult] = []
 
-    @rx.var
-    async def superseded_by_backward(self) -> list[SearchResult]:
-        """Load the superseding items for the current item."""
+    @rx.event(background=True)
+    async def resolve_superseded_by_backward(self) -> None:
+        """Load the superseding items for the current item.
+
+        This runs in the background, because fetching the superseding items and
+        resolving their identifiers takes several backend round-trips. As a
+        computed var it was awaited while building the state delta, which
+        delayed every on-load update until it was done.
+        """
+        async with self:
+            self.superseded_by_backward = []
+            self.is_loading_superseded_by_backward = True
+            # the card is not rendered when the item itself failed to load
+            item_id = "" if self.load_error else self.item_id
+
         results: list[SearchResult] = []
-
-        if self.item_id:
+        if item_id:
             connector = BackendApiConnector.get()
             try:
-                results = transform_models_to_search_results(
-                    connector.fetch_all_merged_items(
-                        reference_field="supersededBy",
-                        referenced_identifier=[self.item_id],
+                results = await asyncio.to_thread(
+                    lambda: transform_models_to_search_results(
+                        connector.fetch_all_merged_items(
+                            reference_field="supersededBy",
+                            referenced_identifier=[item_id],
+                        )
                     )
                 )
-
             except HTTPError as ex:
                 logger.error(
                     "%s - %s: %s",
@@ -44,12 +59,16 @@ class EditState(RuleState):
                     exc_info=False,
                 )
 
+        # resolve before assigning, so the results reach the frontend in one
+        # update instead of one per resolved value
         for result in results:
             for preview in result.preview:
                 if preview.identifier and not preview.text:
                     await resolve_editor_value(preview)
 
-        return results
+        async with self:
+            self.superseded_by_backward = results
+            self.is_loading_superseded_by_backward = False
 
     @rx.event
     def toggle_publish_target(self, publish_target_id: str) -> None:
@@ -145,6 +164,34 @@ class EditState(RuleState):
     def label_delete_rules_success_toast_text(self) -> None:
         """Label for delete_rules.success_toast_text."""
 
+    @label_var(label_id="edit.delete_rules_dialog.title")
+    def label_delete_rules_dialog_title(self) -> None:
+        """Label for delete_rules_dialog.title."""
+
+    @label_var(label_id="edit.delete_rules_dialog.description")
+    def label_delete_rules_dialog_description(self) -> None:
+        """Label for delete_rules_dialog.description."""
+
+    @label_var(label_id="edit.delete_rules_dialog.confirm_button")
+    def label_delete_rules_dialog_confirm_button(self) -> None:
+        """Label for delete_rules_dialog.confirm_button."""
+
+    @label_var(label_id="edit.reset_rules_dialog.title")
+    def label_reset_rules_dialog_title(self) -> None:
+        """Label for reset_rules_dialog.title."""
+
+    @label_var(label_id="edit.reset_rules_dialog.description")
+    def label_reset_rules_dialog_description(self) -> None:
+        """Label for reset_rules_dialog.description."""
+
+    @label_var(label_id="edit.reset_rules_dialog.confirm_button")
+    def label_reset_rules_dialog_confirm_button(self) -> None:
+        """Label for reset_rules_dialog.confirm_button."""
+
+    @label_var(label_id="edit.delete_reset_dialog.cancel_button")
+    def label_delete_reset_dialog_cancel_button(self) -> None:
+        """Label for delete_reset_dialog.cancel_button."""
+
     @label_var(label_id="edit.reset_rules.success_toast_title")
     def label_reset_rules_success_toast_title(self) -> None:
         """Label for reset_rules.success_toast_title."""
@@ -164,3 +211,11 @@ class EditState(RuleState):
     @label_var(label_id="edit.field_supersededBy.empty")
     def label_field_superseded_by_empty(self) -> None:
         """Label for field_supersededBy_empty."""
+
+    @label_var(label_id="edit.load_error.not_found")
+    def label_load_error_not_found(self) -> None:
+        """Label for load_error.not_found."""
+
+    @label_var(label_id="edit.load_error.backend")
+    def label_load_error_backend(self) -> None:
+        """Label for load_error.backend."""

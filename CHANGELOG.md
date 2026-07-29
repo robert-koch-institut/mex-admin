@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - search and advanced search summaries now show the item range and the backend
   response time, e.g. "Showing items 701-750 of 5801 total. Took 3.8 seconds."
+- guard the delete/reset rules button on the edit page with a confirmation dialog
 
 ### Changes
 
@@ -25,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - stop the search page from briefly showing the results of the previous visit
   before the on-load refresh replaces them
+- fix the cancel buttons of the discard changes and discard draft dialogs, which
+  did not close their dialog
 
 ### Security
 

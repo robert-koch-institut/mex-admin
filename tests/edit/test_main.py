@@ -144,25 +144,36 @@ def test_edit_page_delete_reset_button(
         expect(page_body).to_be_visible()
 
     _navigate(load_delete_reset_data[None])
-    expect(page.get_by_test_id("delete-reset-button")).not_to_be_visible()
+    expect(page.get_by_test_id("delete-reset-dialog-button")).not_to_be_visible()
 
     reset_id = load_delete_reset_data["reset"]
     _navigate(reset_id)
-    button = page.get_by_test_id("delete-reset-button")
-    expect(button).to_be_visible()
-    button.click()
+    dialog_button = page.get_by_test_id("delete-reset-dialog-button")
+    expect(dialog_button).to_be_visible()
+
+    # cancelling the dialog must close it and leave the rules untouched
+    dialog_button.click()
+    confirm_button = page.get_by_test_id("delete-reset-button")
+    expect(confirm_button).to_be_visible()
+    page.get_by_test_id("delete-reset-cancel-button").click()
+    expect(confirm_button).not_to_be_visible()
+    expect(dialog_button).to_be_visible()
+
+    dialog_button.click()
+    page.get_by_test_id("delete-reset-button").click()
     page.screenshot(
         path="tests_edit_test_main-test_edit_page_delete_reset_button-reset_clicked.png"
     )
     page.wait_for_url(f"{base_url}/item/{reset_id}")
     expect(page.locator(".editor-toast")).to_be_visible()
-    expect(page.get_by_test_id("delete-reset-button")).not_to_be_visible()
+    expect(page.get_by_test_id("delete-reset-dialog-button")).not_to_be_visible()
 
     delete_id = load_delete_reset_data["delete"]
     _navigate(delete_id)
-    button = page.get_by_test_id("delete-reset-button")
-    expect(button).to_be_visible()
-    button.click()
+    dialog_button = page.get_by_test_id("delete-reset-dialog-button")
+    expect(dialog_button).to_be_visible()
+    dialog_button.click()
+    page.get_by_test_id("delete-reset-button").click()
     page.screenshot(
         path="tests_edit_test_main-test_edit_page_delete_reset_button-delete_clicked.png"
     )
@@ -1006,6 +1017,15 @@ def test_edit_page_discard_changes_button_roundtrip(
     edit_page.goto(navigate_back_url, wait_until="load")
     expect(discard_dialog_button).to_be_visible()
     expect(shortname_text).to_have_value("shortNameChanges")
+
+    # cancelling the dialog must close it and keep the changes
+    discard_dialog_button.click()
+    discard_button = edit_page.get_by_test_id("discard-changes-button")
+    expect(discard_button).to_be_visible()
+    edit_page.get_by_test_id("discard-changes-cancel-button").click()
+    expect(discard_button).not_to_be_visible()
+    expect(shortname_text).to_have_value("shortNameChanges")
+
     discard_dialog_button.click()
     edit_page.get_by_test_id("discard-changes-button").click()
     expect(

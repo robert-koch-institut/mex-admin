@@ -1,6 +1,6 @@
 import json
 import time
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -60,6 +60,31 @@ class RefFilter(BaseModel):
     field_label: str = ""
     field_value_types: list[str] = []
     values: list[str] = []
+
+
+def _build_reference_filters(refs: Sequence[RefFilter]) -> list[ReferenceFilter]:
+    """Build the backend reference filters for the given reference filter rows.
+
+    Blank values are dropped, because a freshly added value row is empty and
+    would otherwise be sent to the backend as an identifier to filter for.
+
+    Args:
+        refs: The reference filter rows as shown in the sidebar.
+
+    Returns:
+        Reference filters for all rows that have at least one identifier.
+    """
+    reference_filters = []
+    for ref in refs:
+        identifiers = [value for value in ref.values if value.strip()]
+        if identifiers:
+            reference_filters.append(
+                ReferenceFilter(
+                    field=FieldDescriptor.from_json(ref.field_descriptor_json).field,
+                    identifiers=identifiers,
+                )
+            )
+    return reference_filters
 
 
 class AdvancedSearchState(State, PaginationStateMixin):
@@ -125,14 +150,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
         """Perform the search with the current filters."""
         entity_type = [ensure_prefix(x, "Merged") for x in self.entity_types]
         skip = self.limit * (self.current_page - 1)
-        references = [
-            ReferenceFilter(
-                field=FieldDescriptor.from_json(x.field_descriptor_json).field,
-                identifiers=x.values,
-            )
-            for x in self.refs
-            if x.values
-        ]
+        references = _build_reference_filters(self.refs)
 
         self.is_searching = True
         yield None
@@ -209,6 +227,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
             RefFilter(
                 field_descriptor_json=field_descriptor_json,
                 field_label=" / ".join(field_data.labels),
+                field_value_types=sorted(field_data.value_types),
                 values=[],
             )
         )
@@ -236,7 +255,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
 
         ref.field_descriptor_json = field_descriptor_json
         ref.field_label = " / ".join(field_desc.labels)
-        ref.field_value_types = list(field_desc.value_types)
+        ref.field_value_types = sorted(field_desc.value_types)
         ref.values = []
 
     @rx.event
