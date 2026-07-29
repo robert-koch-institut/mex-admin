@@ -1,5 +1,3 @@
-import re
-
 import pytest
 from playwright.sync_api import Page, expect
 
@@ -164,10 +162,6 @@ def test_had_primary_sources(
     sidebar = page.get_by_test_id("search-sidebar")
     expect(sidebar).to_be_visible()
 
-    # activate tab for had primary source filtering
-    tab = page.get_by_test_id("reference-filter-strategy-had-primary-source-tab")
-    tab.click()
-
     # check primary sources are showing and functioning
     primary_sources = page.get_by_test_id("primary-source-filter")
     primary_sources.scroll_into_view_if_needed()
@@ -200,7 +194,7 @@ def test_load_search_params(
 
     page.goto(
         f"{base_url}?q=help&page=1&entityType=ContactPoint&entityType=Consent"
-        f"&hadPrimarySource={expected_model.hadPrimarySource}&referenceFilterStrategy=had_primary_source"
+        f"&hadPrimarySource={expected_model.hadPrimarySource}"
     )
 
     # check 1 item is showing
@@ -225,125 +219,6 @@ def test_load_search_params(
     expect(unchecked).to_have_count(3)
     checked = primary_sources.get_by_role("checkbox", checked=True)
     expect(checked).to_have_count(1)
-
-
-@pytest.mark.integration
-def test_reference_filter_fields_for_entity_type(search_page: Page) -> None:
-    page = search_page
-
-    hps_tab = page.get_by_test_id("reference-filter-strategy-had-primary-source-tab")
-    hps_tab.click()
-    expect(page.get_by_test_id("primary-source-filter")).to_be_visible()
-
-    dyn_tab = page.get_by_test_id("reference-filter-strategy-dynamic-tab")
-    dyn_tab.click()
-    expect(page.get_by_test_id("reference-field-filter")).to_be_visible()
-
-    # select person entity
-    entity_types = page.get_by_test_id("entity-types")
-    entity_types.get_by_text("Person").click()
-
-    ref_filter_field = page.get_by_test_id("reference-field-filter-field")
-    ref_filter_field.click()
-
-    page.screenshot(
-        path="tests_search_test_main-test_reference_filter_fields_for_entity_type-on_field_click.png"
-    )
-
-    expected_person_fields = [
-        "Fachgebiet",
-        "Affiliation",
-        "Primärsystem",
-        "Stabiler Identifikator",
-    ]
-    for field in expected_person_fields:
-        select_item = page.get_by_role("option", name=field, exact=True)
-        expect(select_item).to_be_visible()
-
-
-@pytest.mark.parametrize(
-    ("locale_id", "expected_items"),
-    [
-        pytest.param(
-            "de",
-            [
-                "Affiliation",
-                "Autor*in",
-                "Datei",
-                "Fachgebiet",
-                "Kontakt",
-                "Nachfolge von",
-            ],
-            id="de",
-        ),
-        pytest.param(
-            "en",
-            [
-                "Affiliation",
-                "Access platform",
-                "Contact",
-                "Author",
-                "Files",
-                "Publishing institution",
-            ],
-            id="en",
-        ),
-    ],
-)
-@pytest.mark.integration
-def test_reference_filter_field_translation(
-    search_page: Page,
-    locale_id: str,
-    expected_items: list[str],
-) -> None:
-    page = search_page
-
-    # switch language to specified locale
-    lang_switcher = page.get_by_test_id("language-switcher")
-    lang_switcher.click()
-    page.get_by_test_id(f"language-switcher-menu-item-{locale_id}").click()
-
-    # check expected items existing
-    page.get_by_test_id("reference-field-filter-field").click()
-    for item in expected_items:
-        expect(page.get_by_role("option", name=item, exact=True)).to_be_visible()
-
-
-@pytest.mark.integration
-@pytest.mark.usefixtures("load_dummy_data")
-def test_reference_filter(
-    search_page: Page,
-    dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
-) -> None:
-    page = search_page
-
-    contact = dummy_data_by_identifier_in_primary_source["cp-1"]
-
-    # open select
-    page.get_by_test_id("reference-field-filter-field").click()
-    # click concat option
-    page.get_by_role("option", name=re.compile(r"Kontakt|Contact")).click()
-    # add invalid field
-    page.get_by_test_id("reference-field-filter-add-id").click()
-    page.get_by_test_id("reference-field-filter-id-0").fill("invalidIdentifier!")
-    # check for validation error msg
-    expect(
-        page.get_by_test_id("reference-field-filter").get_by_text("pattern")
-    ).to_be_visible()
-    page.screenshot(
-        path="tests_search_test_main-test_reference_filter-reference_filter_invalid_search.png"
-    )
-
-    # set correct contact identifier
-    page.get_by_test_id("reference-field-filter-id-0").fill(contact.stableTargetId)
-    expect(
-        page.get_by_test_id("reference-field-filter").get_by_text("pattern")
-    ).not_to_be_visible()
-
-    page.screenshot(
-        path="tests_search_test_main-test_reference_filter-reference_filter_valid_search.png"
-    )
-    expect(page.get_by_text(build_search_summary_regex(1, 3, 3))).to_be_visible()
 
 
 @pytest.mark.integration
@@ -384,9 +259,7 @@ def test_push_search_params(
     expect(page.get_by_test_id("search-results-component")).to_be_visible()
 
     # expect parameter change to be reflected in url
-    page.wait_for_url(
-        "**/?q=&page=1&entityType=Activity&referenceFilterStrategy=dynamic&referenceField="
-    )
+    page.wait_for_url("**/?q=&page=1&entityType=Activity")
 
     # add a query string to the search constraints
     search_input = page.get_by_test_id("search-input")
@@ -398,14 +271,7 @@ def test_push_search_params(
     expect(page.get_by_test_id("search-results-component")).to_be_visible()
 
     # expect parameter change to be reflected in url
-    page.wait_for_url(
-        "**?q=Une+activit%C3%A9+active&page=1&entityType=Activity"
-        "&referenceFilterStrategy=dynamic&referenceField="
-    )
-
-    # activate tab for had primary source filtering
-    tab = page.get_by_test_id("reference-filter-strategy-had-primary-source-tab")
-    tab.click()
+    page.wait_for_url("**?q=Une+activit%C3%A9+active&page=1&entityType=Activity")
 
     # select a primary source
     primary_sources = page.get_by_test_id("primary-source-filter")
@@ -435,8 +301,7 @@ def test_push_search_params(
     # expect parameter change to be reflected in url
     page.wait_for_url(
         "**/?q=Une+activit%C3%A9+active&page=1&entityType=Activity&"
-        "referenceFilterStrategy=had_primary_source&"
-        f"hadPrimarySource={primary_source.stableTargetId}&referenceField="
+        f"hadPrimarySource={primary_source.stableTargetId}"
     )
 
 

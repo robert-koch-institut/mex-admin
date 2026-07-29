@@ -11,10 +11,7 @@ msgstr "Hier Suchen..."
 msgid "search.entitytype_filter.title"
 msgstr "Entitätstyp"
 
-msgid "search.reference_filter.dynamic_tab"
-msgstr "Dynamisch"
-
-msgid "search.reference_filter.primarysource_tab"
+msgid "search.primarysource_filter.title"
 msgstr "Primärquelle"
 
 msgid "search.result_summary.format"
@@ -22,9 +19,6 @@ msgstr "Zeige {0}-{1} von insgesamt {2} Einträgen. Dauer: {3:.1f} Sekunden."
 
 msgid "search.reference_field_filter.placeholder"
 msgstr "Feld zum Filtern"
-
-msgid "search.reference_field_filter.add"
-msgstr "Filter hinzufügen"
 
 msgid "create.title.create_new"
 msgstr "Erzeugen von"
