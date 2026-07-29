@@ -9,13 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- dedicated start page with a single search input, reachable via the app logo
+- confirmation dialog before deleting or resetting rules
+
 ### Changes
+
+- thin out the page selection for searches with a lot of result pages
+- move dynamic reference filtering out of the search sidebar into the advanced search
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+- show loading and not-found states on edit and create pages instead of an empty page
 
 ### Security
 
