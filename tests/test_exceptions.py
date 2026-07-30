@@ -1,6 +1,6 @@
 from pytest import LogCaptureFixture
 
-from mex.editor.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error
 
 
 def test_escalate_error(caplog: LogCaptureFixture) -> None:

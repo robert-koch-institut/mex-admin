@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from playwright.sync_api import Page, expect
 
-from mex.editor.settings import EditorSettings
+from mex.admin.settings import AdminSettings
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def login_ldap_user(
     page: Page,
     base_url: str,
 ) -> Page:
-    settings = EditorSettings.get()
+    settings = AdminSettings.get()
     url = urlsplit(settings.ldap_url.get_secret_value())
     page.goto(f"{base_url}/consent")
     page.get_by_test_id("input-username").fill(str(url.username))
@@ -94,7 +94,7 @@ def test_pagination(consent_page: Page) -> None:
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
 def test_index(consent_page: Page) -> None:
-    settings = EditorSettings.get()
+    settings = AdminSettings.get()
     url = urlsplit(settings.ldap_url.get_secret_value())
     page = consent_page
 

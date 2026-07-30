@@ -1,42 +1,42 @@
 services:
-  mex-editor-frontend:
+  mex-admin-frontend:
     build:
       context: .
     ports:
       - 8030:8030
     healthcheck:
-      test: [ "CMD", "curl", "http://mex-editor-frontend:8030" ]
+      test: [ "CMD", "curl", "http://mex-admin-frontend:8030" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-    entrypoint: editor-frontend
+    entrypoint: admin-frontend
     depends_on:
-      mex-editor-api:
+      mex-admin-api:
         condition: service_healthy
-  mex-editor-api:
+  mex-admin-api:
     build:
       context: .
     ports:
       - 8031:8031
     environment:
-      - MEX_EDITOR_API_HOST=0.0.0.0
-      - MEX_EDITOR_USER_DATABASE='{"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}'
+      - MEX_ADMIN_API_HOST=0.0.0.0
+      - MEX_ADMIN_USER_DATABASE='{"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}'
       - MEX_BACKEND_API_KEY=write_key
       - MEX_BACKEND_API_URL=http://mex-backend:8080/
       - MEX_IDENTITY_PROVIDER=backend
     healthcheck:
-      test: [ "CMD", "curl", "http://mex-editor-api:8031/_system/check" ]
+      test: [ "CMD", "curl", "http://mex-admin-api:8031/_system/check" ]
       interval: 30s
       timeout: 5s
       retries: 5
       start_period: 10s
-    entrypoint: editor-api
+    entrypoint: admin-api
     depends_on:
       mex-backend:
         condition: service_healthy
   mex-backend:
-    image: ghcr.io/robert-koch-institut/mex-backend:4.0.3
+    image: ghcr.io/robert-koch-institut/mex-backend:4.2.2
     ports:
       - 8080:8080
     environment:
@@ -70,7 +70,7 @@ services:
       retries: 5
       start_period: 10s
   valkey:
-    image: valkey/valkey:9.1.0
+    image: valkey/valkey:9.1.1
     ports:
       - 6379:6379
     volumes:

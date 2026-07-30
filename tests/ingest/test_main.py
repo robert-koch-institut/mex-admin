@@ -1,8 +1,8 @@
 import pytest
 from playwright.sync_api import Page, expect
 
+from mex.admin.ingest.models import ALL_AUX_PROVIDERS, AuxProviderKey
 from mex.common.backend_api.connector import BackendApiConnector
-from mex.editor.ingest.models import ALL_AUX_PROVIDERS, AuxProviderKey
 from tests.conftest import build_pagination_regex, build_ui_label_regex
 
 

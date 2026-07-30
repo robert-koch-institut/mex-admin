@@ -4,8 +4,8 @@ from unittest.mock import patch
 from reflex import State
 from reflex.vars.base import ComputedVar
 
-from mex.editor.label_var import label_var
-from mex.editor.locale_service import LocaleService
+from mex.admin.label_var import label_var
+from mex.admin.locale_service import LocaleService
 
 translations = {
     "locale-1": {

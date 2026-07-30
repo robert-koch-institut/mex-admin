@@ -1,7 +1,7 @@
 import pytest
 
-from mex.editor.login.state import LoginMExState, LoginState
-from mex.editor.state import State
+from mex.admin.login.state import LoginMExState, LoginState
+from mex.admin.state import State
 
 
 @pytest.mark.skip(

@@ -35,7 +35,7 @@ jobs:
         ports:
           - 7687:7687
       backend:
-        image: ghcr.io/robert-koch-institut/mex-backend:4.0.3@sha256:1557cfa843c42c0401eb812c5c518a9bfdd98d520fe0ab5fd82499a61132cdec
+        image: ghcr.io/robert-koch-institut/mex-backend:4.2.0@sha256:fc3ff50af87344068b6210a56f942ae83710ee2079774d1ba4bc68d6e0d65494
         env:
           MEX_BACKEND_API_KEY_DATABASE: '{"read":["read_key"],"write":["write_key"]}'
           MEX_IDENTITY_PROVIDER: graph
@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
 
@@ -93,7 +93,7 @@ jobs:
             ${{ env.cache-name }}-
 
       - name: Setup python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: 3.14
 
@@ -102,11 +102,11 @@ jobs:
 
       - name: Run test suite
         env:
-          MEX_EDITOR_USER_DATABASE: '{"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}'
+          MEX_ADMIN_USER_DATABASE: '{"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}'
           MEX_BACKEND_API_KEY: write_key
           MEX_IDENTITY_PROVIDER: backend
         run: |
-          uv run editor &
+          uv run admin &
           echo `date -Iseconds` INFO checking service readiness &&
           curl --connect-timeout 10 --retry 10 --retry-delay 10 --retry-all-errors http://localhost:8000/_system/check &&
           curl --connect-timeout 10 --retry 10 --retry-delay 10 --retry-all-errors http://localhost:8080/v0/_system/check &&

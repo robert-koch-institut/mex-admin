@@ -1,15 +1,15 @@
 import pytest
 
+from mex.admin.models import EditorValue
+from mex.admin.rules.models import EditorPrimarySource, InputConfig
+from mex.admin.rules.state import RuleState
+from mex.admin.rules.transform import transform_models_to_fields
 from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     ContactPointRuleSetResponse,
     ExtractedContactPoint,
 )
 from mex.common.types import MergedPrimarySourceIdentifier
-from mex.editor.models import EditorValue
-from mex.editor.rules.models import EditorPrimarySource, InputConfig
-from mex.editor.rules.state import RuleState
-from mex.editor.rules.transform import transform_models_to_fields
 
 
 def test_state_get_primary_sources_by_field_name() -> None:

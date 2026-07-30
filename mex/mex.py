@@ -1,26 +1,26 @@
 import reflex as rx
 from reflex.components.radix import themes
 
-from mex.editor.advanced_search.main import index as advanced_search_index
-from mex.editor.advanced_search.state import AdvancedSearchState
-from mex.editor.api.main import api as editor_api
-from mex.editor.consent.main import index as consent_index
-from mex.editor.consent.state import ConsentState
-from mex.editor.create.main import index as create_index
-from mex.editor.create.state import CreateState
-from mex.editor.edit.main import index as edit_index
-from mex.editor.edit.state import EditState
-from mex.editor.ingest.main import index as ingest_index
-from mex.editor.ingest.state import IngestState
-from mex.editor.login.main import ldap_login as login_ldap_index
-from mex.editor.login.main import mex_login as login_mex_index
-from mex.editor.merge.main import index as merge_index
-from mex.editor.merge.state import MergeState
-from mex.editor.rules.state import RuleState
-from mex.editor.search.main import index as search_index
-from mex.editor.search.state import SearchState
-from mex.editor.state import State
-from mex.editor.utils import load_settings
+from mex.admin.advanced_search.main import index as advanced_search_index
+from mex.admin.advanced_search.state import AdvancedSearchState
+from mex.admin.api.main import api as admin_api
+from mex.admin.consent.main import index as consent_index
+from mex.admin.consent.state import ConsentState
+from mex.admin.create.main import index as create_index
+from mex.admin.create.state import CreateState
+from mex.admin.edit.main import index as edit_index
+from mex.admin.edit.state import EditState
+from mex.admin.ingest.main import index as ingest_index
+from mex.admin.ingest.state import IngestState
+from mex.admin.login.main import ldap_login as login_ldap_index
+from mex.admin.login.main import mex_login as login_mex_index
+from mex.admin.merge.main import index as merge_index
+from mex.admin.merge.state import MergeState
+from mex.admin.rules.state import RuleState
+from mex.admin.search.main import index as search_index
+from mex.admin.search.state import SearchState
+from mex.admin.state import State
+from mex.admin.utils import load_settings
 
 app = rx.App(
     theme=themes.theme(accent_color="blue", has_background=False),
@@ -32,7 +32,7 @@ app = rx.App(
             "white-space": "nowrap",
         },
     },
-    api_transformer=editor_api,
+    api_transformer=admin_api,
 )
 app.add_page(
     search_index,

@@ -1,9 +1,9 @@
 from unittest.mock import MagicMock, patch
 
+from mex.admin.ingest.models import IngestResult
+from mex.admin.ingest.transform import transform_models_to_results
+from mex.admin.models import EditorValue
 from mex.common.models import AnyExtractedModel
-from mex.editor.ingest.models import IngestResult
-from mex.editor.ingest.transform import transform_models_to_results
-from mex.editor.models import EditorValue
 
 
 def test_transform_models_to_results_single_model() -> None:
@@ -16,7 +16,7 @@ def test_transform_models_to_results_single_model() -> None:
     model.wikidataId = "wikidataId"
 
     with patch(
-        "mex.editor.ingest.transform.transform_model_to_all_properties",
+        "mex.admin.ingest.transform.transform_model_to_all_properties",
         return_value=[EditorValue(text="property")],
     ):
         result = transform_models_to_results([model])
@@ -79,7 +79,7 @@ def test_transform_models_to_results_multiple_models() -> None:
     model2.wikidataId = "wikidataId2"
 
     with patch(
-        "mex.editor.ingest.transform.transform_model_to_all_properties",
+        "mex.admin.ingest.transform.transform_model_to_all_properties",
         return_value=[EditorValue(text="property")],
     ):
         result = transform_models_to_results([model1, model2])
