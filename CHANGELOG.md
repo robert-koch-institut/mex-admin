@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Overflowing search results on consent page
+
 ### Security
 
 ## [4.0.0] - 2026-07-29

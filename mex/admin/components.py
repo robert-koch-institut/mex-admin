@@ -22,6 +22,7 @@ def render_value(
             render_badge(value.badge),
         ),
         spacing="1",
+        style=rx.Style(max_width="100%"),
     )
 
 

@@ -49,6 +49,7 @@ def _render_properties(
         style=rx.Style(
             color="var(--gray-12)",
             fontWeight="var(--font-weight-light)",
+            max_width="100%",
         ),
         wrap="wrap",
         align="center",
@@ -66,7 +67,7 @@ def _search_results_item(
         icon_by_stem_type(
             item.stem_type,
             size=22,
-            style=rx.Style(color=rx.color("accent", 11)),
+            style=rx.Style(color=rx.color("accent", 11), flex="0 0 22px"),
         ),
         rx.link(
             title,
