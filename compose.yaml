@@ -2,14 +2,18 @@ services:
   mex-admin-frontend:
     build:
       context: .
+    image: mex-admin:local
     ports:
       - 8030:8030
     healthcheck:
-      test: [ "CMD", "curl", "http://mex-admin-frontend:8030" ]
-      interval: 10s
+      # the entrypoint downloads bun, installs the npm packages and runs a
+      # production build before serving, hence the long start period
+      test: [ "CMD", "curl", "--fail", "http://localhost:8030" ]
+      interval: 30s
+      start_interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 30s
+      retries: 3
+      start_period: 360s
     entrypoint: admin-frontend
     depends_on:
       mex-admin-api:
@@ -17,46 +21,54 @@ services:
   mex-admin-api:
     build:
       context: .
+    image: mex-admin:local
     ports:
       - 8031:8031
     environment:
       - MEX_ADMIN_API_HOST=0.0.0.0
-      - MEX_ADMIN_USER_DATABASE='{"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}'
+      # keep in sync with .github/workflows/testing.yml
+      - MEX_ADMIN_USER_DATABASE={"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}
       - MEX_BACKEND_API_KEY=write_key
       - MEX_BACKEND_API_URL=http://mex-backend:8080/
       - MEX_IDENTITY_PROVIDER=backend
     healthcheck:
-      test: [ "CMD", "curl", "http://mex-admin-api:8031/_system/check" ]
+      test: [ "CMD", "curl", "--fail", "http://localhost:8031/_system/check" ]
       interval: 30s
+      start_interval: 2s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 3
+      start_period: 30s
     entrypoint: admin-api
     depends_on:
       mex-backend:
         condition: service_healthy
   mex-backend:
-    image: ghcr.io/robert-koch-institut/mex-backend:4.2.2
+    image: ghcr.io/robert-koch-institut/mex-backend:4.2.2@sha256:b122baae0d12298f54628cd141b1d4bf386cbd441dc8b3a81ebd25699ab5f4ae
     ports:
       - 8080:8080
     environment:
-      - MEX_BACKEND_API_KEY_DATABASE='{"read":["read_key"],"write":["write_key"]}'
+      - MEX_BACKEND_API_KEY_DATABASE={"read":["read_key"],"write":["write_key"]}
       - MEX_BACKEND_VALKEY_URL=valkey://valkey:6379
+      - MEX_DEBUG=True
       - MEX_GRAPH_URL=neo4j://neo4j:7687
       - MEX_IDENTITY_PROVIDER=graph
     healthcheck:
-      test: [ "CMD", "python", "-c", "'import requests; requests.get(\"http://mex-backend:8080/v0/_system/check\").raise_for_status()'" ]
+      test: [ "CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/v0/_system/check').raise_for_status()" ]
       interval: 30s
+      start_interval: 2s
       timeout: 5s
-      retries: 5
-      start_period: 5s
+      retries: 3
+      start_period: 30s
+    # the testing backend mocks ldap and serves the graph flush endpoint,
+    # both of which the integration test suite relies on
+    entrypoint: testing-backend
     depends_on:
       neo4j:
         condition: service_healthy
       valkey:
         condition: service_healthy
   neo4j:
-    image: neo4j:2026.06-community
+    image: neo4j:2026.06-community@sha256:42fd5b9ead4dd4211f6f91bd831c358e4e2117367d04633fbf88682ca4792b30
     environment:
       - NEO4J_AUTH=neo4j/password
     ports:
@@ -66,11 +78,12 @@ services:
     healthcheck:
       test: [ "CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1" ]
       interval: 30s
+      start_interval: 2s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 3
+      start_period: 30s
   valkey:
-    image: valkey/valkey:9.1.1
+    image: valkey/valkey:9.1.1@sha256:3acc0687f2a2e1091fae6450d7842dd658c941338cf0a873ddd9e14b9e4ea4dd
     ports:
       - 6379:6379
     volumes:
@@ -78,8 +91,9 @@ services:
     healthcheck:
       test: [ "CMD", "valkey-cli", "ping" ]
       interval: 30s
+      start_interval: 2s
       timeout: 5s
-      retries: 5
+      retries: 3
       start_period: 10s
 volumes:
   neo4j_data:

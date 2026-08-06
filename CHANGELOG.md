@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - use docker-compose for starting services in CI testing
+- run the dev server on ports 8030/8031
 
 ### Deprecated
 
@@ -20,8 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Overflowing search results on consent page
+- point reflex api and deploy urls at `localhost` instead of `0.0.0.0`
+- fix the frontend and backend healthchecks in `compose.yaml`
+- unquote json environment variables in `compose.yaml`
 
 ### Security
+
+- pin the images in `compose.yaml` to sha digests
 
 ## [4.0.0] - 2026-07-29
 
@@ -31,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING: the environment variable prefix changed from `MEX_EDITOR_` to `MEX_ADMIN_`
 
 ## [3.1.1] - 2026-07-22
+
+### Changes
+
+- update lock file and CI dependencies
 
 ## [3.1.0] - 2026-07-09
 

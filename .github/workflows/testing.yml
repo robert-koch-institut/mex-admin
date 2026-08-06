@@ -27,23 +27,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    services:
-      neo4j:
-        image: neo4j:2026.06-community@sha256:42fd5b9ead4dd4211f6f91bd831c358e4e2117367d04633fbf88682ca4792b30
-        env:
-          NEO4J_AUTH: neo4j/password
-        ports:
-          - 7687:7687
-      backend:
-        image: ghcr.io/robert-koch-institut/mex-backend:4.2.2@sha256:b122baae0d12298f54628cd141b1d4bf386cbd441dc8b3a81ebd25699ab5f4ae
-        env:
-          MEX_BACKEND_API_KEY_DATABASE: '{"read":["read_key"],"write":["write_key"]}'
-          MEX_IDENTITY_PROVIDER: graph
-          MEX_GRAPH_URL: neo4j://neo4j:7687
-          MEX_DEBUG: True
-        ports:
-          - 8080:8080
-        options: --entrypoint testing-backend
     timeout-minutes: 30
 
     steps:
@@ -82,41 +65,42 @@ jobs:
           restore-keys: |
             ${{ env.cache-name }}-
 
-      - name: Cache reflex
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        env:
-          cache-name: cache-reflex
-        with:
-          path: .web/node_modules
-          key: ${{ env.cache-name }}-${{ hashFiles('*.lock') }}
-          restore-keys: |
-            ${{ env.cache-name }}-
-
       - name: Setup python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: 3.14
 
+      - name: Start containers
+        run: docker compose up --build --detach
+
       - name: Install requirements
         run: make install
 
+      - name: Await service readiness
+        run: docker compose up --wait --wait-timeout 600
+
       - name: Run test suite
+        id: test
         env:
+          # keep in sync with the environment of mex-admin-api in compose.yaml
           MEX_ADMIN_USER_DATABASE: '{"read":{"reader":"read_pw"},"write":{"writer":"write_pw"}}'
           MEX_BACKEND_API_KEY: write_key
           MEX_IDENTITY_PROVIDER: backend
-        run: |
-          uv run admin &
-          echo `date -Iseconds` INFO checking service readiness &&
-          curl --connect-timeout 10 --retry 10 --retry-delay 10 --retry-all-errors http://localhost:8000/_system/check &&
-          curl --connect-timeout 10 --retry 10 --retry-delay 10 --retry-all-errors http://localhost:8080/v0/_system/check &&
-          make test
+        run: make test
+
+      - name: Show container logs
+        if: failure()
+        run: docker compose logs --no-color --timestamps
 
       - name: Upload screenshots
-        if: always()
+        if: always() && steps.test.outcome != 'skipped'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: playwright-screenshots-${{ github.run_id }}
           path: test*.png
           if-no-files-found: error
           retention-days: 10
+
+      - name: Cleanup containers
+        if: always()
+        run: docker compose down --volumes --remove-orphans

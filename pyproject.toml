@@ -62,7 +62,7 @@ warn_untyped_fields = true
 [tool.pytest.ini_options]
 addopts = [
     "--verbose",
-    "--base-url=http://localhost:3000",
+    "--base-url=http://localhost:8030",
     "--browser=firefox",
     "--cov",
     "--no-cov-on-fail",
