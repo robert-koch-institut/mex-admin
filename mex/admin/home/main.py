@@ -2,6 +2,7 @@ import reflex as rx
 
 from mex.admin.home.state import HomeState
 from mex.admin.layout import page
+from mex.admin.logo import animated_mex_logo
 
 
 def start_search_input() -> rx.Component:
@@ -34,6 +35,7 @@ def start_search_input() -> rx.Component:
             maxWidth="100%",
             width="calc(720px * var(--scaling))",
         ),
+        variant="ghost",
     )
 
 
@@ -41,7 +43,13 @@ def index() -> rx.Component:
     """Return the index for the start page."""
     return page(
         rx.center(
-            start_search_input(),
+            rx.vstack(
+                animated_mex_logo(),
+                start_search_input(),
+                align="center",
+                spacing="9",
+                width="100%",
+            ),
             style=rx.Style(
                 marginTop="20vh",
                 width="100%",
