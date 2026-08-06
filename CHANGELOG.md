@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - thin out the page selection for searches with a lot of result pages
 - move dynamic reference filtering out of the search sidebar into the advanced search
 - picking a reference in the search dialog now closes the input and shows the title
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/1.4.0
 - use docker-compose for starting services in CI testing
 - run the dev server on ports 8030/8031
 
