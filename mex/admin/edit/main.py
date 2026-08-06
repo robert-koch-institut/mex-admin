@@ -3,7 +3,6 @@ import reflex as rx
 from mex.admin.components import render_value
 from mex.admin.edit.state import EditState
 from mex.admin.layout import page
-from mex.admin.models import EditorValue
 from mex.admin.rules.main import (
     editor_field,
     rule_page_header,
@@ -20,18 +19,13 @@ from mex.admin.search_results_component import (
 from mex.admin.style_helper import flex1_col_style, flex3_style
 
 
-def render_title_value(value: EditorValue) -> rx.Component:
-    """Render one title value, without foreach passing its index as `truncate_text`."""
-    return render_value(value)
-
-
 def edit_title() -> rx.Component:
     """Return the title for the edit page."""
     return rx.heading(
         rx.hstack(
             rx.foreach(
                 EditState.item_title,
-                render_title_value,
+                render_value,
             ),
             style=rx.Style(
                 flexWrap="nowrap",
