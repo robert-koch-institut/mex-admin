@@ -177,7 +177,7 @@ def _transform_model_to_input_config(  # noqa: PLR0911
     return InputConfig()
 
 
-def _create_editor_primary_source(  # noqa: PLR0913
+def _create_editor_primary_source(  # noqa: PLR0913, PLR0917
     primary_source_name: EditorValue,
     primary_source_id: MergedPrimarySourceIdentifier,
     editor_values: list[EditorValue],

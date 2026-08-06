@@ -52,13 +52,6 @@ from mex.common.types import Identifier, Validation
 locale_service = LocaleService.get()
 
 
-def _error_payload(exc: RequestException) -> str:
-    """Return the response body of a failed request, or the error itself."""
-    if exc.response is not None:
-        return exc.response.text
-    return str(exc)
-
-
 class RuleState(State, LocalStorageMixinState):
     """Base state for the edit and create components."""
 
@@ -160,6 +153,13 @@ class RuleState(State, LocalStorageMixinState):
                             await resolve_editor_value(editor_value)
 
     @classmethod
+    def _error_payload(cls, exc: RequestException) -> str:
+        """Return the response body of a failed request, or the error itself."""
+        if exc.response is not None:
+            return exc.response.text
+        return str(exc)
+
+    @classmethod
     def _contains_any_rule(
         cls, rule_set: AnyRuleSetResponse | AnyRuleSetRequest
     ) -> bool:
@@ -228,7 +228,7 @@ class RuleState(State, LocalStorageMixinState):
             self.is_loading = False
             self.load_error = "backend"
             yield from escalate_error(
-                "backend", "error fetching extracted items", _error_payload(exc)
+                "backend", "error fetching extracted items", self._error_payload(exc)
             )
             return
 
@@ -248,7 +248,7 @@ class RuleState(State, LocalStorageMixinState):
                 else "backend"
             )
             yield from escalate_error(
-                "backend", "error fetching rule items", _error_payload(exc)
+                "backend", "error fetching rule items", self._error_payload(exc)
             )
             return
 
