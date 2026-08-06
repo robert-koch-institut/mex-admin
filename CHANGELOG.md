@@ -16,13 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - thin out the page selection for searches with a lot of result pages
 - move dynamic reference filtering out of the search sidebar into the advanced search
+- picking a reference in the search dialog now closes the input and shows the title
 
 ### Deprecated
 
 ### Removed
 
+- removed version hover card on the app logo, use service dashboards instead
+
 ### Fixed
 
+- BREAKING: actually change MEX_BACKEND_API_USER_DATABASE to MEX_ADMIN_USER_DATABASE
+- stale search results no longer flash on the search page
+- search result cards now have a uniform fixed height
 - show loading and not-found states on edit and create pages instead of an empty page
 - Overflowing search results on consent page
 
