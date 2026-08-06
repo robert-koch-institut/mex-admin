@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- replace fixed sleeps in the integration tests with `expect()` waits on real signals
 - thin out the page selection for searches with a lot of result pages
 - move dynamic reference filtering out of the search sidebar into the advanced search
 - picking a reference in the search dialog now closes the input and shows the title

@@ -107,6 +107,13 @@ def writer_user_credentials(settings: AdminSettings) -> tuple[str, SecretStr]:
     raise RuntimeError(msg)  # pragma: no cover
 
 
+def set_generous_timeouts(page: Page) -> None:
+    """Raise playwright's default timeouts to survive slow reflex page loads."""
+    page.set_default_navigation_timeout(50_000)
+    page.set_default_timeout(30_000)
+    expect.set_options(timeout=30_000)
+
+
 def prepare_page(
     page: Page,
     base_url: str,
@@ -118,9 +125,7 @@ def prepare_page(
     page.get_by_test_id("input-password").fill(credentials[1].get_secret_value())
     page.get_by_test_id("login-button").click()
     expect(page.get_by_test_id("page-body")).to_be_visible()
-    page.set_default_navigation_timeout(50_000)
-    page.set_default_timeout(30_000)
-    expect.set_options(timeout=30_000)
+    set_generous_timeouts(page)
     return page
 
 

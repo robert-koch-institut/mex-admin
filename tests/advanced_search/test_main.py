@@ -250,12 +250,11 @@ def test_reference_filter_combinations_with_editor_added_involved_unit(
     page.get_by_test_id("filter-ref-0-value-0-value").fill(
         extracted_activity.contact[0]
     )
-    page.wait_for_timeout(5000)
+    expect(page.get_by_test_id(search_result_item_regex)).to_have_count(3)
     _make_screenshot(
         page,
         "test_reference_filter_combinations_with_editor_added_involved_unit_contact_set",
     )
-    expect(page.get_by_test_id(search_result_item_regex)).to_have_count(3)
 
     # Add unique responsibleUnit
     page.get_by_test_id("add-reference-filter-button").click()
@@ -268,9 +267,8 @@ def test_reference_filter_combinations_with_editor_added_involved_unit(
     ).click()
     page.get_by_test_id("ref-filter-1-add-value").click()
     page.get_by_test_id("filter-ref-1-value-0-value").fill(ou1_id)
-    page.wait_for_timeout(5000)
+    expect(page.get_by_test_id(search_result_item_regex)).to_have_count(1)
     _make_screenshot(
         page,
         "test_reference_filter_combinations_with_editor_added_involved_unit_contact_involvedUnit_set",
     )
-    expect(page.get_by_test_id(search_result_item_regex)).to_have_count(1)

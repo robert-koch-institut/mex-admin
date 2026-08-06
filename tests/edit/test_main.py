@@ -413,7 +413,6 @@ def test_edit_page_switch_roundtrip(
     submit.click()
     toast = page.locator(".editor-toast").first
     expect(toast).to_be_visible()
-    expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
     page.screenshot(path=f"{test_id}-toast_2.png")
 
@@ -742,7 +741,12 @@ def test_edit_page_additive_rule_roundtrip(
     submit_button = page.get_by_test_id("submit-button")
     submit_button.scroll_into_view_if_needed()
     submit_button.click()
-    page.wait_for_timeout(30000)  # wait for save operation
+
+    # wait for the save to land before reloading, or the write would be lost
+    toast = page.locator(".editor-toast").first
+    expect(toast).to_be_visible()
+    expect(toast).to_have_attribute("data-type", "success")
+
     page.reload()
 
     # check the rule input is still gone
@@ -899,7 +903,6 @@ def test_edit_page_submit_button_disabled_while_submitting(edit_page: Page) -> N
     expect(submit_button).to_be_disabled()
 
     # check if back in default state after saving
-    edit_page.wait_for_timeout(30000)
     expect(submit_button).to_have_text(initial_text)
     expect(submit_button).not_to_be_disabled()
 
@@ -1008,8 +1011,10 @@ def test_edit_page_discard_changes_button_roundtrip(
     ).click()
     shortname_text = edit_page.get_by_test_id("additive-rule-shortName-0-text")
     shortname_text.fill("shortNameChanges")
-    # give the state some time to sync changes into local storage
-    edit_page.wait_for_timeout(1_000)
+    # the unload below is hard, so wait for the change to reach local storage first
+    edit_page.wait_for_function(
+        "() => Object.values(localStorage).some((v) => v.includes('shortNameChanges'))"
+    )
     navigate_back_url = edit_page.url
     # navigate away with a full page unload (no network needed), then come back
     edit_page.goto("about:blank")
@@ -1043,15 +1048,14 @@ def test_superseded_by_backward_visibility(
     superseded_by_backward.is_visible()
     superseded_by_backward.scroll_into_view_if_needed()
     edit_page.reload()
-    edit_page.wait_for_timeout(20_000)
-    edit_page.screenshot(
-        path="tests_edit_test_main-test_superseded_by_backward_visibility.png"
-    )
 
     search_results = superseded_by_backward.get_by_test_id(
         re.compile(r"search-result-.*")
     )
     expect(search_results).to_have_count(2)
+    edit_page.screenshot(
+        path="tests_edit_test_main-test_superseded_by_backward_visibility.png"
+    )
 
     for item in load_superseded_by_entites:
         superseded_by_backward.get_by_test_id(

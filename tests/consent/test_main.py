@@ -6,6 +6,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from mex.admin.settings import AdminSettings
+from tests.conftest import set_generous_timeouts
 
 
 @pytest.fixture
@@ -15,13 +16,15 @@ def login_ldap_user(
 ) -> Page:
     settings = AdminSettings.get()
     url = urlsplit(settings.ldap_url.get_secret_value())
+    # these tests log in themselves instead of going through `prepare_page`,
+    # so they have to opt into the longer timeouts on their own
+    set_generous_timeouts(page)
     page.goto(f"{base_url}/consent")
     page.get_by_test_id("input-username").fill(str(url.username))
     page.get_by_test_id("input-password").fill(str(url.password))
     page.get_by_test_id("login-button").click()
-    page.wait_for_timeout(3000)
-    page.screenshot(path="tests_ldap_login.png")
     expect(page.get_by_test_id("nav-bar")).to_be_visible()
+    page.screenshot(path="tests_ldap_login.png")
     return page
 
 
@@ -34,7 +37,8 @@ def consent_page(
     page.goto(f"{base_url}/consent")
     page_body = page.get_by_test_id("page-body")
     expect(page_body).to_be_visible()
-    page.wait_for_timeout(5000)
+    # the category lists only render once their `is_loading` flag clears
+    expect(page.get_by_test_id("user-resources")).to_be_visible()
     page.screenshot(path="tests_consent_test_main-test_index-on-load.png")
     return page
 

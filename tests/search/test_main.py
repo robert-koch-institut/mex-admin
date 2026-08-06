@@ -107,14 +107,11 @@ def test_search_input(search_page: Page) -> None:
     expect(search_input).to_be_visible()
     search_input.fill("Bioinformatics")
     search_input.press("Enter")
-    page.wait_for_timeout(10000)  # wait for loading
     search_results_summary = page.get_by_test_id("search-results-summary")
     expect(search_results_summary).to_be_visible()
+    expect(search_results_summary).to_have_text(build_search_summary_regex(1, 1, 1))
     page.screenshot(
         path="tests_search_test_main-test_search_input-on-search-input-1-found.png"
-    )
-    expect(page.get_by_test_id("search-results-summary")).to_have_text(
-        build_search_summary_regex(1, 1, 1)
     )
 
     search_input.fill("totally random search dPhGDHu3uiEcU6VNNs0UA74bBdubC3")
