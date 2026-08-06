@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - show loading and not-found states on edit and create pages instead of an empty page
+- Overflowing search results on consent page
 
 ### Security
 
