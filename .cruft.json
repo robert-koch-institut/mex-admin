@@ -1,14 +1,14 @@
 {
   "template": "https://github.com/robert-koch-institut/mex-template",
-  "commit": "c6d13eb329f5a884e4ea9cbdcdb12c3299b9c11c",
-  "checkout": "1.4.0",
+  "commit": "b5dc3e8206375f1ab6ae9e23b4cc0fb305d00aed",
+  "checkout": "1.5.0",
   "context": {
     "cookiecutter": {
       "project_name": "admin",
       "short_summary": "Metadata admin web application.",
       "long_summary": "The `mex-admin` is a browser application that allows creating and editing rules to non-destructively manipulate metadata. This can be used to enrich data with manual input or insert new data from scratch.",
       "_template": "https://github.com/robert-koch-institut/mex-template",
-      "_commit": "c6d13eb329f5a884e4ea9cbdcdb12c3299b9c11c"
+      "_commit": "b5dc3e8206375f1ab6ae9e23b4cc0fb305d00aed"
     }
   },
   "directory": null
