@@ -1,6 +1,6 @@
 from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 import reflex as rx
 from reflex.event import EventSpec
@@ -12,7 +12,9 @@ from mex.admin.consent.transform import add_external_links_to_results
 from mex.admin.exceptions import escalate_error
 from mex.admin.models import MergedLoginPerson, SearchResult
 from mex.admin.pagination_component import PaginationStateMixin, pagination
-from mex.admin.search_results_component import search_results_list
+from mex.admin.search_results_component import (
+    search_results_list,
+)
 from mex.admin.transform import transform_models_to_search_results
 from mex.admin.utils import resolve_editor_value
 from mex.common.backend_api.connector import BackendApiConnector
@@ -135,11 +137,13 @@ class ConsentCategoryList(rx.ComponentState, PaginationStateMixin):
         cls,
         category: Literal["resources", "publications", "projects"],
         merged_login_person: MergedLoginPerson | None,
+        **props: dict[str, Any],
     ) -> rx.Component:
         """Get the category list component."""
         title = getattr(ConsentState, f"label_{category}_title")
+        style = props.pop("style", rx.Style())
 
-        return rx.fragment(
+        return rx.box(
             rx.cond(
                 cls.is_loading,
                 rx.spinner(),
@@ -151,7 +155,7 @@ class ConsentCategoryList(rx.ComponentState, PaginationStateMixin):
                             textTransform="uppercase",
                         ),
                     ),
-                    search_results_list(cls.items),
+                    search_results_list(cls.items, style=rx.Style(width="100%")),
                     pagination(
                         build_pagination_options(
                             cls,
@@ -168,4 +172,5 @@ class ConsentCategoryList(rx.ComponentState, PaginationStateMixin):
             ),
             on_mount=cls.initialize(category, merged_login_person).debounce(500),  # type:ignore[operator]
             on_unmount=cls.cleanup,
+            style=style,
         )

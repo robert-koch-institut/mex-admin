@@ -38,7 +38,7 @@ def label_var[StateT: "State", ReturnT](
 ) -> ComputedVar[str]: ...
 
 
-def label_var[StateT: "State"](  # noqa: PLR0913
+def label_var[StateT: "State"](  # noqa: PLR0913, PLR0917
     fget: Callable[[StateT], Any] | None = None,  # noqa: ARG001
     label_id: str = "",
     initial_value: Any | types.Unset = types.Unset(),  # noqa: B008

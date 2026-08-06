@@ -58,7 +58,7 @@ class RuleState(State, LocalStorageMixinState):
     _api_fields: list[EditorField] = []
 
     is_submitting: bool = False
-    delete_reset_mode: None | Literal["delete", "reset"] = None
+    delete_reset_mode: Literal["delete", "reset"] | None = None
     item_title: list[EditorValue] = []
     fields: list[EditorField] = []
     stem_type: str | None = None

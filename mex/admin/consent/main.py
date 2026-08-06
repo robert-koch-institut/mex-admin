@@ -128,9 +128,15 @@ def index() -> rx.Component:
     return page(
         rx.vstack(
             user_data(),
-            ConsentCategoryList.create("projects", State.merged_login_person),
-            ConsentCategoryList.create("resources", State.merged_login_person),
-            ConsentCategoryList.create("publications", State.merged_login_person),
+            ConsentCategoryList.create(
+                "projects", State.merged_login_person, style=rx.Style(width="100%")
+            ),
+            ConsentCategoryList.create(
+                "resources", State.merged_login_person, style=rx.Style(width="100%")
+            ),
+            ConsentCategoryList.create(
+                "publications", State.merged_login_person, style=rx.Style(width="100%")
+            ),
             rx.spacer(direction="column"),
             rx.box(
                 consent_box(),
