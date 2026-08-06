@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - thin out the page selection for searches with a lot of result pages
 - move dynamic reference filtering out of the search sidebar into the advanced search
 - picking a reference in the search dialog now closes the input and shows the title
+- use docker-compose for starting services in CI testing
+- run the dev server on ports 8030/8031
 
 ### Deprecated
 
@@ -32,8 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - search result cards now have a uniform fixed height
 - show loading and not-found states on edit and create pages instead of an empty page
 - Overflowing search results on consent page
+- point reflex api and deploy urls at `localhost` instead of `0.0.0.0`
+- fix the frontend and backend healthchecks in `compose.yaml`
+- unquote json environment variables in `compose.yaml`
 
 ### Security
+
+- pin the images in `compose.yaml` to sha digests
 
 ## [4.0.0] - 2026-07-29
 
@@ -43,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING: the environment variable prefix changed from `MEX_EDITOR_` to `MEX_ADMIN_`
 
 ## [3.1.1] - 2026-07-22
+
+### Changes
+
+- update lock file and CI dependencies
 
 ## [3.1.0] - 2026-07-09
 
