@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.1.0] - 2026-08-07
+
+### Added
+
 - dedicated start page with a single search input, reachable via the app logo
 - confirmation dialog before deleting or resetting rules
 
@@ -22,8 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/1.4.0
 - use docker-compose for starting services in CI testing
 - run the dev server on ports 8030/8031
-
-### Deprecated
 
 ### Removed
 
