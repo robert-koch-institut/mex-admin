@@ -1,9 +1,9 @@
+import time
 from collections.abc import Generator
-from typing import Any, Literal
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import reflex as rx
-from pydantic import TypeAdapter, ValidationError
 from reflex.event import EventSpec
 from reflex.istate.data import RouterData
 from requests import HTTPError
@@ -13,36 +13,14 @@ from mex.admin.label_var import label_var
 from mex.admin.locale_service import LocaleService
 from mex.admin.models import SearchResult, ValueLabelCheckboxItem
 from mex.admin.pagination_component import PaginationStateMixin
-from mex.admin.search.models import (
-    ReferenceFieldFilter,
-    ReferenceFieldIdentifierFilter,
-    ReferenceFieldParameters,
-    SearchPrimarySource,
-)
+from mex.admin.search.models import ReferenceFieldParameters, SearchPrimarySource
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
 from mex.admin.utils import resolve_editor_value
-from mex.admin.value_label_select import ValueLabelSelectItem
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.exceptions import MExError
-from mex.common.fields import REFERENCE_FIELDS_BY_CLASS_NAME
 from mex.common.models import MERGED_MODEL_CLASSES, MergedPrimarySource
 from mex.common.transform import ensure_prefix
-from mex.common.types import Identifier
-
-
-def _build_dynamic_refresh_params(
-    reference_field_filter: ReferenceFieldFilter,
-) -> ReferenceFieldParameters:
-    identifiers = [
-        x for x in reference_field_filter.identifiers if not x.validation_msg
-    ]
-    if not reference_field_filter.field or not identifiers:
-        return {"reference_field": None, "referenced_identifier": None}
-    return {
-        "reference_field": reference_field_filter.field,
-        "referenced_identifier": [x.value for x in identifiers],
-    }
 
 
 def _build_had_primary_source_refresh_params(
@@ -66,12 +44,9 @@ class SearchState(State, PaginationStateMixin):
     query_string: str = ""
     entity_types: dict[str, bool] = {k.stemType: False for k in MERGED_MODEL_CLASSES}
 
-    reference_filter_strategy: Literal["had_primary_source", "dynamic"] = "dynamic"
     had_primary_sources: dict[str, SearchPrimarySource] = {}
-    reference_field_filter: ReferenceFieldFilter = ReferenceFieldFilter(
-        field="", identifiers=[]
-    )
     is_loading: bool = True
+    search_duration_seconds: float = 0.0
     _locale_service = LocaleService.get()
 
     @rx.var
@@ -86,100 +61,6 @@ class SearchState(State, PaginationStateMixin):
                 )
                 for key in self.entity_types
             ],
-            key=lambda x: x.label,
-        )
-
-    @rx.event
-    def set_reference_filter_field(self, value: str) -> None:
-        """Set the reference filter field used to filter references.
-
-        Args:
-            value (str): The field to use for reference filtering.
-        """
-        self.reference_field_filter.field = value
-
-    @rx.event
-    def set_reference_filter_strategy(
-        self, value: Literal["had_primary_source", "dynamic"]
-    ) -> None:
-        """Set the reference filter strategy to define the filter mechanism.
-
-        Args:
-            value: The strategy used for filtering.
-        """
-        self.reference_filter_strategy = value
-
-    @rx.event
-    def set_reference_field_filter_identifier(self, index: int, value: str) -> None:
-        """Set the reference value to filter for at a specific index.
-
-        Args:
-            index (int): Index of the identifier
-            value (str): Value of the identifier
-        """
-        self.reference_field_filter.identifiers[index].validation_msg = None
-        self.reference_field_filter.identifiers[index].value = value
-        try:
-            TypeAdapter(Identifier).validate_python(value)
-        except ValidationError as ve:
-            self.reference_field_filter.identifiers[index].validation_msg = "\n".join(
-                [error["msg"] for error in ve.errors()]
-            )
-
-    @rx.event
-    def remove_reference_field_filter_identifier(self, index: int) -> None:
-        """Remove the reference value to filter for at a specific index.
-
-        Args:
-            index: Index of the identifier to remove.
-        """
-        self.reference_field_filter.identifiers.pop(index)
-
-    @rx.event
-    def add_reference_field_filter_identifier(self) -> None:
-        """Add a new empty identifier."""
-        self.reference_field_filter.identifiers.append(
-            ReferenceFieldIdentifierFilter(value="", validation_msg=None)
-        )
-        self.set_reference_field_filter_identifier(
-            len(self.reference_field_filter.identifiers) - 1, ""
-        )  # type: ignore[operator]
-
-    @rx.var(cache=False)
-    def all_fields_for_entity_types(self) -> list[ValueLabelSelectItem]:
-        """Get all fields for the currently selected entity types filter.
-
-        Returns:
-            The fields for the selected entity types.
-        """
-        selected_entity_types = [
-            item[0]
-            for item in list(filter(lambda item: item[1], self.entity_types.items()))
-        ]
-
-        if len(selected_entity_types) == 0:
-            selected_entity_types = [item[0] for item in self.entity_types.items()]
-
-        fields_with_type = [
-            [
-                ValueLabelSelectItem(
-                    value=field,
-                    label=self._locale_service.get_field_label(
-                        self.current_locale, entity_type, field
-                    ),
-                )
-                for field in REFERENCE_FIELDS_BY_CLASS_NAME[
-                    ensure_prefix(entity_type, "Extracted")
-                ]
-            ]
-            for entity_type in selected_entity_types
-        ]
-
-        return sorted(
-            {
-                item.value: item
-                for item in [f for fields in fields_with_type for f in fields]
-            }.values(),
             key=lambda x: x.label,
         )
 
@@ -212,28 +93,6 @@ class SearchState(State, PaginationStateMixin):
         for primary_source_identifier in had_primary_source_params:
             self.had_primary_sources[primary_source_identifier].checked = True
 
-        self.reference_filter_strategy = (
-            "had_primary_source"
-            if params.get("referenceFilterStrategy") == ["had_primary_source"]
-            else "dynamic"
-        )
-        ref_field_identifiers = params.get("referenceIdentifier", [])
-        ref_field_identifiers = (
-            ref_field_identifiers
-            if isinstance(ref_field_identifiers, list)
-            else [ref_field_identifiers]
-        )
-        reference_field = (
-            params["referenceField"][0] if "referenceField" in params else ""
-        )
-        self.reference_field_filter = ReferenceFieldFilter(
-            field=reference_field,
-            identifiers=[
-                ReferenceFieldIdentifierFilter(value=x, validation_msg=None)
-                for x in ref_field_identifiers
-            ],
-        )
-
     @rx.event
     def push_search_params(self) -> Generator[EventSpec | None]:
         """Push a new browser history item with updated search parameters."""
@@ -242,13 +101,8 @@ class SearchState(State, PaginationStateMixin):
                 "q": self.query_string,
                 "page": self.current_page,
                 "entityType": [k for k, v in self.entity_types.items() if v],
-                "referenceFilterStrategy": self.reference_filter_strategy,
                 "hadPrimarySource": [
                     k for k, v in self.had_primary_sources.items() if v.checked
-                ],
-                "referenceField": self.reference_field_filter.field,
-                "referenceIdentifier": [
-                    x.value for x in self.reference_field_filter.identifiers
                 ],
             }
         )
@@ -293,29 +147,28 @@ class SearchState(State, PaginationStateMixin):
     @rx.event
     def refresh(self) -> Generator[EventSpec | None]:
         """Refresh the search results."""
-        # TODO(ND): use proper connector method when available (stop-gap MX-1984)
         connector = BackendApiConnector.get()
         entity_type = [
             ensure_prefix(k, "Merged") for k, v in self.entity_types.items() if v
         ]
-        filter_strategy_params = (
-            _build_dynamic_refresh_params(self.reference_field_filter)
-            if self.reference_filter_strategy == "dynamic"
-            else _build_had_primary_source_refresh_params(self.had_primary_sources)
+        had_primary_source_params = _build_had_primary_source_refresh_params(
+            self.had_primary_sources
         )
 
         skip = self.limit * (self.current_page - 1)
         self.is_loading = True
         yield None
+        start_time = time.monotonic()
         try:
             response = connector.fetch_preview_items(
                 query_string=self.query_string,
                 entity_type=entity_type,
                 skip=skip,
                 limit=self.limit,
-                **filter_strategy_params,
+                **had_primary_source_params,
             )
         except HTTPError as exc:
+            self.search_duration_seconds = time.monotonic() - start_time
             self.is_loading = False
             self.results = []
             yield SearchState.set_total(0)  # type: ignore[operator]
@@ -324,6 +177,7 @@ class SearchState(State, PaginationStateMixin):
                 "backend", "error fetching merged items", exc.response.text
             )
         else:
+            self.search_duration_seconds = time.monotonic() - start_time
             self.is_loading = False
             self.results = transform_models_to_search_results(response.items)
             yield SearchState.set_total(response.total)  # type: ignore[operator]
@@ -331,7 +185,6 @@ class SearchState(State, PaginationStateMixin):
     @rx.event
     def get_available_primary_sources(self) -> Generator[EventSpec]:
         """Get all available primary sources."""
-        # TODO(ND): use proper connector method when available (stop-gap MX-1984)
         connector = BackendApiConnector.get()
         maximum_number_of_primary_sources = 100
         try:
@@ -377,29 +230,30 @@ class SearchState(State, PaginationStateMixin):
     def label_entitytype_filter_title(self) -> None:
         """Label for entitytype_filter.title."""
 
-    @label_var(label_id="search.reference_filter.dynamic_tab")
-    def label_reference_filter_dynamic_tab(self) -> None:
-        """Label for reference_filter.dynamic_tab."""
-
-    @label_var(label_id="search.reference_filter.primarysource_tab")
-    def label_reference_filter_primarysource_tab(self) -> None:
-        """Label for reference_filter.primarysource_tab."""
+    @label_var(label_id="search.primarysource_filter.title")
+    def label_primarysource_filter_title(self) -> None:
+        """Label for primarysource_filter.title."""
 
     @label_var(
         label_id="search.result_summary.format",
-        deps=["current_results_length", "total"],
+        deps=[
+            "current_results_length",
+            "total",
+            "current_page",
+            "limit",
+            "search_duration_seconds",
+        ],
     )
-    def label_result_summary_format(self) -> list[int]:
+    def label_result_summary_format(self) -> list[float]:
         """Label for result_summary.format."""
-        return [self.current_results_length, self.total]
-
-    @label_var(label_id="search.reference_field_filter.placeholder")
-    def label_reference_field_filter_placeholder(self) -> None:
-        """Label for reference_field_filter.placeholder."""
-
-    @label_var(label_id="search.reference_field_filter.add")
-    def label_reference_field_filter_add(self) -> None:
-        """Label for reference_field_filter.add."""
+        # the range is 1-based and inclusive, but collapses to 0-0 without results
+        first_item = self.skip + 1 if self.current_results_length else 0
+        return [
+            first_item,
+            self.skip + self.current_results_length,
+            self.total,
+            self.search_duration_seconds,
+        ]
 
 
 full_refresh = [

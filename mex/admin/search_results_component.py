@@ -72,6 +72,7 @@ def _search_results_item(
         rx.link(
             title,
             href=f"/item/{item.identifier}",
+            style=rx.Style(minWidth="0", overflow="hidden"),
         )
         if options.enable_title_href
         else title,
@@ -97,6 +98,7 @@ def _search_results_item(
                 color_scheme="gray",
                 variant="surface",
                 size="1",
+                style=rx.Style(flexShrink="0"),
                 on_click=options.on_toggle_show_all_properties(item, index),
                 custom_attrs={"data-testid": "toggle-show-all-properties-button"},
             )
@@ -134,6 +136,14 @@ def _search_results_item(
     if options.render_append_fn:
         card_content.append(options.render_append_fn(item, index))
 
+    # give every card the height of a single-line snippet, so that the list reads
+    # as an even stack: vertical card padding + vstack gap + title and preview row
+    # (each 1.5em, the line height of the text they contain)
+    height: str | rx.Var[str] = "calc(2 * var(--card-padding) + var(--space-3) + 3em)"
+    if options.enable_show_all_properties:
+        # ... unless the item is expanded, which is meant to reveal every property
+        height = rx.cond(item.show_all_properties, "auto", height)
+
     return rx.card(
         rx.hstack(
             *card_content,
@@ -141,7 +151,11 @@ def _search_results_item(
         ),
         class_name="search-result-card",
         custom_attrs={"data-testid": f"search-result-{item.identifier}"},
-        style=rx.Style(width="100%", flex="1 0 auto", min_height="0"),
+        style=rx.Style(
+            width="100%",
+            flex="0 0 auto",
+            height=height,
+        ),
     )
 
 
@@ -173,8 +187,6 @@ def search_results_summary(summary_text: rx.Var[str]) -> rx.Component:
     return rx.text(
         summary_text,
         style=rx.Style(
-            color="var(--gray-12)",
-            fontWeight="var(--font-weight-bold)",
             margin="var(--space-4)",
             userSelect="none",
         ),

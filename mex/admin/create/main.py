@@ -79,8 +79,10 @@ def discard_draft_button() -> rx.Component:
             rx.alert_dialog.trigger(
                 rx.button(
                     CreateState.label_discard_draft_button,
+                    size="3",
                     color_scheme="tomato",
                     variant="surface",
+                    style=rx.Style(margin="var(--line-height-1) 0"),
                 ),
                 custom_attrs={"data-testid": "discard-draft-dialog-button"},
             ),
@@ -92,11 +94,14 @@ def discard_draft_button() -> rx.Component:
                 ),
                 rx.flex(
                     rx.alert_dialog.cancel(
-                        rx.button(
-                            CreateState.label_discard_draft_dialog_cancel_button,
-                            variant="soft",
-                            color_scheme="gray",
+                        rx.flex(
+                            rx.button(
+                                CreateState.label_discard_draft_dialog_cancel_button,
+                                variant="soft",
+                                color_scheme="gray",
+                            ),
                         ),
+                        custom_attrs={"data-testid": "discard-draft-cancel-button"},
                     ),
                     rx.alert_dialog.action(
                         rx.button(

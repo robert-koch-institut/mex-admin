@@ -22,7 +22,7 @@ def test_login_logout(
 
     page.get_by_test_id("login-button").click()
     expect(page.get_by_test_id("nav-bar")).to_be_visible()
-    expect(page.get_by_test_id("search-results-component")).to_be_visible()
+    expect(page.get_by_test_id("start-page-body")).to_be_visible()
     page.screenshot(path="tests_login_test_main-test_login_logout-after-login.png")
 
     page.get_by_test_id("user-menu").click()
@@ -32,7 +32,7 @@ def test_login_logout(
     page.screenshot(path="tests_login_test_main-test_login_logout-after-logout.png")
     expect(page.get_by_test_id("login-button")).to_be_visible()
     expect(page.get_by_test_id("nav-bar")).not_to_be_visible()
-    expect(page.get_by_test_id("search-results-component")).not_to_be_visible()
+    expect(page.get_by_test_id("start-page-body")).not_to_be_visible()
 
 
 @pytest.mark.integration
@@ -67,7 +67,7 @@ def test_login_with_enter_key(
 
     password_input.press("Enter")
     expect(page.get_by_test_id("nav-bar")).to_be_visible()
-    expect(page.get_by_test_id("search-results-component")).to_be_visible()
+    expect(page.get_by_test_id("start-page-body")).to_be_visible()
     page.screenshot(
         path="tests_login_test_main-test_login_with_enter_key-after-login.png"
     )

@@ -9,8 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- dedicated start page with a single search input, reachable via the app logo
+- confirmation dialog before deleting or resetting rules
+
 ### Changes
 
+- replace fixed sleeps in the integration tests with `expect()` waits on real signals
+- thin out the page selection for searches with a lot of result pages
+- move dynamic reference filtering out of the search sidebar into the advanced search
+- picking a reference in the search dialog now closes the input and shows the title
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/1.5.0
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/1.4.0
 - use docker-compose for starting services in CI testing
@@ -20,8 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- removed version hover card on the app logo, use service dashboards instead
+
 ### Fixed
 
+- BREAKING: actually change MEX_BACKEND_API_USER_DATABASE to MEX_ADMIN_USER_DATABASE
+- stale search results no longer flash on the search page
+- search result cards now have a uniform fixed height
+- show loading and not-found states on edit and create pages instead of an empty page
 - Overflowing search results on consent page
 - point reflex api and deploy urls at `localhost` instead of `0.0.0.0`
 - fix the frontend and backend healthchecks in `compose.yaml`

@@ -8,6 +8,11 @@ from reflex.vars import Var
 
 from mex.admin.state import State
 
+# the most pages we offer in the page select, before we start thinning them out
+PAGE_SELECTION_LIMIT = 25
+# the multiple that thinned out pages are rounded down to, for legible page numbers
+PAGE_SELECTION_ROUNDING = 10
+
 
 class PaginationStateMixin(rx.State, mixin=True):
     """State-Mixin for pagination behavior."""
@@ -28,8 +33,28 @@ class PaginationStateMixin(rx.State, mixin=True):
 
     @rx.var
     def page_selection(self) -> list[str]:
-        """Return a list of total pages based on the number of results."""
-        return [f"{i + 1}" for i in range(self.max_page)]
+        """Return the selectable pages, thinned out when there are too many.
+
+        Up to `PAGE_SELECTION_LIMIT` pages are offered one by one. Beyond that, the
+        pages are spread evenly across that many steps and each step is rounded down
+        to a multiple of `PAGE_SELECTION_ROUNDING` (e.g. 90, 190, 290 for 2490 pages).
+        Rounding is skipped when the steps are shorter than the rounding itself,
+        because it would collapse them all onto the same handful of pages.
+        """
+        if self.max_page <= PAGE_SELECTION_LIMIT:
+            return [f"{i + 1}" for i in range(self.max_page)]
+        pages = {
+            i * self.max_page // PAGE_SELECTION_LIMIT
+            for i in range(1, PAGE_SELECTION_LIMIT + 1)
+        }
+        if self.max_page >= PAGE_SELECTION_LIMIT * PAGE_SELECTION_ROUNDING:
+            pages = {
+                max(page // PAGE_SELECTION_ROUNDING * PAGE_SELECTION_ROUNDING, 1)
+                for page in pages
+            }
+        # keep the current page selectable, so the select can display its own value
+        pages.add(self.current_page)
+        return [f"{page}" for page in sorted(pages)]
 
     @rx.var
     def disable_page_selection(self) -> bool:

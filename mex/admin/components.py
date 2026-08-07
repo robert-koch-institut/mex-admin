@@ -34,6 +34,10 @@ def render_title(title: EditorValue) -> rx.Component:
             fontWeight="var(--font-weight-bold)",
             overflow="hidden",
             whiteSpace="nowrap",
+            # allow shrinking below the intrinsic text width in flex containers,
+            # so that siblings like icons or badges don't get squashed
+            minWidth="0",
+            flexShrink="1",
         ),
     )
 
@@ -46,7 +50,7 @@ def render_additional_titles(titles: list[EditorValue]) -> rx.Component:
             rx.hover_card.trigger(
                 rx.badge(
                     State.label_additional_titles,
-                    style=rx.Style(margin="auto 0", cursor="default"),
+                    style=rx.Style(margin="auto 0", cursor="default", flexShrink="0"),
                     custom_attrs={"data-testid": "additional-titles-badge"},
                 ),
                 custom_attrs={"data-testid": "tooltip-additional-titles-trigger"},

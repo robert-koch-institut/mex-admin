@@ -1,5 +1,4 @@
 from collections.abc import Generator, Mapping, Sequence
-from importlib.metadata import version
 from urllib.parse import urlparse, urlunparse
 
 import reflex as rx
@@ -10,7 +9,6 @@ from mex.admin.label_var import label_var
 from mex.admin.locale_service import LocaleService
 from mex.admin.models import MergedLoginPerson, NavItem, User
 from mex.admin.utils import replace_url_params
-from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.models import MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
 
 
@@ -34,8 +32,8 @@ class State(rx.State):
     _nav_items: list[NavItem] = [
         NavItem(
             title="layout.nav_bar.search_navitem",
-            route_ids=["/", "/index"],
-            raw_path="/",
+            route_ids=["/search"],
+            raw_path="/search",
         ),
         NavItem(
             title="layout.nav_bar.advanced_search_navitem",
@@ -138,19 +136,6 @@ class State(rx.State):
         """Event hook for updating the navigation on page loads."""
         for nav_item in self._nav_items:
             nav_item.active = self.router.route_id in nav_item.route_ids
-
-    @rx.var(cache=True)
-    def admin_version(self) -> str:
-        """Return the version of mex-admin."""
-        return version("mex-admin")
-
-    @rx.var(cache=True, initial_value="N/A")
-    def backend_version(self) -> str:
-        """Return the version of mex-backend."""
-        connector = BackendApiConnector.get()
-        # TODO(ND): use proper connector method when available (stop-gap MX-1984)
-        response = connector.request("GET", "_system/check")
-        return str(response.get("version", "N/A"))
 
     @label_var(label_id="components.titles.additional_titles")
     def label_additional_titles(self) -> None:

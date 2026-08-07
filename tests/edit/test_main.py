@@ -144,25 +144,36 @@ def test_edit_page_delete_reset_button(
         expect(page_body).to_be_visible()
 
     _navigate(load_delete_reset_data[None])
-    expect(page.get_by_test_id("delete-reset-button")).not_to_be_visible()
+    expect(page.get_by_test_id("delete-reset-dialog-button")).not_to_be_visible()
 
     reset_id = load_delete_reset_data["reset"]
     _navigate(reset_id)
-    button = page.get_by_test_id("delete-reset-button")
-    expect(button).to_be_visible()
-    button.click()
+    dialog_button = page.get_by_test_id("delete-reset-dialog-button")
+    expect(dialog_button).to_be_visible()
+
+    # cancelling the dialog must close it and leave the rules untouched
+    dialog_button.click()
+    confirm_button = page.get_by_test_id("delete-reset-button")
+    expect(confirm_button).to_be_visible()
+    page.get_by_test_id("delete-reset-cancel-button").click()
+    expect(confirm_button).not_to_be_visible()
+    expect(dialog_button).to_be_visible()
+
+    dialog_button.click()
+    page.get_by_test_id("delete-reset-button").click()
     page.screenshot(
         path="tests_edit_test_main-test_edit_page_delete_reset_button-reset_clicked.png"
     )
     page.wait_for_url(f"{base_url}/item/{reset_id}")
     expect(page.locator(".editor-toast")).to_be_visible()
-    expect(page.get_by_test_id("delete-reset-button")).not_to_be_visible()
+    expect(page.get_by_test_id("delete-reset-dialog-button")).not_to_be_visible()
 
     delete_id = load_delete_reset_data["delete"]
     _navigate(delete_id)
-    button = page.get_by_test_id("delete-reset-button")
-    expect(button).to_be_visible()
-    button.click()
+    dialog_button = page.get_by_test_id("delete-reset-dialog-button")
+    expect(dialog_button).to_be_visible()
+    dialog_button.click()
+    page.get_by_test_id("delete-reset-button").click()
     page.screenshot(
         path="tests_edit_test_main-test_edit_page_delete_reset_button-delete_clicked.png"
     )
@@ -401,7 +412,6 @@ def test_edit_page_switch_roundtrip(
     submit.scroll_into_view_if_needed()
     submit.click()
     toast = page.locator(".editor-toast").first
-    expect(toast).to_be_visible()
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
     page.screenshot(path=f"{test_id}-toast_2.png")
@@ -731,7 +741,12 @@ def test_edit_page_additive_rule_roundtrip(
     submit_button = page.get_by_test_id("submit-button")
     submit_button.scroll_into_view_if_needed()
     submit_button.click()
-    page.wait_for_timeout(30000)  # wait for save operation
+
+    # wait for the save to land before reloading, or the write would be lost
+    toast = page.locator(".editor-toast").first
+    expect(toast).to_be_visible()
+    expect(toast).to_have_attribute("data-type", "success")
+
     page.reload()
 
     # check the rule input is still gone
@@ -888,7 +903,6 @@ def test_edit_page_submit_button_disabled_while_submitting(edit_page: Page) -> N
     expect(submit_button).to_be_disabled()
 
     # check if back in default state after saving
-    edit_page.wait_for_timeout(30000)
     expect(submit_button).to_have_text(initial_text)
     expect(submit_button).not_to_be_disabled()
 
@@ -997,8 +1011,10 @@ def test_edit_page_discard_changes_button_roundtrip(
     ).click()
     shortname_text = edit_page.get_by_test_id("additive-rule-shortName-0-text")
     shortname_text.fill("shortNameChanges")
-    # give the state some time to sync changes into local storage
-    edit_page.wait_for_timeout(1_000)
+    # the unload below is hard, so wait for the change to reach local storage first
+    edit_page.wait_for_function(
+        "() => Object.values(localStorage).some((v) => v.includes('shortNameChanges'))"
+    )
     navigate_back_url = edit_page.url
     # navigate away with a full page unload (no network needed), then come back
     edit_page.goto("about:blank")
@@ -1006,6 +1022,15 @@ def test_edit_page_discard_changes_button_roundtrip(
     edit_page.goto(navigate_back_url, wait_until="load")
     expect(discard_dialog_button).to_be_visible()
     expect(shortname_text).to_have_value("shortNameChanges")
+
+    # cancelling the dialog must close it and keep the changes
+    discard_dialog_button.click()
+    discard_button = edit_page.get_by_test_id("discard-changes-button")
+    expect(discard_button).to_be_visible()
+    edit_page.get_by_test_id("discard-changes-cancel-button").click()
+    expect(discard_button).not_to_be_visible()
+    expect(shortname_text).to_have_value("shortNameChanges")
+
     discard_dialog_button.click()
     edit_page.get_by_test_id("discard-changes-button").click()
     expect(
@@ -1023,17 +1048,35 @@ def test_superseded_by_backward_visibility(
     superseded_by_backward.is_visible()
     superseded_by_backward.scroll_into_view_if_needed()
     edit_page.reload()
-    edit_page.wait_for_timeout(20_000)
-    edit_page.screenshot(
-        path="tests_edit_test_main-test_superseded_by_backward_visibility.png"
-    )
 
     search_results = superseded_by_backward.get_by_test_id(
         re.compile(r"search-result-.*")
     )
     expect(search_results).to_have_count(2)
+    edit_page.screenshot(
+        path="tests_edit_test_main-test_superseded_by_backward_visibility.png"
+    )
 
     for item in load_superseded_by_entites:
         superseded_by_backward.get_by_test_id(
             f"search-result-{item.stableTargetId}"
         ).is_visible()
+
+
+@pytest.mark.integration
+def test_edit_page_renders_not_found_for_unknown_identifier(
+    base_url: str, edit_page: Page
+) -> None:
+    # navigating away from a loaded item must not leak its stem type into the
+    # next item, otherwise an unknown identifier opens an empty editor
+    page = edit_page
+    expect(page.get_by_test_id("edit-heading")).to_be_visible()
+
+    page.goto(f"{base_url}/item/{Identifier.generate()}")
+
+    load_error = page.get_by_test_id("edit-load-error")
+    expect(load_error).to_be_visible()
+    page.screenshot(
+        path="tests_edit_test_main-test_edit_page_renders_not_found_for_unknown_identifier.png"
+    )
+    expect(page.get_by_test_id("edit-heading")).not_to_be_visible()

@@ -10,6 +10,7 @@ from mex.admin.create.main import index as create_index
 from mex.admin.create.state import CreateState
 from mex.admin.edit.main import index as edit_index
 from mex.admin.edit.state import EditState
+from mex.admin.home.main import index as home_index
 from mex.admin.ingest.main import index as ingest_index
 from mex.admin.ingest.state import IngestState
 from mex.admin.login.main import ldap_login as login_ldap_index
@@ -35,8 +36,17 @@ app = rx.App(
     api_transformer=admin_api,
 )
 app.add_page(
-    search_index,
+    home_index,
     route="/",
+    title="MEx Admin",
+    on_load=[
+        State.check_mex_login,
+        State.load_nav,
+    ],
+)
+app.add_page(
+    search_index,
+    route="/search",
     title="MEx Admin | Search",
     on_load=[
         State.check_mex_login,
@@ -102,6 +112,7 @@ app.add_page(
         RuleState.refresh,
         EditState.show_submit_success_toast_on_redirect,
         RuleState.resolve_identifiers,
+        EditState.resolve_superseded_by_backward,
     ],
 )
 app.add_page(

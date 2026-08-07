@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Literal, cast
 import reflex as rx
 from pydantic import ValidationError
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import HTTPError, RequestException
 from starlette import status
 
 from mex.admin.exceptions import escalate_error
@@ -58,6 +58,8 @@ class RuleState(State, LocalStorageMixinState):
     _api_fields: list[EditorField] = []
 
     is_submitting: bool = False
+    is_loading: bool = True
+    load_error: Literal["not_found", "backend"] | None = None
     delete_reset_mode: Literal["delete", "reset"] | None = None
     item_title: list[EditorValue] = []
     fields: list[EditorField] = []
@@ -151,6 +153,13 @@ class RuleState(State, LocalStorageMixinState):
                             await resolve_editor_value(editor_value)
 
     @classmethod
+    def _error_payload(cls, exc: RequestException) -> str:
+        """Return the response body of a failed request, or the error itself."""
+        if exc.response is not None:
+            return exc.response.text
+        return str(exc)
+
+    @classmethod
     def _contains_any_rule(
         cls, rule_set: AnyRuleSetResponse | AnyRuleSetRequest
     ) -> bool:
@@ -198,21 +207,28 @@ class RuleState(State, LocalStorageMixinState):
         return rule_set_request_class()
 
     @rx.event
-    def refresh(self) -> Generator[EventSpec]:
+    def refresh(self) -> Generator[EventSpec | None]:
         """Refresh the edit or create page."""
         self.delete_reset_mode = None
         self.fields.clear()
         self.validation_messages.clear()
+        self.load_error = None
+        self.stem_type = None if self.item_id else self.stem_type
+        self.is_loading = True
+        yield None
 
         if not self.item_id and not self.draft_id:
+            self.is_loading = False
             yield rx.redirect(path=f"/create/{Identifier.generate()}")
             return
 
         try:
             extracted_items = self._get_extracted_items()
-        except HTTPError as exc:
+        except RequestException as exc:
+            self.is_loading = False
+            self.load_error = "backend"
             yield from escalate_error(
-                "backend", "error fetching extracted items", exc.response.text
+                "backend", "error fetching extracted items", self._error_payload(exc)
             )
             return
 
@@ -220,9 +236,19 @@ class RuleState(State, LocalStorageMixinState):
             self.stem_type = transform_models_to_stem_type(extracted_items)
         try:
             rule_set = self._get_rule_set()
-        except HTTPError as exc:
+        except RequestException as exc:
+            self.is_loading = False
+            # a missing rule-set for an item without any extracted items means
+            # there is nothing to edit under this identifier at all
+            self.load_error = (
+                "not_found"
+                if exc.response is not None
+                and exc.response.status_code == status.HTTP_404_NOT_FOUND
+                and not extracted_items
+                else "backend"
+            )
             yield from escalate_error(
-                "backend", "error fetching rule items", exc.response.text
+                "backend", "error fetching rule items", self._error_payload(exc)
             )
             return
 
@@ -263,6 +289,7 @@ class RuleState(State, LocalStorageMixinState):
             self.fields = loaded_fields
 
         self._api_fields = copy.deepcopy(loaded_fields)
+        self.is_loading = False
 
     def _send_rule_set_request(self, rule_set: AnyRuleSetRequest) -> AnyRuleSetResponse:
         """Send the rule set to the backend."""
@@ -418,15 +445,32 @@ class RuleState(State, LocalStorageMixinState):
         primary_source.editor_values[index].text = value
         yield RuleState.update_local_state  # type: ignore[misc]
 
+    async def _apply_identifier_value(
+        self, field_name: str, index: int, value: str
+    ) -> EditorValue:
+        """Set and resolve the identifier attribute on an additive editor value."""
+        primary_source = self._get_editable_primary_source_by_field_name(field_name)
+        editor_value = primary_source.editor_values[index]
+        editor_value.identifier = value
+        editor_value.href = f"/item/{value}"
+        await resolve_editor_value(editor_value)
+        return editor_value
+
     @rx.event
     async def set_identifier_value(
         self, field_name: str, index: int, value: str
     ) -> AsyncGenerator[EventSpec]:
         """Set the identifier attribute on an additive editor value."""
-        primary_source = self._get_editable_primary_source_by_field_name(field_name)
-        primary_source.editor_values[index].identifier = value
-        primary_source.editor_values[index].href = f"/item/{value}"
-        await resolve_editor_value(primary_source.editor_values[index])
+        await self._apply_identifier_value(field_name, index, value)
+        yield RuleState.update_local_state  # type: ignore[misc]
+
+    @rx.event
+    async def select_identifier_value(
+        self, field_name: str, index: int, value: str
+    ) -> AsyncGenerator[EventSpec]:
+        """Set the identifier on an additive editor value and stop editing it."""
+        editor_value = await self._apply_identifier_value(field_name, index, value)
+        editor_value.being_edited = False
         yield RuleState.update_local_state  # type: ignore[misc]
 
     @rx.event

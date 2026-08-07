@@ -246,7 +246,7 @@ def identifier_input(
             },
         ),
         search_reference_dialog(
-            on_identifier_selected=lambda x: RuleState.set_identifier_value(
+            on_identifier_selected=lambda x: RuleState.select_identifier_value(
                 field_translation.field.name, index, x
             ),  # type: ignore[operator]
             reference_types=field_translation.field.value_type,
@@ -379,7 +379,6 @@ def primary_source_name(
     return rx.card(
         rx.hstack(
             add_flex1(render_value(primary_source.name)),
-            rx.spacer(),
             rx.cond(
                 ~cast("rx.vars.BooleanVar", primary_source.input_config.allow_additive)
                 & (primary_source.input_config.allow_preventive),

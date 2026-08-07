@@ -27,6 +27,11 @@ def edit_title() -> rx.Component:
                 EditState.item_title,
                 render_value,
             ),
+            style=rx.Style(
+                flexWrap="nowrap",
+                whiteSpace="nowrap",
+                width="max-content",
+            ),
         ),
         custom_attrs={"data-testid": "edit-heading"},
         style=rx.Style(userSelect="none"),
@@ -66,24 +71,82 @@ def render_publish_target() -> rx.Component:
 
 
 def delete_reset_button() -> rx.Component:
-    """Render a button to delete or reset rules."""
+    """Render a button to show the delete or reset rules dialog."""
     return rx.cond(
         EditState.delete_reset_mode != None,  # noqa: E711
-        rx.button(
-            rx.cond(EditState.is_deleting, rx.spinner()),
-            rx.match(
-                EditState.delete_reset_mode,
-                ("reset", EditState.label_reset_rules_button),
-                ("delete", EditState.label_delete_rules_button),
-                "",
+        rx.alert_dialog.root(
+            rx.alert_dialog.trigger(
+                rx.button(
+                    rx.cond(EditState.is_deleting, rx.spinner()),
+                    rx.match(
+                        EditState.delete_reset_mode,
+                        ("reset", EditState.label_reset_rules_button),
+                        ("delete", EditState.label_delete_rules_button),
+                        "",
+                    ),
+                    disabled=EditState.is_deleting,
+                    size="3",
+                    color_scheme="tomato",
+                    variant="outline",
+                    style=rx.Style(margin="var(--line-height-1) 0"),
+                ),
+                custom_attrs={"data-testid": "delete-reset-dialog-button"},
             ),
-            disabled=EditState.is_deleting,
-            on_click=EditState.delete_reset,
-            size="3",
-            color_scheme="tomato",
-            variant="outline",
-            style=rx.Style(margin="var(--line-height-1) 0"),
-            custom_attrs={"data-testid": "delete-reset-button"},
+            rx.alert_dialog.content(
+                rx.alert_dialog.title(
+                    rx.match(
+                        EditState.delete_reset_mode,
+                        ("reset", EditState.label_reset_rules_dialog_title),
+                        ("delete", EditState.label_delete_rules_dialog_title),
+                        "",
+                    ),
+                ),
+                rx.alert_dialog.description(
+                    rx.match(
+                        EditState.delete_reset_mode,
+                        ("reset", EditState.label_reset_rules_dialog_description),
+                        ("delete", EditState.label_delete_rules_dialog_description),
+                        "",
+                    ),
+                    size="2",
+                ),
+                rx.flex(
+                    rx.alert_dialog.cancel(
+                        rx.flex(
+                            rx.button(
+                                EditState.label_delete_reset_dialog_cancel_button,
+                                variant="soft",
+                                color_scheme="gray",
+                            ),
+                        ),
+                        custom_attrs={"data-testid": "delete-reset-cancel-button"},
+                    ),
+                    rx.alert_dialog.action(
+                        rx.button(
+                            rx.match(
+                                EditState.delete_reset_mode,
+                                (
+                                    "reset",
+                                    EditState.label_reset_rules_dialog_confirm_button,
+                                ),
+                                (
+                                    "delete",
+                                    EditState.label_delete_rules_dialog_confirm_button,
+                                ),
+                                "",
+                            ),
+                            color_scheme="tomato",
+                            variant="solid",
+                            on_click=EditState.delete_reset,
+                            custom_attrs={"data-testid": "delete-reset-button"},
+                        ),
+                    ),
+                    spacing="3",
+                    margin_top="16px",
+                    justify="end",
+                ),
+                style=rx.Style(max_width=450),
+            ),
         ),
     )
 
@@ -111,11 +174,14 @@ def discard_changes_button() -> rx.Component:
                 ),
                 rx.flex(
                     rx.alert_dialog.cancel(
-                        rx.button(
-                            EditState.label_discard_changes_dialog_cancel_button,
-                            variant="soft",
-                            color_scheme="gray",
+                        rx.flex(
+                            rx.button(
+                                EditState.label_discard_changes_dialog_cancel_button,
+                                variant="soft",
+                                color_scheme="gray",
+                            ),
                         ),
+                        custom_attrs={"data-testid": "discard-changes-cancel-button"},
                     ),
                     rx.alert_dialog.action(
                         rx.button(
@@ -151,16 +217,20 @@ def superseding_by_backward_card() -> rx.Component:
         ),
         rx.card(
             rx.cond(
-                EditState.superseded_by_backward,
-                search_results_list(
+                EditState.is_loading_superseded_by_backward,
+                rx.spinner(),
+                rx.cond(
                     EditState.superseded_by_backward,
-                    SearchResultsListOptions(
-                        item_options=SearchResultsListItemOptions(
-                            enable_title_href=True
-                        )
+                    search_results_list(
+                        EditState.superseded_by_backward,
+                        SearchResultsListOptions(
+                            item_options=SearchResultsListItemOptions(
+                                enable_title_href=True
+                            )
+                        ),
                     ),
+                    rx.text(EditState.label_field_superseded_by_empty),
                 ),
-                rx.text(EditState.label_field_superseded_by_empty),
             ),
             style=flex3_style,
         ),
@@ -168,33 +238,81 @@ def superseding_by_backward_card() -> rx.Component:
     )
 
 
+def loading_spinner() -> rx.Component:
+    """Render a spinner while the item is being loaded."""
+    return rx.center(
+        rx.spinner(size="3"),
+        custom_attrs={"data-testid": "edit-loading"},
+        style=rx.Style(
+            flex="1",
+            marginTop="var(--space-6)",
+            width="100%",
+        ),
+    )
+
+
+def load_error_message() -> rx.Component:
+    """Render why the item could not be loaded, instead of an unusable editor."""
+    return rx.center(
+        rx.heading(
+            rx.match(
+                RuleState.load_error,
+                ("not_found", EditState.label_load_error_not_found),
+                ("backend", EditState.label_load_error_backend),
+                EditState.label_load_error_backend,
+            ),
+            size="6",
+            align="center",
+        ),
+        custom_attrs={"data-testid": "edit-load-error"},
+        style=rx.Style(
+            flex="1",
+            minHeight="60vh",
+            width="100%",
+        ),
+    )
+
+
+def editor() -> rx.Component:
+    """Render the editor for a successfully loaded item."""
+    return rx.vstack(
+        rule_page_header(
+            edit_title(),
+        ),
+        rx.hstack(
+            rx.spacer(),
+            render_publish_target(),
+            delete_reset_button(),
+            discard_changes_button(),
+            submit_button(),
+            align="stretch",
+            justify="start",
+        ),
+        rx.foreach(
+            RuleState.translated_fields,
+            editor_field,
+        ),
+        superseding_by_backward_card(),
+        validation_errors(),
+        align="stretch",
+        style=rx.Style(
+            flex="1",
+            marginTop="calc(2 * var(--space-6))",
+            overflow="auto",
+        ),
+    )
+
+
 def index() -> rx.Component:
     """Return the index for the edit component."""
     return page(
-        rx.vstack(
-            rule_page_header(
-                edit_title(),
-            ),
-            rx.hstack(
-                rx.spacer(),
-                render_publish_target(),
-                delete_reset_button(),
-                discard_changes_button(),
-                submit_button(),
-                align="stretch",
-                justify="start",
-            ),
-            rx.foreach(
-                RuleState.translated_fields,
-                editor_field,
-            ),
-            superseding_by_backward_card(),
-            validation_errors(),
-            align="stretch",
-            style=rx.Style(
-                flex="1",
-                marginTop="calc(2 * var(--space-6))",
-                overflow="auto",
+        rx.cond(
+            RuleState.is_loading,
+            loading_spinner(),
+            rx.cond(
+                RuleState.load_error != None,  # noqa: E711
+                load_error_message(),
+                editor(),
             ),
         ),
     )

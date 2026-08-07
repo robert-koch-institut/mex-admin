@@ -1,5 +1,3 @@
-import re
-
 import pytest
 from playwright.sync_api import Page, expect
 
@@ -10,7 +8,7 @@ from mex.common.models import (
     ExtractedPrimarySource,
     ExtractedResource,
 )
-from tests.conftest import build_pagination_regex, build_ui_label_regex
+from tests.conftest import build_search_summary_regex, build_ui_label_regex
 
 
 @pytest.fixture
@@ -19,7 +17,7 @@ def search_page(
     reader_user_page: Page,
 ) -> Page:
     page = reader_user_page
-    page.goto(base_url)
+    page.goto(f"{base_url}/search")
     page_body = page.get_by_test_id("page-body")
     expect(page_body).to_be_visible()
     return page
@@ -109,14 +107,11 @@ def test_search_input(search_page: Page) -> None:
     expect(search_input).to_be_visible()
     search_input.fill("Bioinformatics")
     search_input.press("Enter")
-    page.wait_for_timeout(10000)  # wait for loading
     search_results_summary = page.get_by_test_id("search-results-summary")
     expect(search_results_summary).to_be_visible()
+    expect(search_results_summary).to_have_text(build_search_summary_regex(1, 1, 1))
     page.screenshot(
         path="tests_search_test_main-test_search_input-on-search-input-1-found.png"
-    )
-    expect(page.get_by_test_id("search-results-summary")).to_have_text(
-        build_pagination_regex(1, 1)
     )
 
     search_input.fill("totally random search dPhGDHu3uiEcU6VNNs0UA74bBdubC3")
@@ -125,7 +120,7 @@ def test_search_input(search_page: Page) -> None:
         path="tests_search_test_main-test_search_input-on-search-input-0-found.png"
     )
     expect(page.get_by_test_id("search-results-summary")).to_have_text(
-        build_pagination_regex(0, 0)
+        build_search_summary_regex(0, 0, 0)
     )
 
 
@@ -142,7 +137,7 @@ def test_entity_types(search_page: Page) -> None:
     entity_types = page.get_by_test_id("entity-types")
     expect(entity_types).to_be_visible()
     entity_types.get_by_test_id("entity-type-Activity").click()
-    expect(page.get_by_text(build_pagination_regex(1, 1))).to_be_visible()
+    expect(page.get_by_text(build_search_summary_regex(1, 1, 1))).to_be_visible()
     page.screenshot(
         path="tests_search_test_main-test_entity_types-on-select-entity-1-found.png"
     )
@@ -164,10 +159,6 @@ def test_had_primary_sources(
     sidebar = page.get_by_test_id("search-sidebar")
     expect(sidebar).to_be_visible()
 
-    # activate tab for had primary source filtering
-    tab = page.get_by_test_id("reference-filter-strategy-had-primary-source-tab")
-    tab.click()
-
     # check primary sources are showing and functioning
     primary_sources = page.get_by_test_id("primary-source-filter")
     primary_sources.scroll_into_view_if_needed()
@@ -181,7 +172,7 @@ def test_had_primary_sources(
     primary_sources.get_by_text("Primary Source One").click()
     summary = page.get_by_test_id("search-results-summary")
     expect(summary).to_be_visible()
-    expect(summary).to_contain_text(build_pagination_regex(4, 4))
+    expect(summary).to_contain_text(build_search_summary_regex(1, 4, 4))
     page.screenshot(
         path="tests_search_test_main-test_had_primary_sources-on-select-primary-source-1-found.png"
     )
@@ -199,12 +190,12 @@ def test_load_search_params(
     expected_model = dummy_data_by_identifier_in_primary_source["cp-2"]
 
     page.goto(
-        f"{base_url}?q=help&page=1&entityType=ContactPoint&entityType=Consent"
-        f"&hadPrimarySource={expected_model.hadPrimarySource}&referenceFilterStrategy=had_primary_source"
+        f"{base_url}/search?q=help&page=1&entityType=ContactPoint&entityType=Consent"
+        f"&hadPrimarySource={expected_model.hadPrimarySource}"
     )
 
     # check 1 item is showing
-    expect(page.get_by_text(build_pagination_regex(1, 1))).to_be_visible()
+    expect(page.get_by_text(build_search_summary_regex(1, 1, 1))).to_be_visible()
     page.screenshot(
         path="tests_search_test_main-test_load_search_params-on-params-loaded.png"
     )
@@ -228,125 +219,6 @@ def test_load_search_params(
 
 
 @pytest.mark.integration
-def test_reference_filter_fields_for_entity_type(search_page: Page) -> None:
-    page = search_page
-
-    hps_tab = page.get_by_test_id("reference-filter-strategy-had-primary-source-tab")
-    hps_tab.click()
-    expect(page.get_by_test_id("primary-source-filter")).to_be_visible()
-
-    dyn_tab = page.get_by_test_id("reference-filter-strategy-dynamic-tab")
-    dyn_tab.click()
-    expect(page.get_by_test_id("reference-field-filter")).to_be_visible()
-
-    # select person entity
-    entity_types = page.get_by_test_id("entity-types")
-    entity_types.get_by_text("Person").click()
-
-    ref_filter_field = page.get_by_test_id("reference-field-filter-field")
-    ref_filter_field.click()
-
-    page.screenshot(
-        path="tests_search_test_main-test_reference_filter_fields_for_entity_type-on_field_click.png"
-    )
-
-    expected_person_fields = [
-        "Fachgebiet",
-        "Affiliation",
-        "Primärsystem",
-        "Stabiler Identifikator",
-    ]
-    for field in expected_person_fields:
-        select_item = page.get_by_role("option", name=field, exact=True)
-        expect(select_item).to_be_visible()
-
-
-@pytest.mark.parametrize(
-    ("locale_id", "expected_items"),
-    [
-        pytest.param(
-            "de",
-            [
-                "Affiliation",
-                "Autor*in",
-                "Datei",
-                "Fachgebiet",
-                "Kontakt",
-                "Nachfolge von",
-            ],
-            id="de",
-        ),
-        pytest.param(
-            "en",
-            [
-                "Affiliation",
-                "Access platform",
-                "Contact",
-                "Author",
-                "Files",
-                "Publishing institution",
-            ],
-            id="en",
-        ),
-    ],
-)
-@pytest.mark.integration
-def test_reference_filter_field_translation(
-    search_page: Page,
-    locale_id: str,
-    expected_items: list[str],
-) -> None:
-    page = search_page
-
-    # switch language to specified locale
-    lang_switcher = page.get_by_test_id("language-switcher")
-    lang_switcher.click()
-    page.get_by_test_id(f"language-switcher-menu-item-{locale_id}").click()
-
-    # check expected items existing
-    page.get_by_test_id("reference-field-filter-field").click()
-    for item in expected_items:
-        expect(page.get_by_role("option", name=item, exact=True)).to_be_visible()
-
-
-@pytest.mark.integration
-@pytest.mark.usefixtures("load_dummy_data")
-def test_reference_filter(
-    search_page: Page,
-    dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
-) -> None:
-    page = search_page
-
-    contact = dummy_data_by_identifier_in_primary_source["cp-1"]
-
-    # open select
-    page.get_by_test_id("reference-field-filter-field").click()
-    # click concat option
-    page.get_by_role("option", name=re.compile(r"Kontakt|Contact")).click()
-    # add invalid field
-    page.get_by_test_id("reference-field-filter-add-id").click()
-    page.get_by_test_id("reference-field-filter-id-0").fill("invalidIdentifier!")
-    # check for validation error msg
-    expect(
-        page.get_by_test_id("reference-field-filter").get_by_text("pattern")
-    ).to_be_visible()
-    page.screenshot(
-        path="tests_search_test_main-test_reference_filter-reference_filter_invalid_search.png"
-    )
-
-    # set correct contact identifier
-    page.get_by_test_id("reference-field-filter-id-0").fill(contact.stableTargetId)
-    expect(
-        page.get_by_test_id("reference-field-filter").get_by_text("pattern")
-    ).not_to_be_visible()
-
-    page.screenshot(
-        path="tests_search_test_main-test_reference_filter-reference_filter_valid_search.png"
-    )
-    expect(page.get_by_text(build_pagination_regex(3, 3))).to_be_visible()
-
-
-@pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
 def test_push_search_params(
     base_url: str,
@@ -359,8 +231,8 @@ def test_push_search_params(
     assert type(primary_source) is ExtractedPrimarySource
 
     # load page and verify url
-    page.goto(base_url)
-    page.wait_for_url(base_url)
+    page.goto(f"{base_url}/search")
+    page.wait_for_url(f"{base_url}/search")
 
     # select an entity type
     entity_types = page.get_by_test_id("entity-types")
@@ -384,9 +256,7 @@ def test_push_search_params(
     expect(page.get_by_test_id("search-results-component")).to_be_visible()
 
     # expect parameter change to be reflected in url
-    page.wait_for_url(
-        "**/?q=&page=1&entityType=Activity&referenceFilterStrategy=dynamic&referenceField="
-    )
+    page.wait_for_url("**/search?q=&page=1&entityType=Activity")
 
     # add a query string to the search constraints
     search_input = page.get_by_test_id("search-input")
@@ -398,14 +268,7 @@ def test_push_search_params(
     expect(page.get_by_test_id("search-results-component")).to_be_visible()
 
     # expect parameter change to be reflected in url
-    page.wait_for_url(
-        "**?q=Une+activit%C3%A9+active&page=1&entityType=Activity"
-        "&referenceFilterStrategy=dynamic&referenceField="
-    )
-
-    # activate tab for had primary source filtering
-    tab = page.get_by_test_id("reference-filter-strategy-had-primary-source-tab")
-    tab.click()
+    page.wait_for_url("**/search?q=Une+activit%C3%A9+active&page=1&entityType=Activity")
 
     # select a primary source
     primary_sources = page.get_by_test_id("primary-source-filter")
@@ -434,9 +297,8 @@ def test_push_search_params(
 
     # expect parameter change to be reflected in url
     page.wait_for_url(
-        "**/?q=Une+activit%C3%A9+active&page=1&entityType=Activity&"
-        "referenceFilterStrategy=had_primary_source&"
-        f"hadPrimarySource={primary_source.stableTargetId}&referenceField="
+        "**/search?q=Une+activit%C3%A9+active&page=1&entityType=Activity&"
+        f"hadPrimarySource={primary_source.stableTargetId}"
     )
 
 
@@ -449,7 +311,7 @@ def test_additional_titles_badge(
 ) -> None:
     # search for resources
     page = search_page
-    page.goto(f"{base_url}?entityType=Resource")
+    page.goto(f"{base_url}/search?entityType=Resource")
 
     resource_r2 = dummy_data_by_identifier_in_primary_source["r-2"]
     assert isinstance(resource_r2, ExtractedResource)

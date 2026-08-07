@@ -1,5 +1,6 @@
 import json
-from collections.abc import Generator
+import time
+from collections.abc import Generator, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -61,6 +62,31 @@ class RefFilter(BaseModel):
     values: list[str] = []
 
 
+def _build_reference_filters(refs: Sequence[RefFilter]) -> list[ReferenceFilter]:
+    """Build the backend reference filters for the given reference filter rows.
+
+    Blank values are dropped, because a freshly added value row is empty and
+    would otherwise be sent to the backend as an identifier to filter for.
+
+    Args:
+        refs: The reference filter rows as shown in the sidebar.
+
+    Returns:
+        Reference filters for all rows that have at least one identifier.
+    """
+    reference_filters = []
+    for ref in refs:
+        identifiers = [value for value in ref.values if value.strip()]
+        if identifiers:
+            reference_filters.append(
+                ReferenceFilter(
+                    field=FieldDescriptor.from_json(ref.field_descriptor_json).field,
+                    identifiers=identifiers,
+                )
+            )
+    return reference_filters
+
+
 class AdvancedSearchState(State, PaginationStateMixin):
     """State for the advanced search page."""
 
@@ -71,6 +97,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
     all_entity_types = [k.stemType for k in MERGED_MODEL_CLASSES]
 
     is_searching: bool = False
+    search_duration_seconds: float = 0.0
     search_results: list[SearchResult] = []
 
     @rx.var
@@ -123,19 +150,13 @@ class AdvancedSearchState(State, PaginationStateMixin):
         """Perform the search with the current filters."""
         entity_type = [ensure_prefix(x, "Merged") for x in self.entity_types]
         skip = self.limit * (self.current_page - 1)
-        references = [
-            ReferenceFilter(
-                field=FieldDescriptor.from_json(x.field_descriptor_json).field,
-                identifiers=x.values,
-            )
-            for x in self.refs
-            if x.values
-        ]
+        references = _build_reference_filters(self.refs)
 
         self.is_searching = True
         yield None
 
         connector = BackendApiConnector.get()
+        start_time = time.monotonic()
         try:
             fetch_result = connector.search_preview_items(
                 query_string=self.query or None,
@@ -145,6 +166,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
                 limit=self.limit,
             )
         except HTTPError as exc:
+            self.search_duration_seconds = time.monotonic() - start_time
             self.search_results = []
             self.total = 0
             self.current_page = 1
@@ -154,6 +176,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
                 exc.response.text,
             )
         else:
+            self.search_duration_seconds = time.monotonic() - start_time
             self.search_results = transform_models_to_search_results(fetch_result.items)
             self.total = fetch_result.total
 
@@ -204,6 +227,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
             RefFilter(
                 field_descriptor_json=field_descriptor_json,
                 field_label=" / ".join(field_data.labels),
+                field_value_types=sorted(field_data.value_types),
                 values=[],
             )
         )
@@ -231,7 +255,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
 
         ref.field_descriptor_json = field_descriptor_json
         ref.field_label = " / ".join(field_desc.labels)
-        ref.field_value_types = list(field_desc.value_types)
+        ref.field_value_types = sorted(field_desc.value_types)
         ref.values = []
 
     @rx.event
@@ -279,11 +303,24 @@ class AdvancedSearchState(State, PaginationStateMixin):
 
     @label_var(
         label_id="search.result_summary.format",
-        deps=["search_results_length", "total"],
+        deps=[
+            "search_results_length",
+            "total",
+            "current_page",
+            "limit",
+            "search_duration_seconds",
+        ],
     )
-    def label_result_summary_format(self) -> list[int]:
+    def label_result_summary_format(self) -> list[float]:
         """Label for result_summary.format."""
-        return [self.search_results_length, self.total]
+        # the range is 1-based and inclusive, but collapses to 0-0 without results
+        first_item = self.skip + 1 if self.search_results_length else 0
+        return [
+            first_item,
+            self.skip + self.search_results_length,
+            self.total,
+            self.search_duration_seconds,
+        ]
 
     @label_var(label_id="advanced_search.reference_filter.add_value")
     def label_reference_filter_add_value(self) -> None:

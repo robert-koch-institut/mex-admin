@@ -141,12 +141,12 @@ def render_draft_menu_item(dict_entry: tuple[str, UserDraft]) -> rx.Component:
                 icon_by_stem_type(
                     draft.stem_type,
                     size=22,
-                    style=rx.Style(color=rx.color("accent", 11)),
+                    style=rx.Style(color=rx.color("accent", 11), flexShrink="0"),
                 ),
                 render_title(draft.title),
             ),
             href=f"/create/{draft.identifier}",
-            style=rx.Style({"flex": "1"}),
+            style=rx.Style({"flex": "1", "minWidth": "0", "overflow": "hidden"}),
         ),
         custom_attrs={"data-testid": f"draft-{draft.identifier}-menu-item"},
     )
@@ -196,26 +196,21 @@ def nav_link(item: NavItem) -> rx.Component:
 
 
 def app_logo() -> rx.Component:
-    """Return the app logo with icon and label."""
-    return rx.hover_card.root(
-        rx.hover_card.trigger(
-            rx.hstack(
-                rx.icon("circuit-board", size=28),
-                rx.heading(
-                    "MEx Admin",
-                    weight="medium",
-                    style=rx.Style(userSelect="none"),
-                ),
-                custom_attrs={"data-testid": "app-logo"},
-            )
-        ),
-        rx.hover_card.content(
-            rx.vstack(
-                rx.code(f"mex-admin=={State.admin_version}", variant="outline"),
-                rx.code(f"mex-backend=={State.backend_version}", variant="outline"),
+    """Return the app logo with icon and label, linking to the start page."""
+    return rx.link(
+        rx.hstack(
+            rx.icon("circuit-board", size=28),
+            rx.heading(
+                "MEx Admin",
+                weight="medium",
+                style=rx.Style(userSelect="none"),
             ),
+            custom_attrs={"data-testid": "app-logo"},
         ),
-        open_delay=500,
+        href="/",
+        underline="none",
+        # keep the ambient colors, so linking does not change the logo's looks
+        style=rx.Style(color="inherit"),
     )
 
 

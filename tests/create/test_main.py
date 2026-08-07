@@ -146,14 +146,12 @@ def test_create_page_submit_item(create_page: Page) -> None:
 
     submit_button = page.get_by_test_id("submit-button")
     submit_button.click()
-    page.wait_for_timeout(30_000)
-    page.screenshot(
-        path="tests_create_test_main-test_edit_page_save_item_input_submit_pressed.png"
-    )
-
     toast = page.locator(".editor-toast").first
     expect(toast).to_be_visible()
     expect(toast).to_have_attribute("data-type", "success")
+    page.screenshot(
+        path="tests_create_test_main-test_edit_page_save_item_input_submit_pressed.png"
+    )
 
     connector = BackendApiConnector.get()
     result = connector.fetch_merged_items(query_string="Test01234567")
@@ -190,13 +188,12 @@ def test_language_switcher(
     create_page.get_by_test_id(
         re.compile(r"value-label-select-item-(.+)-Resource")
     ).click()
-    create_page.wait_for_timeout(20000)
-    create_page.screenshot(
-        path=f"tests_create_test_main-test_language_switcher-resource_selected-{locale_id}.png"
-    )
     # find the accessPlatform field label and check the text
     field_access_platform = create_page.get_by_test_id("field-accessPlatform-name")
     expect(field_access_platform).to_have_text(expected_access_platform_field_label)
+    create_page.screenshot(
+        path=f"tests_create_test_main-test_language_switcher-resource_selected-{locale_id}.png"
+    )
 
 
 @pytest.mark.integration
@@ -224,9 +221,15 @@ def test_search_reference_dialog(
     expect(
         create_page.get_by_test_id(f"{dialog_prefix}-query-input")
     ).not_to_be_visible()
+    # selecting a reference closes the edit mode and shows the resolved title
     expect(
         field_contact.get_by_test_id("additive-rule-contact-0-identifier")
-    ).to_have_value(ou.stableTargetId)
+    ).not_to_be_visible()
+    contact_value = field_contact.get_by_test_id("additive-rule-contact-0")
+    expect(contact_value).to_contain_text("OU1")
+    expect(contact_value.get_by_role("link")).to_have_attribute(
+        "href", f"/item/{ou.stableTargetId}"
+    )
 
     field_uic = create_page.get_by_test_id("field-unitInCharge")
     field_uic.get_by_test_id(
@@ -322,8 +325,6 @@ def test_logout_unsaved_changes_dialog_on_draft_logout_normal(
     expect(page.get_by_test_id("draft-menu-trigger")).to_be_visible()
     page.get_by_test_id("discard-draft-dialog-button").click()
     page.get_by_test_id("discard-draft-button").click()
-    # wait some time to sync local storages
-    page.wait_for_timeout(30000)
     expect(page.get_by_test_id("draft-menu-trigger")).not_to_be_visible()
     _screenshot("changes_removed")
 

@@ -11,20 +11,14 @@ msgstr "Hier Suchen..."
 msgid "search.entitytype_filter.title"
 msgstr "Entitätstyp"
 
-msgid "search.reference_filter.dynamic_tab"
-msgstr "Dynamisch"
-
-msgid "search.reference_filter.primarysource_tab"
+msgid "search.primarysource_filter.title"
 msgstr "Primärquelle"
 
 msgid "search.result_summary.format"
-msgstr "Zeige {0} von {1} Einträgen"
+msgstr "Zeige {0}-{1} von insgesamt {2} Einträgen. Gefunden in {3:.1f} Sekunden."
 
 msgid "search.reference_field_filter.placeholder"
 msgstr "Feld zum Filtern"
-
-msgid "search.reference_field_filter.add"
-msgstr "Filter hinzufügen"
 
 msgid "create.title.create_new"
 msgstr "Erzeugen von"
@@ -274,6 +268,27 @@ msgstr "Eintrag gelöscht"
 msgid "edit.delete_rules.success_toast_text"
 msgstr "Der Eintrag wurde erfolgreich gelöscht."
 
+msgid "edit.delete_rules_dialog.title"
+msgstr "Eintrag wirklich löschen?"
+
+msgid "edit.delete_rules_dialog.description"
+msgstr "Sind Sie sicher, dass Sie diesen Eintrag löschen möchten? Es ist nicht möglich das Löschen rückgängig zu machen."
+
+msgid "edit.delete_rules_dialog.confirm_button"
+msgstr "Eintrag löschen"
+
+msgid "edit.reset_rules_dialog.title"
+msgstr "Regeln wirklich zurücksetzen?"
+
+msgid "edit.reset_rules_dialog.description"
+msgstr "Sind Sie sicher, dass Sie alle Regeln dieses Eintrags zurücksetzen möchten? Es ist nicht möglich das Zurücksetzen rückgängig zu machen."
+
+msgid "edit.reset_rules_dialog.confirm_button"
+msgstr "Regeln zurücksetzen"
+
+msgid "edit.delete_reset_dialog.cancel_button"
+msgstr "Abbrechen"
+
 msgid "edit.reset_rules.success_toast_title"
 msgstr "Regeln zurückgesetzt"
 
@@ -288,6 +303,12 @@ msgstr "Zeigt die Entitäten, die auf diese Entität mit dem Feld 'ersetzt durch
 
 msgid "edit.field_supersededBy.empty"
 msgstr "Keine Dubletten vorhanden."
+
+msgid "edit.load_error.not_found"
+msgstr "Dieser Eintrag wurde nicht gefunden."
+
+msgid "edit.load_error.backend"
+msgstr "Dieser Eintrag konnte nicht geladen werden."
 
 msgid "edit.publish_targets"
 msgstr "Publizieren auf/in"

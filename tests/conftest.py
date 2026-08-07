@@ -107,6 +107,13 @@ def writer_user_credentials(settings: AdminSettings) -> tuple[str, SecretStr]:
     raise RuntimeError(msg)  # pragma: no cover
 
 
+def set_generous_timeouts(page: Page) -> None:
+    """Raise playwright's default timeouts to survive slow reflex page loads."""
+    page.set_default_navigation_timeout(50_000)
+    page.set_default_timeout(30_000)
+    expect.set_options(timeout=30_000)
+
+
 def prepare_page(
     page: Page,
     base_url: str,
@@ -118,9 +125,7 @@ def prepare_page(
     page.get_by_test_id("input-password").fill(credentials[1].get_secret_value())
     page.get_by_test_id("login-button").click()
     expect(page.get_by_test_id("page-body")).to_be_visible()
-    page.set_default_navigation_timeout(50_000)
-    page.set_default_timeout(30_000)
-    expect.set_options(timeout=30_000)
+    set_generous_timeouts(page)
     return page
 
 
@@ -348,6 +353,20 @@ def extracted_activity(
 
 def build_pagination_regex(current: int, total: int) -> Pattern[str]:
     return re.compile(rf"\w+\s{current}\s\w+\s{total}\s\w+")
+
+
+def build_search_summary_regex(first: int, last: int, total: int) -> Pattern[str]:
+    """Match the search page summary in any locale, ignoring the measured duration."""
+    service = LocaleService.get()
+    summaries = (
+        re.escape(
+            service.get_ui_label(locale.id, "search.result_summary.format").format(
+                first, last, total, 0.0
+            )
+        ).replace(r"0\.0", r"\d+\.\d+")
+        for locale in service.get_available_locales()
+    )
+    return re.compile(f"({'|'.join(summaries)})")
 
 
 def build_ui_label_regex(label_id: str) -> Pattern[str]:
