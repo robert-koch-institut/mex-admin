@@ -16,8 +16,13 @@ class DummyPaginationState(State, PaginationStateMixin):
     [
         (0, 50, 1, []),
         (50, 50, 1, ["1"]),
-        (1250, 50, 1, [f"{page}" for page in range(1, 26)]),
-        (1300, 50, 1, ["1", *[f"{page}" for page in range(2, 25)], "26"]),
+        (1000, 50, 1, [f"{page}" for page in range(1, 21)]),
+        (
+            1050,
+            50,
+            1,
+            [f"{page}" for page in [*range(1, 16), *range(17, 22)]],
+        ),
     ],
     ids=["no results", "single page", "exactly the limit", "just above the limit"],
 )
@@ -28,39 +33,53 @@ def test_page_selection_lists_every_page_up_to_the_limit(
     assert state.page_selection == expected
 
 
-def test_page_selection_rounds_down_to_the_nearest_tenth() -> None:
-    # 2490 pages in 25 steps is 99.6, rounded down to 90, 190, 290 ...
-    state = DummyPaginationState(total=124_500, limit=50, current_page=1)
+def test_page_selection_offers_the_head_percentiles_and_tail() -> None:
+    # 8000 pages, so 16% is page 10 + round(0.16 * (8000 - 10 - 5)) = 1288 and so on
+    state = DummyPaginationState(total=400_000, limit=50, current_page=1)
 
     assert state.page_selection == [
-        "1",
-        *[f"{page}" for page in range(90, 2491, 100)],
+        *[f"{page}" for page in range(1, 11)],
+        "1288",
+        "2565",
+        "4002",
+        "5280",
+        "6558",
+        *[f"{page}" for page in range(7996, 8001)],
     ]
 
 
-def test_page_selection_skips_rounding_when_it_would_collapse_the_steps() -> None:
-    # 100 pages in 25 steps is 4, so rounding down to tens would flatten the list
-    state = DummyPaginationState(total=5000, limit=50, current_page=1)
-
-    assert state.page_selection == ["1", *[f"{page}" for page in range(4, 101, 4)]]
-
-
 def test_page_selection_keeps_the_current_page_selectable() -> None:
-    state = DummyPaginationState(total=124_500, limit=50, current_page=91)
+    state = DummyPaginationState(total=400_000, limit=50, current_page=1289)
 
-    assert "91" in state.page_selection
-    assert state.page_selection[:3] == ["90", "91", "190"]
+    assert "1289" in state.page_selection
+    assert state.page_selection[10:13] == ["1288", "1289", "2565"]
 
 
 @pytest.mark.parametrize(
     "total",
-    [0, 50, 1250, 1300, 5000, 124_500, 5_000_000],
-    ids=["0", "1", "25", "26", "100", "2490", "100000 pages"],
+    [0, 50, 1000, 1050, 5000, 124_500, 5_000_000],
+    ids=["0", "1", "20", "21", "100", "2490", "100000 pages"],
 )
 def test_page_selection_stays_within_the_limit(total: int) -> None:
     state = DummyPaginationState(total=total, limit=50, current_page=1)
 
-    # the current page is offered on top of the evenly spread pages
-    assert len(state.page_selection) <= PAGE_SELECTION_LIMIT + 1
+    # the current page is one of the head pages, so it costs no extra slot here
+    assert len(state.page_selection) == min(state.max_page, PAGE_SELECTION_LIMIT)
     assert len(state.page_selection) == len(set(state.page_selection))
     assert all(1 <= int(page) <= state.max_page for page in state.page_selection)
+
+
+@pytest.mark.parametrize(
+    ("total", "current_page"),
+    [(5000, 42), (124_500, 1234), (5_000_000, 54_321)],
+    ids=["100 pages", "2490 pages", "100000 pages"],
+)
+def test_page_selection_offers_at_most_one_page_above_the_limit(
+    total: int, current_page: int
+) -> None:
+    state = DummyPaginationState(total=total, limit=50, current_page=current_page)
+
+    # the current page is offered on top of the head, percentile and tail pages
+    assert len(state.page_selection) <= PAGE_SELECTION_LIMIT + 1
+    assert len(state.page_selection) == len(set(state.page_selection))
+    assert f"{current_page}" in state.page_selection
