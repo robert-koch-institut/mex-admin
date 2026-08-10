@@ -38,10 +38,10 @@ def merge_title() -> rx.Component:
 
 
 def search_input(category: Literal["merged", "extracted"]) -> rx.Component:
-    """Render a search input and buttons for the results to refresh."""
-    return rx.vstack(
+    """Render a search input with an inlined button for the results to refresh."""
+    return rx.card(
         rx.form.root(
-            rx.card(
+            rx.hstack(
                 rx.input(
                     autofocus=True,
                     value=MergeState.query_strings[category],
@@ -50,25 +50,14 @@ def search_input(category: Literal["merged", "extracted"]) -> rx.Component:
                     name=f"query_string_{category}",
                     on_change=MergeState.handle_submit(category),  # type: ignore[operator]
                     placeholder=MergeState.label_search_input_placeholder,
-                    style=rx.Style(
-                        {
-                            "--text-field-selection-color": "",
-                            "--text-field-focus-color": "transparent",
-                            "--text-field-border-width": "calc(1px * var(--scaling))",
-                            "boxShadow": (
-                                "inset 0 0 0 var(--text-field-border-width) transparent"
-                            ),
-                        }
-                    ),
+                    width="100%",
                     tab_index=1,
                     type="text",
                     custom_attrs={"data-testid": f"search-input-{category}"},
                 ),
-            ),
-            rx.spacer(height="var(--space-2)"),
-            rx.hstack(
+                rx.spacer(),
                 rx.button(
-                    rx.icon("Search"),
+                    rx.icon("search"),
                     type="submit",
                     variant="surface",
                     disabled=MergeState.is_loading,
@@ -78,17 +67,16 @@ def search_input(category: Literal["merged", "extracted"]) -> rx.Component:
                     ],
                     custom_attrs={"data-testid": f"search-button-{category}"},
                 ),
-                justify="center",
                 align="center",
-                spacing="2",
-                margin="var(--space-4)",
+                width="100%",
             ),
         ),
         style=rx.Style(
-            width="100%",
             marginBottom="var(--space-4)",
-            align="center",
+            width="100%",
         ),
+        variant="ghost",
+        custom_attrs={"data-testid": f"search-{category}"},
     )
 
 
