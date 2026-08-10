@@ -160,7 +160,13 @@ def index() -> rx.Component:
     """Return the index for the merge and extracted search component."""
     return page(
         rx.vstack(
-            merge_title(),
+            rx.hstack(
+                merge_title(),
+                rx.spacer(),
+                submit_button(),
+                align="center",
+                style=rx.Style(width="100%"),
+            ),
             rx.hstack(
                 search_panel(category="merged"),
                 search_panel(category="extracted"),
@@ -168,14 +174,6 @@ def index() -> rx.Component:
                     width="100%",
                     align="center",
                     justify="center",
-                ),
-            ),
-            rx.box(
-                submit_button(),
-                style=rx.Style(
-                    justifyContent="center",
-                    display="flex",
-                    width="100%",
                 ),
             ),
             style=rx.Style(
