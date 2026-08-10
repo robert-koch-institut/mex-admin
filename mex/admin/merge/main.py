@@ -5,6 +5,11 @@ import reflex as rx
 from mex.admin.layout import page
 from mex.admin.merge.state import MergeState
 from mex.admin.models import SearchResult
+from mex.admin.pagination_component import (
+    PaginationButtonOptions,
+    PaginationOptions,
+    PaginationPageOptions,
+)
 from mex.admin.search_results_component import (
     SearchResultsComponentOptions,
     SearchResultsListItemOptions,
@@ -37,6 +42,32 @@ def merge_title() -> rx.Component:
     )
 
 
+def build_pagination_options(
+    category: Literal["merged", "extracted"],
+) -> PaginationOptions:
+    """Build the pagination options for one side of the merge page."""
+    refresh_category = [
+        MergeState.refresh([category]),  # type: ignore[operator]
+        MergeState.resolve_identifiers,
+    ]
+    return PaginationOptions(
+        PaginationButtonOptions(
+            MergeState.disable_previous_pages[category],
+            [MergeState.go_to_previous_page(category), *refresh_category],  # type: ignore[operator]
+        ),
+        PaginationButtonOptions(
+            MergeState.disable_next_pages[category],
+            [MergeState.go_to_next_page(category), *refresh_category],  # type: ignore[operator]
+        ),
+        PaginationPageOptions(
+            MergeState.current_pages[category],
+            MergeState.page_selections[category],
+            MergeState.disable_page_selections[category],
+            [MergeState.set_current_page(category), *refresh_category],  # type: ignore[operator]
+        ),
+    )
+
+
 def search_input(category: Literal["merged", "extracted"]) -> rx.Component:
     """Render a search input with an inlined button for the results to refresh."""
     return rx.card(
@@ -62,6 +93,7 @@ def search_input(category: Literal["merged", "extracted"]) -> rx.Component:
                     variant="surface",
                     disabled=MergeState.is_loading,
                     on_click=[
+                        MergeState.go_to_first_page(category),  # type: ignore[operator]
                         MergeState.refresh([category]),  # type: ignore[operator]
                         MergeState.resolve_identifiers,
                     ],
@@ -104,6 +136,7 @@ def search_panel(category: Literal["merged", "extracted"]) -> rx.Component:
     list_options = SearchResultsListOptions(
         item_options=SearchResultsListItemOptions(render_prepend_fn=render_checkbox)
     )
+    pagination_options = build_pagination_options(category)
 
     return rx.vstack(
         rx.heading(
@@ -127,6 +160,7 @@ def search_panel(category: Literal["merged", "extracted"]) -> rx.Component:
                     SearchResultsComponentOptions(
                         summary_text=MergeState.label_result_summary_format_merged,
                         list_options=list_options,
+                        pagination_options=pagination_options,
                     ),
                 ),
                 search_results_component(
@@ -134,13 +168,16 @@ def search_panel(category: Literal["merged", "extracted"]) -> rx.Component:
                     SearchResultsComponentOptions(
                         summary_text=MergeState.label_result_summary_format_extracted,
                         list_options=list_options,
+                        pagination_options=pagination_options,
                     ),
                 ),
             ),
             custom_attrs={"data-testid": f"{category}-search-results-container"},
         ),
         align="stretch",
-        style=rx.Style(width="50%", margin="var(--space-4)"),
+        # `minWidth` lets the panel shrink below the width of its widest result,
+        # so the two panels always share the row instead of overflowing it
+        style=rx.Style(flex="1", minWidth="0"),
     )
 
 
@@ -153,22 +190,17 @@ def index() -> rx.Component:
                 rx.spacer(),
                 submit_button(),
                 align="center",
-                style=rx.Style(width="100%"),
+                width="100%",
             ),
             rx.hstack(
                 search_panel(category="merged"),
                 search_panel(category="extracted"),
-                style=rx.Style(
-                    width="100%",
-                    align="center",
-                    justify="center",
-                ),
-            ),
-            style=rx.Style(
+                align="start",
+                spacing="4",
                 width="100%",
-                align="center",
-                justify="center",
-                flexGrow="1",
             ),
+            align="stretch",
+            spacing="4",
+            style=rx.Style(flex="1", minWidth="0"),
         ),
     )

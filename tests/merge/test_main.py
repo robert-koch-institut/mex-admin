@@ -79,6 +79,42 @@ def test_entity_type_select_filters_both_sides(merge_page: Page) -> None:
 
 
 @pytest.mark.integration
+@pytest.mark.usefixtures("load_pagination_dummy_data")
+def test_pagination(merge_page: Page) -> None:
+    page = merge_page
+    select_entity_type(page, "ContactPoint")
+
+    # both sides paginate on their own, so each starts on page 1 of 102 items
+    for category in ("merged", "extracted"):
+        container = page.get_by_test_id(f"{category}-search-results-container")
+        previous_button = container.get_by_test_id("pagination-previous-button")
+        next_button = container.get_by_test_id("pagination-next-button")
+        page_select = container.get_by_test_id("pagination-page-select")
+        page_select.scroll_into_view_if_needed()
+
+        expect(page_select).to_have_text("1")
+        expect(previous_button).to_be_disabled()
+        expect(next_button).to_be_enabled()
+        expect_summary(container, 1, 50, 102)
+
+        next_button.click()
+        expect(page_select).to_have_text("2")
+        expect(previous_button).to_be_enabled()
+        expect_summary(container, 51, 100, 102)
+
+        next_button.click()
+        expect(page_select).to_have_text("3")
+        expect(next_button).to_be_disabled()
+        expect_summary(container, 101, 102, 102)
+
+        previous_button.click()
+        expect(page_select).to_have_text("2")
+        expect_summary(container, 51, 100, 102)
+
+    page.screenshot(path="tests_merge_test_main-test_pagination.png")
+
+
+@pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
 def test_search_input_merged(merge_page: Page) -> None:
     page = merge_page
