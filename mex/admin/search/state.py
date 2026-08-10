@@ -254,11 +254,3 @@ class SearchState(State, PaginationStateMixin):
             self.total,
             self.search_duration_seconds,
         ]
-
-
-full_refresh = [
-    SearchState.go_to_first_page,
-    SearchState.push_search_params,
-    SearchState.refresh,
-    SearchState.resolve_identifiers,
-]
