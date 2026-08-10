@@ -93,13 +93,6 @@ def test_search_input_merged(merge_page: Page) -> None:
         path="tests_merge_items_test_main-test_merged_search_input-on-search-input-1-found.png"
     )
 
-    # check merged clear button is working
-    page.get_by_test_id("clear-button-merged").click()
-    assert page.get_by_test_id("search-input-merged").input_value() == ""
-    page.screenshot(
-        path="tests_merge_items_test_main-test_merged_search_input-clear-input.png"
-    )
-
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
@@ -116,13 +109,6 @@ def test_search_input_extracted(merge_page: Page) -> None:
     expect_pagination(extracted_results, 1, 1)
     page.screenshot(
         path="tests_merge_items_test_main-test_extracted_search_input-on-search-input-1-found.png"
-    )
-
-    # check extracted clear button is working
-    page.get_by_test_id("clear-button-extracted").click()
-    assert page.get_by_test_id("search-input-extracted").input_value() == ""
-    page.screenshot(
-        path="tests_merge_items_test_main-test_extracted_search_input-clear-input.png"
     )
 
 

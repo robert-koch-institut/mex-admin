@@ -83,18 +83,6 @@ class MergeState(State):
         """Set the stem type to the first available one in alphabetical order."""
         self.stem_type = self.value_label_stem_types[0].value
 
-    @rx.event
-    def clear_input(self, category: Literal["merged", "extracted"]) -> None:
-        """Clear the merged or extracted search input and reset the results."""
-        self.query_strings[category] = ""
-        self.selected_items[category] = None
-        self.results_count[category] = 0
-        self.total_count[category] = 0
-        if category == "merged":
-            self.results_merged = []
-        else:
-            self.results_extracted = []
-
     @rx.event(background=True)
     async def resolve_identifiers(self) -> None:
         """Resolve identifiers to human readable display values."""
@@ -216,10 +204,6 @@ class MergeState(State):
     def label_search_title_extracted(self) -> list[str]:
         """Label for search.title_merged."""
         return ["extracted"]
-
-    @label_var(label_id="merge.search.clear_button")
-    def label_search_clear_button(self) -> None:
-        """Label for search.clear_button."""
 
     @label_var(label_id="merge.title.merge_items")
     def label_title_merge_items(self) -> None:

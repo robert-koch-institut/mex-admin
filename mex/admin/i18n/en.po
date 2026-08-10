@@ -101,9 +101,6 @@ msgstr "Search here..."
 msgid "merge.search.title_format"
 msgstr "Search {0} items"
 
-msgid "merge.search.clear_button"
-msgstr "Clear"
-
 msgid "merge.title.merge_items"
 msgstr "Merge items of type"
 

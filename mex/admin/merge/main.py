@@ -68,13 +68,6 @@ def search_input(category: Literal["merged", "extracted"]) -> rx.Component:
             rx.spacer(height="var(--space-2)"),
             rx.hstack(
                 rx.button(
-                    "Clear",
-                    variant="surface",
-                    disabled=MergeState.is_loading,
-                    on_click=MergeState.clear_input(category),  # type: ignore[operator]
-                    custom_attrs={"data-testid": f"clear-button-{category}"},
-                ),
-                rx.button(
                     rx.icon("Search"),
                     type="submit",
                     variant="surface",
