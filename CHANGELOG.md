@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- prioritize the first 10 pages in the pagination drop-down
+
 ### Deprecated
 
 ### Removed
