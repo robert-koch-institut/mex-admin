@@ -90,7 +90,7 @@ msgid "ingest.toast_success.message_format"
 msgstr "{} was ingested successfully."
 
 msgid "merge.result_summary.format"
-msgstr "Showing {0} of {1} items"
+msgstr "Showing items {0}-{1} of {2} total. Took {3:.1f} seconds."
 
 msgid "merge.submit_button"
 msgstr "Submit merge"

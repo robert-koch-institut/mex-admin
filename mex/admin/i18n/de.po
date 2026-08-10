@@ -90,7 +90,7 @@ msgid "ingest.toast_success.message_format"
 msgstr "{} wurde erfolgreich aufgenommen."
 
 msgid "merge.result_summary.format"
-msgstr "Zeige {0} von {1} Einträgen"
+msgstr "Zeige {0}-{1} von insgesamt {2} Einträgen. Gefunden in {3:.1f} Sekunden."
 
 msgid "merge.submit_button"
 msgstr "Zusammenführung einreichen"

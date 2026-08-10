@@ -8,7 +8,7 @@ from mex.common.models import (
     ExtractedContactPoint,
     ExtractedResource,
 )
-from tests.conftest import build_pagination_regex, build_ui_label_regex
+from tests.conftest import build_search_summary_regex, build_ui_label_regex
 
 
 @pytest.fixture
@@ -31,11 +31,13 @@ def select_entity_type(page: Page, stem_type: str) -> None:
     ).click()
 
 
-def expect_pagination(container: Locator, current: int, total: int) -> None:
-    """Expect the result summary of the given container to show these counts."""
+def expect_summary(container: Locator, first: int, last: int, total: int) -> None:
+    """Expect the detailed result summary of the container to show these counts."""
     expect(
         container.get_by_test_id("search-results-summary").get_by_text(
-            build_pagination_regex(current, total)
+            build_search_summary_regex(
+                first, last, total, "merge.result_summary.format"
+            )
         )
     ).to_be_visible()
 
@@ -67,13 +69,13 @@ def test_entity_type_select_filters_both_sides(merge_page: Page) -> None:
 
     # selecting an entity type filters the merged and the extracted side
     select_entity_type(page, "ContactPoint")
-    expect_pagination(merged_results, 2, 2)
-    expect_pagination(extracted_results, 2, 2)
+    expect_summary(merged_results, 1, 2, 2)
+    expect_summary(extracted_results, 1, 2, 2)
 
     # switching the entity type filters both sides again
     select_entity_type(page, "OrganizationalUnit")
-    expect_pagination(merged_results, 1, 1)
-    expect_pagination(extracted_results, 1, 1)
+    expect_summary(merged_results, 1, 1, 1)
+    expect_summary(extracted_results, 1, 1, 1)
 
 
 @pytest.mark.integration
@@ -88,7 +90,7 @@ def test_search_input_merged(merge_page: Page) -> None:
     search_input_merged.fill("Unit 1")
     select_entity_type(page, "OrganizationalUnit")
     page.get_by_test_id("search-button-merged").click()
-    expect_pagination(merged_results, 1, 1)
+    expect_summary(merged_results, 1, 1, 1)
     page.screenshot(
         path="tests_merge_items_test_main-test_merged_search_input-on-search-input-1-found.png"
     )
@@ -106,7 +108,7 @@ def test_search_input_extracted(merge_page: Page) -> None:
     search_input_extracted.fill("Unit 1")
     select_entity_type(page, "OrganizationalUnit")
     page.get_by_test_id("search-button-extracted").click()
-    expect_pagination(extracted_results, 1, 1)
+    expect_summary(extracted_results, 1, 1, 1)
     page.screenshot(
         path="tests_merge_items_test_main-test_extracted_search_input-on-search-input-1-found.png"
     )
@@ -127,7 +129,7 @@ def test_select_result_extracted(
     search_input_extracted.fill("contact")
     select_entity_type(page, "ContactPoint")
     page.get_by_test_id("search-button-extracted").click()
-    expect_pagination(extracted_results, 2, 2)
+    expect_summary(extracted_results, 1, 2, 2)
     contact_point_1 = dummy_data_by_identifier_in_primary_source["cp-1"]
     result = extracted_results.get_by_test_id(
         f"search-result-{contact_point_1.identifier}"
@@ -155,7 +157,7 @@ def test_select_result_merged(
     search_input_merged.fill("contact")
     select_entity_type(page, "ContactPoint")
     page.get_by_test_id("search-button-merged").click()
-    expect_pagination(merged_results, 2, 2)
+    expect_summary(merged_results, 1, 2, 2)
     contact_point_1 = dummy_data_by_identifier_in_primary_source["cp-1"]
     result = merged_results.get_by_test_id(
         f"search-result-{contact_point_1.stableTargetId}"
@@ -183,7 +185,7 @@ def test_resolves_identifier(
 
     page.get_by_test_id("search-button-extracted").click()
     extracted_results = page.get_by_test_id("extracted-search-results-container")
-    expect_pagination(extracted_results, 1, 1)
+    expect_summary(extracted_results, 1, 1, 1)
     page.screenshot(path="tests_merge_test_main-test_resolves_identifier.png")
     result = extracted_results.get_by_test_id(f"search-result-{activity_1.identifier}")
     email = result.get_by_text(f"{contact_point_1.email[0]}")

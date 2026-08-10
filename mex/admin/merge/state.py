@@ -1,3 +1,4 @@
+import time
 from collections.abc import Generator, Iterable
 from typing import Literal
 
@@ -36,6 +37,10 @@ class MergeState(State):
     total_count: dict[str, int] = {
         "merged": 0,
         "extracted": 0,
+    }
+    search_duration_seconds: dict[str, float] = {
+        "merged": 0.0,
+        "extracted": 0.0,
     }
     selected_items: dict[str, int | None] = {
         "merged": None,
@@ -112,6 +117,7 @@ class MergeState(State):
         entity_type = [ensure_prefix(self.stem_type, "Merged")]
         self.is_loading = True
         yield None
+        start_time = time.monotonic()
         try:
             response = connector.fetch_preview_items(
                 query_string=self.query_strings["merged"],
@@ -119,6 +125,7 @@ class MergeState(State):
                 limit=self.limit,
             )
         except HTTPError as exc:
+            self.search_duration_seconds["merged"] = time.monotonic() - start_time
             self.is_loading = False
             self.results_merged = []
             self.results_count["merged"] = 0
@@ -128,6 +135,7 @@ class MergeState(State):
                 "backend", "error fetching merged items", exc.response.text
             )
         else:
+            self.search_duration_seconds["merged"] = time.monotonic() - start_time
             self.is_loading = False
             self.results_merged = transform_models_to_search_results(response.items)
             self.results_count["merged"] = len(self.results_merged)
@@ -140,6 +148,7 @@ class MergeState(State):
         self.results_extracted = self.results_extracted
         self.is_loading = True
         yield None
+        start_time = time.monotonic()
         try:
             response = connector.fetch_extracted_items(
                 query_string=self.query_strings["extracted"],
@@ -147,6 +156,7 @@ class MergeState(State):
                 limit=self.limit,
             )
         except HTTPError as exc:
+            self.search_duration_seconds["extracted"] = time.monotonic() - start_time
             self.is_loading = False
             self.results_extracted = []
             self.results_count["extracted"] = 0
@@ -156,6 +166,7 @@ class MergeState(State):
                 "backend", "error fetching extracted items", exc.response.text
             )
         else:
+            self.search_duration_seconds["extracted"] = time.monotonic() - start_time
             self.is_loading = False
             self.results_extracted = transform_models_to_search_results(response.items)
             self.results_count["extracted"] = len(self.results_extracted)
@@ -173,19 +184,32 @@ class MergeState(State):
             duration=5000,
         )
 
-    @label_var(
-        label_id="merge.result_summary.format", deps=["results_count", "total_count"]
-    )
-    def label_result_summary_format_merged(self) -> list[int]:
-        """Label for result_summary.format."""
-        return [self.results_count["merged"], self.total_count["merged"]]
+    def _result_summary_args(
+        self, category: Literal["merged", "extracted"]
+    ) -> list[float]:
+        # the range is 1-based and inclusive, but collapses to 0-0 without results
+        return [
+            1 if self.results_count[category] else 0,
+            self.results_count[category],
+            self.total_count[category],
+            self.search_duration_seconds[category],
+        ]
 
     @label_var(
-        label_id="merge.result_summary.format", deps=["results_count", "total_count"]
+        label_id="merge.result_summary.format",
+        deps=["results_count", "total_count", "search_duration_seconds"],
     )
-    def label_result_summary_format_extracted(self) -> list[int]:
+    def label_result_summary_format_merged(self) -> list[float]:
         """Label for result_summary.format."""
-        return [self.results_count["extracted"], self.total_count["extracted"]]
+        return self._result_summary_args("merged")
+
+    @label_var(
+        label_id="merge.result_summary.format",
+        deps=["results_count", "total_count", "search_duration_seconds"],
+    )
+    def label_result_summary_format_extracted(self) -> list[float]:
+        """Label for result_summary.format."""
+        return self._result_summary_args("extracted")
 
     @label_var(label_id="merge.submit_button")
     def label_submit_button(self) -> None:
