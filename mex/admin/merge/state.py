@@ -7,10 +7,11 @@ from requests import HTTPError
 
 from mex.admin.exceptions import escalate_error
 from mex.admin.label_var import label_var
-from mex.admin.models import SearchResult, ValueLabelCheckboxItem
+from mex.admin.models import SearchResult
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
 from mex.admin.utils import resolve_editor_value
+from mex.admin.value_label_select import ValueLabelSelectItem
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.models import MERGED_MODEL_CLASSES
 from mex.common.transform import ensure_prefix
@@ -21,12 +22,7 @@ class MergeState(State):
 
     results_extracted: list[SearchResult] = []
     results_merged: list[SearchResult] = []
-    entity_types_merged: dict[str, bool] = {
-        k.stemType: False for k in MERGED_MODEL_CLASSES
-    }
-    entity_types_extracted: dict[str, bool] = {
-        k.stemType: False for k in MERGED_MODEL_CLASSES
-    }
+    stem_type: str = min(k.stemType for k in MERGED_MODEL_CLASSES)
     is_loading: bool = True
     limit: int = 50
     query_strings: dict[Literal["merged", "extracted"], str] = {
@@ -47,31 +43,17 @@ class MergeState(State):
     }
 
     @rx.var
-    def label_entity_types_merged(self) -> list[ValueLabelCheckboxItem]:
-        """Get entity_types_merged with value, label and checked."""
+    def value_label_stem_types(self) -> list[ValueLabelSelectItem]:
+        """Get the mergeable stem types with translation."""
         return sorted(
             [
-                ValueLabelCheckboxItem(
-                    label=self._locale_service.get_ui_label(self.current_locale, key),
-                    value=key,
-                    checked=self.entity_types_merged[key],
+                ValueLabelSelectItem(
+                    value=k.stemType,
+                    label=self._locale_service.get_ui_label(
+                        self.current_locale, k.stemType
+                    ),
                 )
-                for key in self.entity_types_merged
-            ],
-            key=lambda x: x.label,
-        )
-
-    @rx.var
-    def label_entity_types_extracted(self) -> list[ValueLabelCheckboxItem]:
-        """Get entity_types_extracted with value, label and checked."""
-        return sorted(
-            [
-                ValueLabelCheckboxItem(
-                    label=self._locale_service.get_ui_label(self.current_locale, key),
-                    value=key,
-                    checked=self.entity_types_extracted[key],
-                )
-                for key in self.entity_types_extracted
+                for k in MERGED_MODEL_CLASSES
             ],
             key=lambda x: x.label,
         )
@@ -92,22 +74,14 @@ class MergeState(State):
         self.query_strings[category] = form_data
 
     @rx.event
-    def set_entity_type_merged(
-        self,
-        index: str,
-        value: bool,  # noqa: FBT001
-    ) -> None:
-        """Set the entity type for filtering and refresh the merged results."""
-        self.entity_types_merged[index] = value
+    def set_stem_type(self, stem_type: str) -> None:
+        """Set the stem type both search panels are filtered by."""
+        self.stem_type = stem_type
 
     @rx.event
-    def set_entity_type_extracted(
-        self,
-        index: str,
-        value: bool,  # noqa: FBT001
-    ) -> None:
-        """Set the entity type for filtering and refresh the extracted results."""
-        self.entity_types_extracted[index] = value
+    def reset_stem_type(self) -> None:
+        """Set the stem type to the first available one in alphabetical order."""
+        self.stem_type = self.value_label_stem_types[0].value
 
     @rx.event
     def clear_input(self, category: Literal["merged", "extracted"]) -> None:
@@ -117,12 +91,8 @@ class MergeState(State):
         self.results_count[category] = 0
         self.total_count[category] = 0
         if category == "merged":
-            self.entity_types_merged = dict.fromkeys(self.entity_types_merged, False)
             self.results_merged = []
         else:
-            self.entity_types_extracted = dict.fromkeys(
-                self.entity_types_extracted, False
-            )
             self.results_extracted = []
 
     @rx.event(background=True)
@@ -151,9 +121,7 @@ class MergeState(State):
     def _refresh_merged(self) -> Generator[EventSpec | None]:
         """Refresh the search results for merged items."""
         connector = BackendApiConnector.get()
-        entity_type = [
-            ensure_prefix(k, "Merged") for k, v in self.entity_types_merged.items() if v
-        ]
+        entity_type = [ensure_prefix(self.stem_type, "Merged")]
         self.is_loading = True
         yield None
         try:
@@ -180,11 +148,7 @@ class MergeState(State):
     def _refresh_extracted(self) -> Generator[EventSpec | None]:
         """Refresh the search results for extracted items."""
         connector = BackendApiConnector.get()
-        entity_type = [
-            ensure_prefix(k, "Extracted")
-            for k, v in self.entity_types_extracted.items()
-            if v
-        ]
+        entity_type = [ensure_prefix(self.stem_type, "Extracted")]
         self.results_extracted = self.results_extracted
         self.is_loading = True
         yield None
@@ -257,6 +221,6 @@ class MergeState(State):
     def label_search_clear_button(self) -> None:
         """Label for search.clear_button."""
 
-    @label_var(label_id="merge.filter_entity_type.title")
-    def label_filter_entity_type_title(self) -> None:
-        """Label for filter_entity_type.title."""
+    @label_var(label_id="merge.title.merge_items")
+    def label_title_merge_items(self) -> None:
+        """Label for title.merge_items."""

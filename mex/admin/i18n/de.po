@@ -104,8 +104,8 @@ msgstr "Suche {0} Einträge"
 msgid "merge.search.clear_button"
 msgstr "Leeren"
 
-msgid "merge.filter_entity_type.title"
-msgstr "Filtern nach Entitätstyp"
+msgid "merge.title.merge_items"
+msgstr "Zusammenführen von Einträgen des Typs"
 
 msgid "rules.additive_rule.add_button_prefix"
 msgstr "Hinzufügen von"

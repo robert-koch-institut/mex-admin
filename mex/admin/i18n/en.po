@@ -104,8 +104,8 @@ msgstr "Search {0} items"
 msgid "merge.search.clear_button"
 msgstr "Clear"
 
-msgid "merge.filter_entity_type.title"
-msgstr "Filter by entity type"
+msgid "merge.title.merge_items"
+msgstr "Merge items of type"
 
 msgid "rules.additive_rule.add_button_prefix"
 msgstr "New"

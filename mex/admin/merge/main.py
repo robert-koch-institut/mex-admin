@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Literal
 
 import reflex as rx
 
@@ -11,70 +11,29 @@ from mex.admin.search_results_component import (
     SearchResultsListOptions,
     search_results_component,
 )
+from mex.admin.value_label_select import value_label_select
 
 
-def entity_type_choice_merged(choice: dict[str, Any]) -> rx.Component:
-    """Render a single checkbox for filtering by merged entity type."""
-    return rx.checkbox(
-        choice["label"],
-        checked=choice["checked"],
-        on_change=[
-            MergeState.set_entity_type_merged(choice["value"]),  # type: ignore[operator]
-            MergeState.refresh(["merged"]),  # type: ignore[operator]
-            MergeState.resolve_identifiers,
-        ],
-        disabled=MergeState.is_loading,
-        custom_attrs={"data-testid": f"merged-entity-type-{choice['value']}"},
-    )
-
-
-def entity_type_choice_extracted(choice: dict[str, Any]) -> rx.Component:
-    """Render a single checkbox for filtering by extracted entity type."""
-    return rx.checkbox(
-        choice["label"],
-        checked=choice["checked"],
-        on_change=[
-            MergeState.set_entity_type_extracted(choice["value"]),  # type: ignore[operator]
-            MergeState.refresh(["extracted"]),  # type: ignore[operator]
-            MergeState.resolve_identifiers,
-        ],
-        disabled=MergeState.is_loading,
-        custom_attrs={"data-testid": f"extracted-entity-type-{choice['value']}"},
-    )
-
-
-def entity_type_filter(category: Literal["merged", "extracted"]) -> rx.Component:
-    """Render checkboxes for filtering the search results by entity type."""
-    return rx.card(
-        rx.text(
-            MergeState.label_filter_entity_type_title,
-            margin_bottom="0.5em",
-            size="1",
+def merge_title() -> rx.Component:
+    """Return the title with a select for the entity type to merge."""
+    return rx.hstack(
+        rx.heading(
+            MergeState.label_title_merge_items,
+            style=rx.Style(userSelect="none"),
         ),
-        rx.scroll_area(
-            rx.flex(
-                rx.cond(
-                    category == "merged",
-                    rx.vstack(
-                        rx.foreach(
-                            MergeState.label_entity_types_merged,
-                            entity_type_choice_merged,
-                        ),
-                        custom_attrs={"data-testid": "entity-types-merged"},
-                    ),
-                    rx.vstack(
-                        rx.foreach(
-                            MergeState.label_entity_types_extracted,
-                            entity_type_choice_extracted,
-                        ),
-                        custom_attrs={"data-testid": "entity-types-extracted"},
-                    ),
-                ),
-            ),
-            type="always",
-            scrollbars="vertical",
-            style=rx.Style(height=90),
+        value_label_select(
+            MergeState.value_label_stem_types,
+            value=MergeState.stem_type,
+            on_change=[
+                MergeState.set_stem_type,
+                MergeState.refresh(["merged", "extracted"]),  # type: ignore[operator]
+                MergeState.resolve_identifiers,
+            ],
+            disabled=MergeState.is_loading,
+            custom_attrs={"data-testid": "entity-type-select"},
         ),
+        align="center",
+        custom_attrs={"data-testid": "merge-heading"},
     )
 
 
@@ -107,7 +66,6 @@ def search_input(category: Literal["merged", "extracted"]) -> rx.Component:
                 ),
             ),
             rx.spacer(height="var(--space-2)"),
-            entity_type_filter(category),
             rx.hstack(
                 rx.button(
                     "Clear",
@@ -172,10 +130,11 @@ def search_panel(category: Literal["merged", "extracted"]) -> rx.Component:
             if category == "merged"
             else MergeState.label_search_title_extracted,
             style=rx.Style(
-                whiteSpace="nowrap",
-                overflow="hidden",
+                userSelect="none",
+                fontWeight="normal",
                 width="100%",
             ),
+            as_="h2",
             custom_attrs={"data-testid": f"create-heading-{category}"},
         ),
         search_input(category),
@@ -208,6 +167,7 @@ def index() -> rx.Component:
     """Return the index for the merge and extracted search component."""
     return page(
         rx.vstack(
+            merge_title(),
             rx.hstack(
                 search_panel(category="merged"),
                 search_panel(category="extracted"),
