@@ -93,6 +93,11 @@ class MergeState(State):
         }
 
     @rx.var
+    def disable_submit_button(self) -> bool:
+        """Whether the merge can be submitted, which needs a selection on both sides."""
+        return None in self.selected_items.values()
+
+    @rx.var
     def value_label_stem_types(self) -> list[ValueLabelSelectItem]:
         """Get the mergeable stem types with translation."""
         return sorted(
@@ -251,15 +256,40 @@ class MergeState(State):
 
     @rx.event
     def submit_merge_items(self) -> Generator[EventSpec]:
-        """Submit merging of the items."""
-        yield rx.toast.error(
-            title="Not Implemented",
-            description="Item merging is not yet implemented.",
-            class_name="editor-toast",
-            close_button=True,
-            dismissible=True,
-            duration=5000,
-        )
+        """Submit merging the selected extracted item into the selected merged item."""
+        merged_index = self.selected_items["merged"]
+        extracted_index = self.selected_items["extracted"]
+        if merged_index is None or extracted_index is None:
+            # the submit button is disabled until both sides have a selection
+            return
+        keeper_identifier = self.results_merged[merged_index].identifier
+        goner_identifier = self.results_extracted[extracted_index].identifier
+        connector = BackendApiConnector.get()
+        try:
+            # TODO(ND): use the dedicated connector method once it is available
+            connector.request(
+                method="POST",
+                endpoint="merge",
+                payload={
+                    "gonerIdentifier": str(goner_identifier),
+                    "keeperIdentifier": str(keeper_identifier),
+                },
+            )
+        except HTTPError as exc:
+            yield from escalate_error(
+                "backend", "error merging items", exc.response.text
+            )
+        else:
+            yield rx.toast.success(
+                title=self.label_toast_success_title,
+                description=self.label_toast_success_message_format.format(
+                    goner_identifier, keeper_identifier
+                ),
+                class_name="editor-toast",
+                close_button=True,
+                dismissible=True,
+                duration=5000,
+            )
 
     def _result_summary_args(
         self, category: Literal["merged", "extracted"]
@@ -322,3 +352,11 @@ class MergeState(State):
     @label_var(label_id="merge.title.merge_items")
     def label_title_merge_items(self) -> None:
         """Label for title.merge_items."""
+
+    @label_var(label_id="merge.toast_success.title")
+    def label_toast_success_title(self) -> None:
+        """Label for toast_success.title."""
+
+    @label_var(label_id="merge.toast_success.message_format")
+    def label_toast_success_message_format(self) -> None:
+        """Label for toast_success.message_format."""

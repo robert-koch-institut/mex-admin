@@ -208,6 +208,36 @@ def test_select_result_merged(
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
+def test_submit_button_needs_both_selections(
+    merge_page: Page,
+    dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
+) -> None:
+    page = merge_page
+    submit_button = page.get_by_test_id("submit-button")
+    contact_point_1 = dummy_data_by_identifier_in_primary_source["cp-1"]
+
+    # without any selection there is nothing to merge
+    expect(submit_button).to_be_disabled()
+    select_entity_type(page, "ContactPoint")
+    expect(submit_button).to_be_disabled()
+
+    # selecting only the merged side is still not enough
+    merged_results = page.get_by_test_id("merged-search-results-container")
+    merged_results.get_by_test_id(
+        f"search-result-{contact_point_1.stableTargetId}"
+    ).get_by_role("checkbox").click()
+    expect(submit_button).to_be_disabled()
+
+    # only with a selection on both sides the merge can be submitted
+    extracted_results = page.get_by_test_id("extracted-search-results-container")
+    extracted_results.get_by_test_id(
+        f"search-result-{contact_point_1.identifier}"
+    ).get_by_role("checkbox").click()
+    expect(submit_button).to_be_enabled()
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_dummy_data")
 def test_resolves_identifier(
     merge_page: Page,
     dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],

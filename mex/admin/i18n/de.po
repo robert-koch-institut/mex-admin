@@ -104,6 +104,12 @@ msgstr "Suche {0} Einträge"
 msgid "merge.title.merge_items"
 msgstr "Zusammenführen von Einträgen des Typs"
 
+msgid "merge.toast_success.title"
+msgstr "Zusammengeführt"
+
+msgid "merge.toast_success.message_format"
+msgstr "{0} wurde in {1} zusammengeführt."
+
 msgid "rules.additive_rule.add_button_prefix"
 msgstr "Hinzufügen von"
 

@@ -104,6 +104,12 @@ msgstr "Search {0} items"
 msgid "merge.title.merge_items"
 msgstr "Merge items of type"
 
+msgid "merge.toast_success.title"
+msgstr "Merged"
+
+msgid "merge.toast_success.message_format"
+msgstr "{0} was merged into {1}."
+
 msgid "rules.additive_rule.add_button_prefix"
 msgstr "New"
 

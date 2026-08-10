@@ -118,6 +118,7 @@ def submit_button() -> rx.Component:
         MergeState.label_submit_button,
         color_scheme="jade",
         size="3",
+        disabled=MergeState.disable_submit_button,
         on_click=MergeState.submit_merge_items,
         style=rx.Style(margin="var(--line-height-1) 0"),
         custom_attrs={"data-testid": "submit-button"},
