@@ -8,10 +8,16 @@ from reflex.vars import Var
 
 from mex.admin.state import State
 
+# how many leading pages are always offered one by one
+PAGE_SELECTION_HEAD = 10
+# how many trailing pages are always offered one by one
+PAGE_SELECTION_TAIL = 5
+# the percentiles of the pages between head and tail that are offered as shortcuts
+PAGE_SELECTION_PERCENTILES = (0.16, 0.32, 0.50, 0.66, 0.82)
 # the most pages we offer in the page select, before we start thinning them out
-PAGE_SELECTION_LIMIT = 25
-# the multiple that thinned out pages are rounded down to, for legible page numbers
-PAGE_SELECTION_ROUNDING = 10
+PAGE_SELECTION_LIMIT = (
+    PAGE_SELECTION_HEAD + len(PAGE_SELECTION_PERCENTILES) + PAGE_SELECTION_TAIL
+)
 
 
 class PaginationStateMixin(rx.State, mixin=True):
@@ -35,25 +41,24 @@ class PaginationStateMixin(rx.State, mixin=True):
     def page_selection(self) -> list[str]:
         """Return the selectable pages, thinned out when there are too many.
 
-        Up to `PAGE_SELECTION_LIMIT` pages are offered one by one. Beyond that, the
-        pages are spread evenly across that many steps and each step is rounded down
-        to a multiple of `PAGE_SELECTION_ROUNDING` (e.g. 90, 190, 290 for 2490 pages).
-        Rounding is skipped when the steps are shorter than the rounding itself,
-        because it would collapse them all onto the same handful of pages.
+        Up to `PAGE_SELECTION_LIMIT` pages are offered one by one. Beyond that, only
+        the first `PAGE_SELECTION_HEAD` and the last `PAGE_SELECTION_TAIL` pages are
+        offered, plus one shortcut per entry in `PAGE_SELECTION_PERCENTILES` for the
+        pages in between (e.g. 1288, 2565, 4002, 5280, 6558 for 8000 pages).
         """
         if self.max_page <= PAGE_SELECTION_LIMIT:
             return [f"{i + 1}" for i in range(self.max_page)]
+        middle = self.max_page - PAGE_SELECTION_HEAD - PAGE_SELECTION_TAIL
         pages = {
-            i * self.max_page // PAGE_SELECTION_LIMIT
-            for i in range(1, PAGE_SELECTION_LIMIT + 1)
+            *range(1, PAGE_SELECTION_HEAD + 1),
+            *(
+                PAGE_SELECTION_HEAD + round(percentile * middle)
+                for percentile in PAGE_SELECTION_PERCENTILES
+            ),
+            *range(self.max_page - PAGE_SELECTION_TAIL + 1, self.max_page + 1),
+            # keep the current page selectable, so the select can display its own value
+            self.current_page,
         }
-        if self.max_page >= PAGE_SELECTION_LIMIT * PAGE_SELECTION_ROUNDING:
-            pages = {
-                max(page // PAGE_SELECTION_ROUNDING * PAGE_SELECTION_ROUNDING, 1)
-                for page in pages
-            }
-        # keep the current page selectable, so the select can display its own value
-        pages.add(self.current_page)
         return [f"{page}" for page in sorted(pages)]
 
     @rx.var
