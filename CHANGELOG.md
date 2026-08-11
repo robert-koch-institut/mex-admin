@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- added translation to advanced search entity type filter
+
 ### Changes
 
 - prioritize the first 10 pages in the pagination drop-down

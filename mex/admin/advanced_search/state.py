@@ -12,7 +12,7 @@ from requests import HTTPError
 from mex.admin.exceptions import escalate_error
 from mex.admin.fields import STRINGIFIED_TYPES_BY_FIELD_BY_CLASS_NAME
 from mex.admin.label_var import label_var
-from mex.admin.models import SearchResult
+from mex.admin.models import SearchResult, ValueLabelCheckboxItem
 from mex.admin.pagination_component import PaginationStateMixin
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
@@ -99,6 +99,21 @@ class AdvancedSearchState(State, PaginationStateMixin):
     is_searching: bool = False
     search_duration_seconds: float = 0.0
     search_results: list[SearchResult] = []
+
+    @rx.var
+    def label_entity_types(self) -> list[ValueLabelCheckboxItem]:
+        """Get entity types with value, label and checked."""
+        return sorted(
+            [
+                ValueLabelCheckboxItem(
+                    label=self._locale_service.get_ui_label(self.current_locale, key),
+                    value=key,
+                    checked=key in self.entity_types,
+                )
+                for key in self.all_entity_types
+            ],
+            key=lambda x: x.label,
+        )
 
     @rx.var
     def all_fields_for_entity_types(self) -> list[ValueLabelSelectItem]:
@@ -190,15 +205,6 @@ class AdvancedSearchState(State, PaginationStateMixin):
                 if preview.identifier and not preview.text:
                     async with self:
                         await resolve_editor_value(preview)
-
-    @rx.event
-    def set_query(self, query: str) -> None:
-        """Set the search query.
-
-        Args:
-            query: The search query string.
-        """
-        self.query = query
 
     @rx.event
     def on_query_form_submit(self, form_data: dict[str, Any]) -> None:

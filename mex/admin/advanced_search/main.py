@@ -3,6 +3,7 @@ import reflex as rx
 from mex.admin.advanced_search.state import AdvancedSearchState, RefFilter
 from mex.admin.component_option_helper import build_pagination_options
 from mex.admin.layout import page
+from mex.admin.models import ValueLabelCheckboxItem
 from mex.admin.search_reference_dialog import search_reference_dialog
 from mex.admin.search_results_component import (
     SearchResultsComponentOptions,
@@ -23,8 +24,8 @@ def filter_query() -> rx.Component:
                         default_value=AdvancedSearchState.query,
                         max_length=100,
                         name="query",
-                        on_blur=AdvancedSearchState.set_query,
                         placeholder=AdvancedSearchState.label_search_input_placeholder,
+                        type="text",
                         custom_attrs={"data-testid": "filter-query"},
                     ),
                     style=rx.Style(flex=1),
@@ -46,38 +47,39 @@ def filter_query() -> rx.Component:
     )
 
 
+def entity_type_choice(choice: ValueLabelCheckboxItem) -> rx.Component:
+    """Render a single checkbox for filtering by entity type."""
+    return rx.checkbox(
+        choice.label,
+        checked=choice.checked,
+        on_change=[
+            AdvancedSearchState.toggle_entity_type(choice.value),  # type: ignore[operator]
+            AdvancedSearchState.search,
+            AdvancedSearchState.resolve_identifiers,
+        ],
+        custom_attrs={"data-testid": f"filter-entity-type-{choice.value}"},
+    )
+
+
 def filter_entity_type() -> rx.Component:
     """Render filter entity type page."""
     return rx.card(
+        rx.text(
+            AdvancedSearchState.label_entitytype_filter_title,
+            style=rx.Style(
+                marginBottom="var(--space-4)",
+                userSelect="none",
+            ),
+        ),
         rx.vstack(
-            rx.text(
-                AdvancedSearchState.label_entitytype_filter_title,
-                style=rx.Style(userSelect="none"),
+            rx.foreach(
+                AdvancedSearchState.label_entity_types,
+                entity_type_choice,
             ),
-            rx.vstack(
-                rx.foreach(
-                    AdvancedSearchState.all_entity_types,
-                    lambda entity_type: rx.checkbox(
-                        entity_type,
-                        value=entity_type,
-                        on_change=[
-                            AdvancedSearchState.toggle_entity_type(entity_type),  # type: ignore[operator]
-                            AdvancedSearchState.search,
-                            AdvancedSearchState.resolve_identifiers,
-                        ],
-                        default_checked=AdvancedSearchState.entity_types.contains(  # type: ignore[attr-defined]
-                            entity_type
-                        ),
-                        custom_attrs={
-                            "data-testid": f"filter-entity-type-{entity_type}"
-                        },
-                    ),
-                ),
-                align="stretch",
-            ),
-            align="stretch",
             custom_attrs={"data-testid": "filter-entity-types"},
-        )
+            align="stretch",
+        ),
+        align="stretch",
     )
 
 
@@ -252,10 +254,8 @@ def search_results() -> rx.Component:
                 ),
                 pagination_options=build_pagination_options(
                     AdvancedSearchState,
-                    *[
-                        AdvancedSearchState.search,
-                        AdvancedSearchState.resolve_identifiers,
-                    ],
+                    AdvancedSearchState.search,  # type: ignore[arg-type]
+                    AdvancedSearchState.resolve_identifiers,
                 ),
             ),
             style=rx.Style(

@@ -1,11 +1,10 @@
-from typing import Any
-
 import reflex as rx
 
 from mex.admin.component_option_helper import build_pagination_for_state_options
 from mex.admin.layout import page
+from mex.admin.models import ValueLabelCheckboxItem
 from mex.admin.search.models import SearchPrimarySource
-from mex.admin.search.state import SearchState, full_refresh
+from mex.admin.search.state import SearchState
 from mex.admin.search_results_component import (
     SearchResultsComponentOptions,
     SearchResultsListItemOptions,
@@ -19,17 +18,17 @@ def search_input() -> rx.Component:
     return rx.card(
         rx.form.root(
             rx.hstack(
-                rx.input(
-                    default_value=SearchState.query_string,
-                    max_length=100,
-                    name="query_string",
-                    placeholder=SearchState.label_search_input_placeholder,
-                    width="100%",
-                    tab_index=1,
-                    type="text",
-                    custom_attrs={"data-testid": "search-input"},
+                rx.box(
+                    rx.input(
+                        default_value=SearchState.query_string,
+                        max_length=100,
+                        name="query_string",
+                        placeholder=SearchState.label_search_input_placeholder,
+                        type="text",
+                        custom_attrs={"data-testid": "search-input"},
+                    ),
+                    style=rx.Style(flex=1),
                 ),
-                rx.spacer(),
                 rx.button(
                     rx.icon("search"),
                     type="submit",
@@ -37,25 +36,33 @@ def search_input() -> rx.Component:
                     disabled=SearchState.is_loading,
                     custom_attrs={"data-testid": "search-button"},
                 ),
-                width="100%",
+                align="stretch",
             ),
-            on_submit=[SearchState.handle_submit, *full_refresh],
+            on_submit=[
+                SearchState.handle_submit,
+                SearchState.go_to_first_page,
+                SearchState.push_search_params,
+                SearchState.refresh,
+                SearchState.resolve_identifiers,
+            ],
         ),
-        style=rx.Style(width="100%"),
     )
 
 
-def entity_type_choice(choice: dict[str, Any]) -> rx.Component:
+def entity_type_choice(choice: ValueLabelCheckboxItem) -> rx.Component:
     """Render a single checkbox for filtering by entity type."""
     return rx.checkbox(
-        choice["label"],
-        checked=choice["checked"],
+        choice.label,
+        checked=choice.checked,
         on_change=[
-            SearchState.set_entity_type(choice["value"]),  # type: ignore[operator]
-            *full_refresh,
+            SearchState.set_entity_type(choice.value),  # type: ignore[operator]
+            SearchState.go_to_first_page,
+            SearchState.push_search_params,
+            SearchState.refresh,
+            SearchState.resolve_identifiers,
         ],
         disabled=SearchState.is_loading,
-        custom_attrs={"data-testid": f"entity-type-{choice['value']}"},
+        custom_attrs={"data-testid": f"entity-type-{choice.value}"},
     )
 
 
@@ -87,7 +94,10 @@ def primary_source_choice(choice: tuple[str, SearchPrimarySource]) -> rx.Compone
         checked=choice[1].checked,
         on_change=[
             SearchState.set_had_primary_source(choice[0]),  # type: ignore[operator]
-            *full_refresh,
+            SearchState.go_to_first_page,
+            SearchState.push_search_params,
+            SearchState.refresh,
+            SearchState.resolve_identifiers,
         ],
         disabled=SearchState.is_loading,
         custom_attrs={"data-testid": f"primary-source-filter-{choice[0]}"},
@@ -124,7 +134,7 @@ def sidebar() -> rx.Component:
         spacing="4",
         align="stretch",
         custom_attrs={"data-testid": "search-sidebar"},
-        style=rx.Style(width="300px"),
+        style=rx.Style(flex="0 0 300px"),
     )
 
 
