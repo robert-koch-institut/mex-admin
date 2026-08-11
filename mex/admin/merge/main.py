@@ -70,44 +70,37 @@ def build_pagination_options(
 
 def search_input(category: Literal["merged", "extracted"]) -> rx.Component:
     """Render a search input with an inlined button for the results to refresh."""
-    return rx.card(
-        rx.form.root(
-            rx.hstack(
-                rx.input(
-                    autofocus=True,
-                    value=MergeState.query_strings[category],
-                    default_value=MergeState.query_strings[category],
-                    max_length=100,
-                    name=f"query_string_{category}",
-                    on_change=MergeState.handle_submit(category),  # type: ignore[operator]
-                    placeholder=MergeState.label_search_input_placeholder,
-                    width="100%",
-                    tab_index=1,
-                    type="text",
-                    custom_attrs={"data-testid": f"search-input-{category}"},
-                ),
-                rx.spacer(),
-                rx.button(
-                    rx.icon("search"),
-                    type="submit",
-                    variant="surface",
-                    disabled=MergeState.is_loading,
-                    on_click=[
-                        MergeState.go_to_first_page(category),  # type: ignore[operator]
-                        MergeState.refresh([category]),  # type: ignore[operator]
-                        MergeState.resolve_identifiers,
-                    ],
-                    custom_attrs={"data-testid": f"search-button-{category}"},
-                ),
-                align="center",
+    return rx.form.root(
+        rx.hstack(
+            rx.input(
+                autofocus=True,
+                value=MergeState.query_strings[category],
+                default_value=MergeState.query_strings[category],
+                max_length=100,
+                name=f"query_string_{category}",
+                on_change=MergeState.handle_submit(category),  # type: ignore[operator]
+                placeholder=MergeState.label_search_input_placeholder,
                 width="100%",
+                tab_index=1,
+                type="text",
+                custom_attrs={"data-testid": f"search-input-{category}"},
             ),
-        ),
-        style=rx.Style(
-            marginBottom="var(--space-4)",
+            rx.spacer(),
+            rx.button(
+                rx.icon("search"),
+                type="submit",
+                variant="surface",
+                disabled=MergeState.is_loading,
+                on_click=[
+                    MergeState.go_to_first_page(category),  # type: ignore[operator]
+                    MergeState.refresh([category]),  # type: ignore[operator]
+                    MergeState.resolve_identifiers,
+                ],
+                custom_attrs={"data-testid": f"search-button-{category}"},
+            ),
+            align="center",
             width="100%",
         ),
-        variant="ghost",
         custom_attrs={"data-testid": f"search-{category}"},
     )
 
@@ -197,7 +190,7 @@ def index() -> rx.Component:
                 search_panel(category="merged"),
                 search_panel(category="extracted"),
                 align="start",
-                spacing="4",
+                spacing="8",
                 width="100%",
             ),
             align="stretch",
