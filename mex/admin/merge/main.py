@@ -1,9 +1,7 @@
-from typing import Literal
-
 import reflex as rx
 
 from mex.admin.layout import page
-from mex.admin.merge.state import MergeState
+from mex.admin.merge.state import DescriptionSegment, MergeSide, MergeState
 from mex.admin.models import SearchResult
 from mex.admin.pagination_component import (
     PaginationButtonOptions,
@@ -31,7 +29,7 @@ def merge_title() -> rx.Component:
             value=MergeState.stem_type,
             on_change=[
                 MergeState.set_stem_type,
-                MergeState.refresh(["merged", "extracted"]),  # type: ignore[operator]
+                MergeState.refresh(["goner", "keeper"]),  # type: ignore[operator]
                 MergeState.resolve_identifiers,
             ],
             disabled=MergeState.is_loading,
@@ -42,131 +40,189 @@ def merge_title() -> rx.Component:
     )
 
 
-def build_pagination_options(
-    category: Literal["merged", "extracted"],
-) -> PaginationOptions:
+def build_pagination_options(side: MergeSide) -> PaginationOptions:
     """Build the pagination options for one side of the merge page."""
-    refresh_category = [
-        MergeState.refresh([category]),  # type: ignore[operator]
+    refresh_side = [
+        MergeState.refresh([side]),  # type: ignore[operator]
         MergeState.resolve_identifiers,
     ]
     return PaginationOptions(
         PaginationButtonOptions(
-            MergeState.disable_previous_pages[category],
-            [MergeState.go_to_previous_page(category), *refresh_category],  # type: ignore[operator]
+            MergeState.disable_previous_pages[side],
+            [MergeState.go_to_previous_page(side), *refresh_side],  # type: ignore[operator]
         ),
         PaginationButtonOptions(
-            MergeState.disable_next_pages[category],
-            [MergeState.go_to_next_page(category), *refresh_category],  # type: ignore[operator]
+            MergeState.disable_next_pages[side],
+            [MergeState.go_to_next_page(side), *refresh_side],  # type: ignore[operator]
         ),
         PaginationPageOptions(
-            MergeState.current_pages[category],
-            MergeState.page_selections[category],
-            MergeState.disable_page_selections[category],
-            [MergeState.set_current_page(category), *refresh_category],  # type: ignore[operator]
+            MergeState.current_pages[side],
+            MergeState.page_selections[side],
+            MergeState.disable_page_selections[side],
+            [MergeState.set_current_page(side), *refresh_side],  # type: ignore[operator]
         ),
     )
 
 
-def search_input(category: Literal["merged", "extracted"]) -> rx.Component:
+def search_input(side: MergeSide) -> rx.Component:
     """Render a search input with an inlined button for the results to refresh."""
-    return rx.form.root(
-        rx.hstack(
-            rx.input(
-                autofocus=True,
-                value=MergeState.query_strings[category],
-                default_value=MergeState.query_strings[category],
-                max_length=100,
-                name=f"query_string_{category}",
-                on_change=MergeState.handle_submit(category),  # type: ignore[operator]
-                placeholder=MergeState.label_search_input_placeholder,
+    return rx.card(
+        rx.form.root(
+            rx.hstack(
+                rx.input(
+                    autofocus=True,
+                    value=MergeState.query_strings[side],
+                    default_value=MergeState.query_strings[side],
+                    max_length=100,
+                    name=f"query_string_{side}",
+                    on_change=MergeState.handle_submit(side),  # type: ignore[operator]
+                    placeholder=MergeState.label_search_input_placeholder,
+                    width="100%",
+                    tab_index=1,
+                    type="text",
+                    custom_attrs={"data-testid": f"search-input-{side}"},
+                ),
+                rx.spacer(),
+                rx.button(
+                    rx.icon("search"),
+                    type="submit",
+                    variant="surface",
+                    disabled=MergeState.is_loading,
+                    on_click=[
+                        MergeState.go_to_first_page(side),  # type: ignore[operator]
+                        MergeState.refresh([side]),  # type: ignore[operator]
+                        MergeState.resolve_identifiers,
+                    ],
+                    custom_attrs={"data-testid": f"search-button-{side}"},
+                ),
+                align="center",
                 width="100%",
-                tab_index=1,
-                type="text",
-                custom_attrs={"data-testid": f"search-input-{category}"},
             ),
-            rx.spacer(),
-            rx.button(
-                rx.icon("search"),
-                type="submit",
-                variant="surface",
-                disabled=MergeState.is_loading,
-                on_click=[
-                    MergeState.go_to_first_page(category),  # type: ignore[operator]
-                    MergeState.refresh([category]),  # type: ignore[operator]
-                    MergeState.resolve_identifiers,
-                ],
-                custom_attrs={"data-testid": f"search-button-{category}"},
-            ),
-            align="center",
+        ),
+        style=rx.Style(
+            marginBottom="var(--space-4)",
             width="100%",
         ),
-        custom_attrs={"data-testid": f"search-{category}"},
+        variant="ghost",
+        custom_attrs={"data-testid": f"search-{side}"},
+    )
+
+
+def description_segment(segment: DescriptionSegment) -> rx.Component:
+    """Render a dialog description chunk, linking identifiers to their edit page."""
+    return rx.cond(
+        segment.identifier,
+        rx.link(
+            segment.text,
+            href="/item/" + segment.identifier,
+            high_contrast=True,
+            is_external=True,
+            role="link",
+            title=segment.text,
+        ),
+        rx.text.span(segment.text),
     )
 
 
 def submit_button() -> rx.Component:
-    """Render a submit button to commit the merging."""
-    return rx.button(
-        MergeState.label_submit_button,
-        color_scheme="jade",
-        size="3",
-        disabled=MergeState.disable_submit_button,
-        on_click=MergeState.submit_merge_items,
-        style=rx.Style(margin="var(--line-height-1) 0"),
-        custom_attrs={"data-testid": "submit-button"},
+    """Render a submit button that asks for confirmation before merging."""
+    return rx.alert_dialog.root(
+        rx.alert_dialog.trigger(
+            rx.button(
+                MergeState.label_submit_button,
+                color_scheme="jade",
+                size="3",
+                disabled=MergeState.disable_submit_button,
+                style=rx.Style(margin="var(--line-height-1) 0"),
+                custom_attrs={"data-testid": "submit-button"},
+            ),
+        ),
+        rx.alert_dialog.content(
+            rx.alert_dialog.title(MergeState.label_submit_dialog_title),
+            rx.alert_dialog.description(
+                rx.foreach(
+                    MergeState.submit_dialog_description_segments,
+                    description_segment,
+                ),
+                size="2",
+                custom_attrs={"data-testid": "submit-merge-description"},
+            ),
+            rx.flex(
+                rx.alert_dialog.cancel(
+                    # the inert flex is what receives radix's close behavior; a
+                    # bare button child would render without it. the testid has
+                    # to sit on the button, `cancel` drops its own attrs
+                    rx.flex(
+                        rx.button(
+                            MergeState.label_submit_dialog_cancel_button,
+                            variant="soft",
+                            color_scheme="gray",
+                            custom_attrs={"data-testid": "submit-merge-cancel-button"},
+                        ),
+                    ),
+                ),
+                rx.alert_dialog.action(
+                    rx.button(
+                        MergeState.label_submit_dialog_confirm_button,
+                        color_scheme="tomato",
+                        variant="solid",
+                        on_click=MergeState.submit_merge_items,
+                        custom_attrs={"data-testid": "submit-merge-confirm-button"},
+                    ),
+                ),
+                spacing="3",
+                margin_top="16px",
+                justify="end",
+            ),
+            style=rx.Style(max_width=450),
+        ),
     )
 
 
-def search_panel(category: Literal["merged", "extracted"]) -> rx.Component:
-    """Return the search interface."""
+def search_panel(side: MergeSide) -> rx.Component:
+    """Return the search interface for one side of the merge page."""
 
     def render_checkbox(_: SearchResult, index: int) -> rx.Component:
         return rx.checkbox(
-            checked=MergeState.selected_items[category] == index,
-            on_change=MergeState.select_item(category, index),  # type:ignore[operator]
+            checked=MergeState.selected_items[side] == index,
+            on_change=MergeState.select_item(side, index),  # type:ignore[operator]
         )
 
-    list_options = SearchResultsListOptions(
-        item_options=SearchResultsListItemOptions(render_prepend_fn=render_checkbox)
-    )
-    pagination_options = build_pagination_options(category)
+    if side == "goner":
+        heading = MergeState.label_search_title_goner
+        results = MergeState.results_goner
+        summary_text = MergeState.label_result_summary_format_goner
+    else:
+        heading = MergeState.label_search_title_keeper
+        results = MergeState.results_keeper
+        summary_text = MergeState.label_result_summary_format_keeper
 
     return rx.vstack(
         rx.heading(
-            MergeState.label_search_title_merged
-            if category == "merged"
-            else MergeState.label_search_title_extracted,
+            heading,
             style=rx.Style(
                 userSelect="none",
                 fontWeight="normal",
                 width="100%",
             ),
             as_="h2",
-            custom_attrs={"data-testid": f"create-heading-{category}"},
+            custom_attrs={"data-testid": f"search-heading-{side}"},
         ),
-        search_input(category),
+        search_input(side),
         rx.box(
-            rx.cond(
-                category == "merged",
-                search_results_component(
-                    MergeState.results_merged,
-                    SearchResultsComponentOptions(
-                        summary_text=MergeState.label_result_summary_format_merged,
-                        list_options=list_options,
-                        pagination_options=pagination_options,
+            search_results_component(
+                results,
+                SearchResultsComponentOptions(
+                    summary_text=summary_text,
+                    list_options=SearchResultsListOptions(
+                        item_options=SearchResultsListItemOptions(
+                            render_prepend_fn=render_checkbox
+                        )
                     ),
-                ),
-                search_results_component(
-                    MergeState.results_extracted,
-                    SearchResultsComponentOptions(
-                        summary_text=MergeState.label_result_summary_format_extracted,
-                        list_options=list_options,
-                        pagination_options=pagination_options,
-                    ),
+                    pagination_options=build_pagination_options(side),
                 ),
             ),
-            custom_attrs={"data-testid": f"{category}-search-results-container"},
+            custom_attrs={"data-testid": f"{side}-search-results-container"},
         ),
         align="stretch",
         # `minWidth` lets the panel shrink below the width of its widest result,
@@ -176,7 +232,7 @@ def search_panel(category: Literal["merged", "extracted"]) -> rx.Component:
 
 
 def index() -> rx.Component:
-    """Return the index for the merge and extracted search component."""
+    """Return the index for the merge component."""
     return page(
         rx.vstack(
             rx.hstack(
@@ -187,10 +243,10 @@ def index() -> rx.Component:
                 width="100%",
             ),
             rx.hstack(
-                search_panel(category="merged"),
-                search_panel(category="extracted"),
+                search_panel(side="goner"),
+                search_panel(side="keeper"),
                 align="start",
-                spacing="8",
+                spacing="4",
                 width="100%",
             ),
             align="stretch",

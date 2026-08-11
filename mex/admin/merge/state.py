@@ -4,6 +4,7 @@ from collections.abc import Generator, Iterable
 from typing import Literal
 
 import reflex as rx
+from pydantic import BaseModel
 from reflex.event import EventSpec
 from requests import HTTPError
 
@@ -19,83 +20,146 @@ from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.models import MERGED_MODEL_CLASSES
 from mex.common.transform import ensure_prefix
 
+# The item that is superseded (left) and the one that survives the merge (right).
+# This has to stay a plain assignment: a PEP 695 `type` alias would be a
+# `TypeAliasType`, which reflex's runtime field validation cannot resolve.
+MergeSide = Literal["goner", "keeper"]
+
+# marks the identifier placeholders while splitting the dialog description
+PLACEHOLDER_MARKER = "\x00"
+
+
+class DescriptionSegment(BaseModel):
+    """A chunk of the submit dialog description, optionally linking to an item."""
+
+    text: str
+    identifier: str = ""
+
 
 class MergeState(State):
     """State management for the merge items page."""
 
-    results_extracted: list[SearchResult] = []
-    results_merged: list[SearchResult] = []
+    results_goner: list[SearchResult] = []
+    results_keeper: list[SearchResult] = []
     stem_type: str = min(k.stemType for k in MERGED_MODEL_CLASSES)
     is_loading: bool = True
     limit: int = 50
-    query_strings: dict[Literal["merged", "extracted"], str] = {
-        "merged": "",
-        "extracted": "",
+    query_strings: dict[MergeSide, str] = {
+        "goner": "",
+        "keeper": "",
     }
     results_count: dict[str, int] = {
-        "merged": 0,
-        "extracted": 0,
+        "goner": 0,
+        "keeper": 0,
     }
     total_count: dict[str, int] = {
-        "merged": 0,
-        "extracted": 0,
+        "goner": 0,
+        "keeper": 0,
     }
     search_duration_seconds: dict[str, float] = {
-        "merged": 0.0,
-        "extracted": 0.0,
+        "goner": 0.0,
+        "keeper": 0.0,
     }
-    current_pages: dict[Literal["merged", "extracted"], int] = {
-        "merged": 1,
-        "extracted": 1,
+    current_pages: dict[MergeSide, int] = {
+        "goner": 1,
+        "keeper": 1,
     }
     selected_items: dict[str, int | None] = {
-        "merged": None,
-        "extracted": None,
+        "goner": None,
+        "keeper": None,
     }
 
-    def _max_page(self, category: Literal["merged", "extracted"]) -> int:
-        """Return the maximum page of a category, based on its total and the limit."""
-        return math.ceil(self.total_count[category] / self.limit)
+    def _results(self, side: MergeSide) -> list[SearchResult]:
+        """Return the search results of one side."""
+        return self.results_goner if side == "goner" else self.results_keeper
 
-    def _skip(self, category: Literal["merged", "extracted"]) -> int:
-        """Return the skip/offset of a category, based on its page and the limit."""
-        return self.limit * (self.current_pages[category] - 1)
+    def _set_results(self, side: MergeSide, results: list[SearchResult]) -> None:
+        """Set the search results of one side."""
+        if side == "goner":
+            self.results_goner = results
+        else:
+            self.results_keeper = results
+
+    def _selected_identifier(self, side: MergeSide) -> str:
+        """Return the identifier selected on one side, or an empty string if none."""
+        index = self.selected_items[side]
+        results = self._results(side)
+        if index is None or index >= len(results):
+            return ""
+        return results[index].identifier
+
+    def _max_page(self, side: MergeSide) -> int:
+        """Return the maximum page of one side, based on its total and the limit."""
+        return math.ceil(self.total_count[side] / self.limit)
+
+    def _skip(self, side: MergeSide) -> int:
+        """Return the skip/offset of one side, based on its page and the limit."""
+        return self.limit * (self.current_pages[side] - 1)
 
     @rx.var
     def page_selections(self) -> dict[str, list[str]]:
-        """Get the selectable pages per category, thinned out when there are many."""
+        """Get the selectable pages per side, thinned out when there are many."""
         return {
-            category: build_page_selection(
-                self._max_page(category), self.current_pages[category]
-            )
-            for category in self.current_pages
+            side: build_page_selection(self._max_page(side), self.current_pages[side])
+            for side in self.current_pages
         }
 
     @rx.var
     def disable_page_selections(self) -> dict[str, bool]:
-        """Whether the page selection should be disabled, per category."""
+        """Whether the page selection should be disabled, per side."""
         return {
-            category: page >= self._max_page(category)
-            for category, page in self.current_pages.items()
+            side: page >= self._max_page(side)
+            for side, page in self.current_pages.items()
         }
 
     @rx.var
     def disable_previous_pages(self) -> dict[str, bool]:
-        """Whether the 'Previous' button should be disabled, per category."""
-        return {category: page <= 1 for category, page in self.current_pages.items()}
+        """Whether the 'Previous' button should be disabled, per side."""
+        return {side: page <= 1 for side, page in self.current_pages.items()}
 
     @rx.var
     def disable_next_pages(self) -> dict[str, bool]:
-        """Whether the 'Next' button should be disabled, per category."""
+        """Whether the 'Next' button should be disabled, per side."""
         return {
-            category: page >= self._max_page(category)
-            for category, page in self.current_pages.items()
+            side: page >= self._max_page(side)
+            for side, page in self.current_pages.items()
         }
 
     @rx.var
     def disable_submit_button(self) -> bool:
         """Whether the merge can be submitted, which needs a selection on both sides."""
         return None in self.selected_items.values()
+
+    @rx.var(
+        deps=["current_locale", "selected_items", "results_goner", "results_keeper"],
+        auto_deps=False,
+    )
+    def submit_dialog_description_segments(self) -> list[DescriptionSegment]:
+        """Split the submit dialog description around its identifier placeholders.
+
+        The sentence stays one translatable unit, but the two identifiers are
+        handed out separately so they can be rendered as links.
+        """
+        label = self._locale_service.get_ui_label(
+            self.current_locale, "merge.submit_dialog.description_format"
+        )
+        # marking rather than splitting on "{0}"/"{1}" keeps this working for a
+        # translation that puts the two placeholders in the other order
+        sides: list[MergeSide] = ["goner", "keeper"]
+        marked = label.format(
+            *(f"{PLACEHOLDER_MARKER}{side}{PLACEHOLDER_MARKER}" for side in sides)
+        )
+        segments = []
+        for index, part in enumerate(marked.split(PLACEHOLDER_MARKER)):
+            if index % 2:
+                # odd chunks are the markers, so `part` is the side's name
+                identifier = self._selected_identifier(part)  # type: ignore[arg-type]
+                segments.append(
+                    DescriptionSegment(text=identifier, identifier=identifier)
+                )
+            elif part:
+                segments.append(DescriptionSegment(text=part))
+        return segments
 
     @rx.var
     def value_label_stem_types(self) -> list[ValueLabelSelectItem]:
@@ -114,19 +178,17 @@ class MergeState(State):
         )
 
     @rx.event
-    def select_item(self, category: Literal["merged", "extracted"], index: int) -> None:
-        """Select or deselect a merged or extracted item based on the index."""
-        if self.selected_items[category] == index:
-            self.selected_items[category] = None
+    def select_item(self, side: MergeSide, index: int) -> None:
+        """Select or deselect an item on one side based on the index."""
+        if self.selected_items[side] == index:
+            self.selected_items[side] = None
             return
-        self.selected_items[category] = index
+        self.selected_items[side] = index
 
     @rx.event
-    def handle_submit(
-        self, category: Literal["merged", "extracted"], form_data: str
-    ) -> None:
-        """Handle the extracted or merged form submit."""
-        self.query_strings[category] = form_data
+    def handle_submit(self, side: MergeSide, form_data: str) -> None:
+        """Handle the search form submit of one side."""
+        self.query_strings[side] = form_data
 
     @rx.event
     def set_stem_type(self, stem_type: str) -> None:
@@ -141,33 +203,31 @@ class MergeState(State):
         self.set_stem_type(self.value_label_stem_types[0].value)  # type: ignore[operator]
 
     @rx.event
-    def set_current_page(
-        self, category: Literal["merged", "extracted"], page_number: str | int
-    ) -> None:
-        """Set the current page of a category (coerced to be between 1 and max_page)."""
+    def set_current_page(self, side: MergeSide, page_number: str | int) -> None:
+        """Set the current page of one side (coerced to be between 1 and max_page)."""
         page_number = int(page_number) if page_number else 1
-        max_page = self._max_page(category)
-        self.current_pages[category] = max(min(page_number, max_page), 1)
+        max_page = self._max_page(side)
+        self.current_pages[side] = max(min(page_number, max_page), 1)
 
     @rx.event
-    def go_to_first_page(self, category: Literal["merged", "extracted"]) -> None:
-        """Navigate to the first page of a category."""
-        self.current_pages[category] = 1
+    def go_to_first_page(self, side: MergeSide) -> None:
+        """Navigate to the first page of one side."""
+        self.current_pages[side] = 1
 
     @rx.event
-    def go_to_previous_page(self, category: Literal["merged", "extracted"]) -> None:
-        """Navigate to the previous page of a category."""
-        self.set_current_page(category, self.current_pages[category] - 1)  # type: ignore[operator]
+    def go_to_previous_page(self, side: MergeSide) -> None:
+        """Navigate to the previous page of one side."""
+        self.set_current_page(side, self.current_pages[side] - 1)  # type: ignore[operator]
 
     @rx.event
-    def go_to_next_page(self, category: Literal["merged", "extracted"]) -> None:
-        """Navigate to the next page of a category."""
-        self.set_current_page(category, self.current_pages[category] + 1)  # type: ignore[operator]
+    def go_to_next_page(self, side: MergeSide) -> None:
+        """Navigate to the next page of one side."""
+        self.set_current_page(side, self.current_pages[side] + 1)  # type: ignore[operator]
 
     @rx.event(background=True)
     async def resolve_identifiers(self) -> None:
         """Resolve identifiers to human readable display values."""
-        for result_list in (self.results_merged, self.results_extracted):
+        for result_list in (self.results_goner, self.results_keeper):
             for result in result_list:
                 for preview in result.preview:
                     if preview.identifier and not preview.text:
@@ -177,18 +237,16 @@ class MergeState(State):
     @rx.event
     def refresh(
         self,
-        categories: Iterable[Literal["merged", "extracted"]] = ("merged", "extracted"),
+        sides: Iterable[MergeSide] = ("goner", "keeper"),
     ) -> Generator[EventSpec | None]:
-        """Refresh the search results for the specified category."""
-        if "merged" in categories:
-            self.selected_items["merged"] = None
-            yield from self._refresh_merged()
-        if "extracted" in categories:
-            self.selected_items["extracted"] = None
-            yield from self._refresh_extracted()
+        """Refresh the search results for the specified sides."""
+        for side in ("goner", "keeper"):
+            if side in sides:
+                self.selected_items[side] = None
+                yield from self._refresh(side)
 
-    def _refresh_merged(self) -> Generator[EventSpec | None]:
-        """Refresh the search results for merged items."""
+    def _refresh(self, side: MergeSide) -> Generator[EventSpec | None]:
+        """Refresh the search results for one side."""
         connector = BackendApiConnector.get()
         entity_type = [ensure_prefix(self.stem_type, "Merged")]
         self.is_loading = True
@@ -196,74 +254,38 @@ class MergeState(State):
         start_time = time.monotonic()
         try:
             response = connector.fetch_preview_items(
-                query_string=self.query_strings["merged"],
+                query_string=self.query_strings[side],
                 entity_type=entity_type,
-                skip=self._skip("merged"),
+                skip=self._skip(side),
                 limit=self.limit,
             )
         except HTTPError as exc:
-            self.search_duration_seconds["merged"] = time.monotonic() - start_time
+            self.search_duration_seconds[side] = time.monotonic() - start_time
             self.is_loading = False
-            self.results_merged = []
-            self.results_count["merged"] = 0
-            self.total_count["merged"] = 0
+            self._set_results(side, [])
+            self.results_count[side] = 0
+            self.total_count[side] = 0
             yield None
             yield from escalate_error(
                 "backend", "error fetching merged items", exc.response.text
             )
         else:
-            self.search_duration_seconds["merged"] = time.monotonic() - start_time
+            self.search_duration_seconds[side] = time.monotonic() - start_time
             self.is_loading = False
-            self.results_merged = transform_models_to_search_results(response.items)
-            self.results_count["merged"] = len(self.results_merged)
-            self.total_count["merged"] = response.total
+            self._set_results(side, transform_models_to_search_results(response.items))
+            self.results_count[side] = len(self._results(side))
+            self.total_count[side] = response.total
             # the current page can fall outside the range when the total shrinks
-            self.set_current_page("merged", self.current_pages["merged"])  # type: ignore[operator]
-
-    def _refresh_extracted(self) -> Generator[EventSpec | None]:
-        """Refresh the search results for extracted items."""
-        connector = BackendApiConnector.get()
-        entity_type = [ensure_prefix(self.stem_type, "Extracted")]
-        self.results_extracted = self.results_extracted
-        self.is_loading = True
-        yield None
-        start_time = time.monotonic()
-        try:
-            response = connector.fetch_extracted_items(
-                query_string=self.query_strings["extracted"],
-                entity_type=entity_type,
-                skip=self._skip("extracted"),
-                limit=self.limit,
-            )
-        except HTTPError as exc:
-            self.search_duration_seconds["extracted"] = time.monotonic() - start_time
-            self.is_loading = False
-            self.results_extracted = []
-            self.results_count["extracted"] = 0
-            self.total_count["extracted"] = 0
-            yield None
-            yield from escalate_error(
-                "backend", "error fetching extracted items", exc.response.text
-            )
-        else:
-            self.search_duration_seconds["extracted"] = time.monotonic() - start_time
-            self.is_loading = False
-            self.results_extracted = transform_models_to_search_results(response.items)
-            self.results_count["extracted"] = len(self.results_extracted)
-            self.total_count["extracted"] = response.total
-            # the current page can fall outside the range when the total shrinks
-            self.set_current_page("extracted", self.current_pages["extracted"])  # type: ignore[operator]
+            self.set_current_page(side, self.current_pages[side])  # type: ignore[operator]
 
     @rx.event
-    def submit_merge_items(self) -> Generator[EventSpec]:
-        """Submit merging the selected extracted item into the selected merged item."""
-        merged_index = self.selected_items["merged"]
-        extracted_index = self.selected_items["extracted"]
-        if merged_index is None or extracted_index is None:
+    def submit_merge_items(self) -> Generator[EventSpec | None]:
+        """Submit merging the selected goner into the selected keeper."""
+        goner_identifier = self._selected_identifier("goner")
+        keeper_identifier = self._selected_identifier("keeper")
+        if not (goner_identifier and keeper_identifier):
             # the submit button is disabled until both sides have a selection
             return
-        keeper_identifier = self.results_merged[merged_index].identifier
-        goner_identifier = self.results_extracted[extracted_index].identifier
         connector = BackendApiConnector.get()
         try:
             # TODO(ND): use the dedicated connector method once it is available
@@ -276,6 +298,7 @@ class MergeState(State):
                 },
             )
         except HTTPError as exc:
+            # keep the selections, so a transient error can be retried as-is
             yield from escalate_error(
                 "backend", "error merging items", exc.response.text
             )
@@ -290,17 +313,18 @@ class MergeState(State):
                 dismissible=True,
                 duration=5000,
             )
+            # the goner is a tombstone now, so both result lists are stale
+            yield from self.refresh()  # type: ignore[operator]
+            yield MergeState.resolve_identifiers()  # type: ignore[misc]
 
-    def _result_summary_args(
-        self, category: Literal["merged", "extracted"]
-    ) -> list[float]:
+    def _result_summary_args(self, side: MergeSide) -> list[float]:
         # the range is 1-based and inclusive, but collapses to 0-0 without results
-        first_item = self._skip(category) + 1 if self.results_count[category] else 0
+        first_item = self._skip(side) + 1 if self.results_count[side] else 0
         return [
             first_item,
-            self._skip(category) + self.results_count[category],
-            self.total_count[category],
-            self.search_duration_seconds[category],
+            self._skip(side) + self.results_count[side],
+            self.total_count[side],
+            self.search_duration_seconds[side],
         ]
 
     @label_var(
@@ -313,9 +337,9 @@ class MergeState(State):
             "limit",
         ],
     )
-    def label_result_summary_format_merged(self) -> list[float]:
+    def label_result_summary_format_goner(self) -> list[float]:
         """Label for result_summary.format."""
-        return self._result_summary_args("merged")
+        return self._result_summary_args("goner")
 
     @label_var(
         label_id="merge.result_summary.format",
@@ -327,9 +351,9 @@ class MergeState(State):
             "limit",
         ],
     )
-    def label_result_summary_format_extracted(self) -> list[float]:
+    def label_result_summary_format_keeper(self) -> list[float]:
         """Label for result_summary.format."""
-        return self._result_summary_args("extracted")
+        return self._result_summary_args("keeper")
 
     @label_var(label_id="merge.submit_button")
     def label_submit_button(self) -> None:
@@ -339,19 +363,29 @@ class MergeState(State):
     def label_search_input_placeholder(self) -> None:
         """Label for search_input.placeholder."""
 
-    @label_var(label_id="merge.search.title_format")
-    def label_search_title_merged(self) -> list[str]:
-        """Label for search.title_merged."""
-        return ["merged"]
+    @label_var(label_id="merge.search.title_goner")
+    def label_search_title_goner(self) -> None:
+        """Label for search.title_goner."""
 
-    @label_var(label_id="merge.search.title_format")
-    def label_search_title_extracted(self) -> list[str]:
-        """Label for search.title_merged."""
-        return ["extracted"]
+    @label_var(label_id="merge.search.title_keeper")
+    def label_search_title_keeper(self) -> None:
+        """Label for search.title_keeper."""
 
     @label_var(label_id="merge.title.merge_items")
     def label_title_merge_items(self) -> None:
         """Label for title.merge_items."""
+
+    @label_var(label_id="merge.submit_dialog.title")
+    def label_submit_dialog_title(self) -> None:
+        """Label for submit_dialog.title."""
+
+    @label_var(label_id="merge.submit_dialog.cancel_button")
+    def label_submit_dialog_cancel_button(self) -> None:
+        """Label for submit_dialog.cancel_button."""
+
+    @label_var(label_id="merge.submit_dialog.confirm_button")
+    def label_submit_dialog_confirm_button(self) -> None:
+        """Label for submit_dialog.confirm_button."""
 
     @label_var(label_id="merge.toast_success.title")
     def label_toast_success_title(self) -> None:

@@ -98,11 +98,28 @@ msgstr "Submit merge"
 msgid "merge.search_input.placeholder"
 msgstr "Search here..."
 
-msgid "merge.search.title_format"
-msgstr "Search {0} items"
+msgid "merge.search.title_goner"
+msgstr "Superseded Item"
+
+msgid "merge.search.title_keeper"
+msgstr "Kept Item"
 
 msgid "merge.title.merge_items"
 msgstr "Merge items of type"
+
+msgid "merge.submit_dialog.title"
+msgstr "Confirm merge"
+
+msgid "merge.submit_dialog.description_format"
+msgstr ""
+"{0} will be superseded and lose all of its data. Its rules and extracted "
+"items move to {1}. This cannot be undone."
+
+msgid "merge.submit_dialog.cancel_button"
+msgstr "Cancel"
+
+msgid "merge.submit_dialog.confirm_button"
+msgstr "Merge"
 
 msgid "merge.toast_success.title"
 msgstr "Merged"
