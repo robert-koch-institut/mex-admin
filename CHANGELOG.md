@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- added translation to advanced search entity type filter
+
 ### Changes
 
 - update merge page to comply with backend and new ADR
