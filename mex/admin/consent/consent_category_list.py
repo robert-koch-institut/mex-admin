@@ -4,12 +4,12 @@ from typing import Any, Literal
 
 import reflex as rx
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
 from mex.admin.component_option_helper import build_pagination_options
 from mex.admin.consent.state import ConsentState
 from mex.admin.consent.transform import add_external_links_to_results
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.models import MergedLoginPerson, SearchResult
 from mex.admin.pagination_component import PaginationStateMixin, pagination
 from mex.admin.search_results_component import (
@@ -83,14 +83,14 @@ class ConsentCategoryList(rx.ComponentState, PaginationStateMixin):
                 all_results.extend(response.items)
                 total += response.total
 
-        except HTTPError as exc:
+        except RequestException as exc:
             self.is_loading = False
             self.set_current_page(1)  # type:ignore[operator]
             self.set_total(0)  # type:ignore[operator]
             self.items = []
             yield None
             yield from escalate_error(
-                "backend", "error fetching merged items", exc.response.text
+                "backend", "error fetching merged items", response_payload(exc)
             )
             return
 

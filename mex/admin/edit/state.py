@@ -4,8 +4,9 @@ from urllib.parse import parse_qs, urlparse
 
 import reflex as rx
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
+from mex.admin.exceptions import response_payload
 from mex.admin.label_var import label_var
 from mex.admin.models import SearchResult
 from mex.admin.rules.state import RuleState
@@ -47,12 +48,12 @@ class EditState(RuleState):
                         )
                     )
                 )
-            except HTTPError as ex:
+            except RequestException as ex:
                 logger.error(
                     "%s - %s: %s",
                     "backend",
                     "error fetching superseding items using 'fetch_all_merged_items'.",
-                    ex.response.json(),
+                    response_payload(ex),
                     exc_info=False,
                 )
 

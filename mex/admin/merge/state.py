@@ -3,9 +3,9 @@ from typing import Literal
 
 import reflex as rx
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.label_var import label_var
 from mex.admin.models import SearchResult, ValueLabelCheckboxItem
 from mex.admin.state import State
@@ -162,14 +162,14 @@ class MergeState(State):
                 entity_type=entity_type,
                 limit=self.limit,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.is_loading = False
             self.results_merged = []
             self.results_count["merged"] = 0
             self.total_count["merged"] = 0
             yield None
             yield from escalate_error(
-                "backend", "error fetching merged items", exc.response.text
+                "backend", "error fetching merged items", response_payload(exc)
             )
         else:
             self.is_loading = False
@@ -194,14 +194,14 @@ class MergeState(State):
                 entity_type=entity_type,
                 limit=self.limit,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.is_loading = False
             self.results_extracted = []
             self.results_count["extracted"] = 0
             self.total_count["extracted"] = 0
             yield None
             yield from escalate_error(
-                "backend", "error fetching extracted items", exc.response.text
+                "backend", "error fetching extracted items", response_payload(exc)
             )
         else:
             self.is_loading = False

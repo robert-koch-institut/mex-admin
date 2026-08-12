@@ -3,9 +3,9 @@ from typing import cast
 
 import reflex as rx
 from reflex.event import EventSpec, EventType
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.label_var import label_var
 from mex.admin.locale_service import LocaleService
 from mex.admin.models import SearchResult
@@ -129,14 +129,14 @@ class SearchReferenceDialogState(State, PaginationStateMixin):
                 skip=self.skip,
                 limit=self.limit,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.is_loading = False
             self.results = []
             self.total = 0
             yield SearchReferenceDialogState.set_current_page(1)  # type: ignore[operator]
             yield None
             yield from escalate_error(
-                "backend", "error fetching merged items", exc.response.text
+                "backend", "error fetching merged items", response_payload(exc)
             )
         else:
             self.is_loading = False

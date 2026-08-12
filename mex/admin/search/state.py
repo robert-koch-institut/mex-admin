@@ -6,9 +6,9 @@ from urllib.parse import parse_qs, urlparse
 import reflex as rx
 from reflex.event import EventSpec
 from reflex.istate.data import RouterData
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.label_var import label_var
 from mex.admin.locale_service import LocaleService
 from mex.admin.models import SearchResult, ValueLabelCheckboxItem
@@ -163,14 +163,14 @@ class SearchState(State, PaginationStateMixin):
                 skip=skip,
                 limit=self.limit,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.search_duration_seconds = time.monotonic() - start_time
             self.is_loading = False
             self.results = []
             yield SearchState.set_total(0)  # type: ignore[operator]
             yield SearchState.set_current_page(1)  # type: ignore[operator]
             yield from escalate_error(
-                "backend", "error fetching merged items", exc.response.text
+                "backend", "error fetching merged items", response_payload(exc)
             )
         else:
             self.search_duration_seconds = time.monotonic() - start_time
@@ -189,9 +189,9 @@ class SearchState(State, PaginationStateMixin):
                 skip=0,
                 limit=maximum_number_of_primary_sources,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             yield from escalate_error(
-                "backend", "error fetching primary sources", exc.response.text
+                "backend", "error fetching primary sources", response_payload(exc)
             )
         else:
             available_primary_sources = transform_models_to_search_results(

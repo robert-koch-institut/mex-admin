@@ -7,9 +7,9 @@ from typing import Any
 import reflex as rx
 from pydantic import BaseModel
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.fields import STRINGIFIED_TYPES_BY_FIELD_BY_CLASS_NAME
 from mex.admin.label_var import label_var
 from mex.admin.models import SearchResult, ValueLabelCheckboxItem
@@ -180,7 +180,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
                 skip=skip,
                 limit=self.limit,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.search_duration_seconds = time.monotonic() - start_time
             self.search_results = []
             self.total = 0
@@ -188,7 +188,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
             yield from escalate_error(
                 "backend",
                 "advanced search :: error fetching preview items",
-                exc.response.text,
+                response_payload(exc),
             )
         else:
             self.search_duration_seconds = time.monotonic() - start_time
