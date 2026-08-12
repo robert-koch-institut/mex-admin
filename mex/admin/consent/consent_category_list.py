@@ -17,7 +17,7 @@ from mex.admin.search_results_component import (
 )
 from mex.admin.transform import transform_models_to_search_results
 from mex.admin.utils import resolve_editor_value
-from mex.common.backend_api.connector import BackendApiConnector
+from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.models import AnyMergedModel
 
 
@@ -73,8 +73,12 @@ class ConsentCategoryList(rx.ComponentState, PaginationStateMixin):
                     entity_type=[self.config.entity_type],
                     skip=self.skip,
                     limit=self.limit,
-                    reference_field=ref_field,
-                    referenced_identifier=[str(self.merged_login_person.identifier)],
+                    reference_filters=[
+                        ReferenceFilter(
+                            field=ref_field,
+                            identifiers=[str(self.merged_login_person.identifier)],
+                        )
+                    ],
                 )
                 all_results.extend(response.items)
                 total += response.total

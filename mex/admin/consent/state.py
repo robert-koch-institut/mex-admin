@@ -12,7 +12,7 @@ from mex.admin.models import NavItem, SearchResult
 from mex.admin.settings import AdminSettings
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
-from mex.common.backend_api.connector import BackendApiConnector
+from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.models import (
     AdditiveConsent,
     AnyRuleSetRequest,
@@ -90,8 +90,12 @@ class ConsentState(State):
             response = connector.fetch_preview_items(
                 query_string=None,
                 entity_type=["MergedConsent"],
-                referenced_identifier=[str(self.merged_login_person.identifier)],
-                reference_field="hasDataSubject",
+                reference_filters=[
+                    ReferenceFilter(
+                        field="hasDataSubject",
+                        identifiers=[str(self.merged_login_person.identifier)],
+                    )
+                ],
             )
         except HTTPError as exc:
             self.is_loading = False

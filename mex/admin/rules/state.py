@@ -35,7 +35,7 @@ from mex.admin.transform import (
     transform_models_to_title,
 )
 from mex.admin.utils import resolve_editor_value, resolve_identifier
-from mex.common.backend_api.connector import BackendApiConnector
+from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     RULE_SET_REQUEST_CLASSES,
@@ -177,7 +177,9 @@ class RuleState(State, LocalStorageMixinState):
         if self.item_id:
             connector = BackendApiConnector.get()
             extracted_items_response = connector.fetch_extracted_items(
-                stable_target_id=self.item_id
+                reference_filters=[
+                    ReferenceFilter(field="stableTargetId", identifiers=[self.item_id])
+                ]
             )
             return extracted_items_response.items
         return []

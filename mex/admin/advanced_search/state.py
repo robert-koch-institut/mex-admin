@@ -165,7 +165,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
         """Perform the search with the current filters."""
         entity_type = [ensure_prefix(x, "Merged") for x in self.entity_types]
         skip = self.limit * (self.current_page - 1)
-        references = _build_reference_filters(self.refs)
+        reference_filters = _build_reference_filters(self.refs)
 
         self.is_searching = True
         yield None
@@ -173,10 +173,10 @@ class AdvancedSearchState(State, PaginationStateMixin):
         connector = BackendApiConnector.get()
         start_time = time.monotonic()
         try:
-            fetch_result = connector.search_preview_items(
+            fetch_result = connector.fetch_preview_items(
                 query_string=self.query or None,
                 entity_type=entity_type,
-                references=references,
+                reference_filters=reference_filters or None,
                 skip=skip,
                 limit=self.limit,
             )

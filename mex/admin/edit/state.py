@@ -11,7 +11,7 @@ from mex.admin.models import SearchResult
 from mex.admin.rules.state import RuleState
 from mex.admin.transform import transform_models_to_search_results
 from mex.admin.utils import resolve_editor_value
-from mex.common.backend_api.connector import BackendApiConnector
+from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.logging import logger
 from mex.common.types import PublishingTarget
 
@@ -39,8 +39,11 @@ class EditState(RuleState):
                 results = await asyncio.to_thread(
                     lambda: transform_models_to_search_results(
                         connector.fetch_all_merged_items(
-                            reference_field="supersededBy",
-                            referenced_identifier=[item_id],
+                            reference_filters=[
+                                ReferenceFilter(
+                                    field="supersededBy", identifiers=[item_id]
+                                )
+                            ]
                         )
                     )
                 )
