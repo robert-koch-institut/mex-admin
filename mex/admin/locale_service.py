@@ -15,6 +15,9 @@ from mex.common.transform import camelcase_to_title
 
 LOCALE_SERVICE_STORE = SingleSingletonStore["LocaleService"]()
 
+# ISO 639-2/T codes used as short language labels in the UI
+ISO_639_2_CODES = {"de": "deu", "en": "eng"}
+
 
 class MExLocale(BaseModel):
     """Represents a locale with id and label."""
@@ -22,6 +25,7 @@ class MExLocale(BaseModel):
     id: str
     label: str
     language: str
+    code: str
 
     def values(self) -> Iterable[str]:
         """Expose locale values to avoid reflex bug."""
@@ -47,12 +51,13 @@ class LocaleService:
 
     def __init__(self) -> None:
         """Initialize with all available locales in `_admin_locale_path`."""
-        for po_file in self._admin_locale_path.glob("*.po"):
+        for po_file in sorted(self._admin_locale_path.glob("*.po")):
             locale = po_file.name.removesuffix(".po")
             language = re.split("[-_]", locale)[0]
             label = BabelLocale(language).get_language_name()
+            code = ISO_639_2_CODES.get(language, language).upper()
             self._available_locales[locale] = MExLocale(
-                id=locale, label=label, language=language
+                id=locale, label=label, language=language, code=code
             )
 
     def _ensure_translation(self, locale_id: str) -> GNUTranslations:

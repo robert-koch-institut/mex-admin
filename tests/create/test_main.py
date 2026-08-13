@@ -176,15 +176,21 @@ def test_language_switcher(
     lang_switcher = create_page.get_by_test_id("language-switcher")
     expect(lang_switcher).to_be_visible()
 
-    # change language and wait for reload
-    lang_switcher.click()
-    create_page.get_by_test_id(f"language-switcher-menu-item-{locale_id}").click()
+    # change language and wait for the new locale to be applied
+    locale_segment = create_page.get_by_test_id(f"language-switcher-{locale_id}")
+    locale_segment.click()
+    expect(locale_segment).to_have_attribute("aria-pressed", "true")
     create_page.screenshot(
         path=f"tests_create_test_main-test_language_switcher-switcher_clicked-{locale_id}.png"
     )
 
+    # the select shows the default entity type, whose label matches the field label,
+    # so this waits for the select to re-render before interacting with it
+    entity_type_select = create_page.get_by_test_id("entity-type-select")
+    expect(entity_type_select).to_have_text(expected_access_platform_field_label)
+
     # select entity_type resource
-    create_page.get_by_test_id("entity-type-select").click(timeout=30_000)
+    entity_type_select.click(timeout=30_000)
     create_page.get_by_test_id(
         re.compile(r"value-label-select-item-(.+)-Resource")
     ).click()
