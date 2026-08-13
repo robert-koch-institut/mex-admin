@@ -3,7 +3,7 @@ from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from urllib.parse import urlencode, urlparse, urlunparse
 
-from requests import HTTPError
+from requests import RequestException
 from starlette import status
 
 from mex.admin.models import EditorValue
@@ -20,7 +20,7 @@ def resolve_identifier(identifier: str) -> str:
     connector = BackendApiConnector.get()
     try:
         item = connector.get_preview_item(identifier)
-    except HTTPError as exc:
+    except RequestException as exc:
         if (
             exc.response is not None
             and exc.response.status_code == status.HTTP_404_NOT_FOUND

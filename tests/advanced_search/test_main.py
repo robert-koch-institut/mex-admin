@@ -2,7 +2,7 @@ import re
 from collections.abc import Iterable
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Locator, Page, expect
 
 from mex.common.backend_api.connector import (
     BackendApiConnector,
@@ -46,6 +46,18 @@ def _make_screenshot(page: Page, name: str) -> None:
     page.screenshot(path=f"tests_advanced_search_test_main_{name}.png")
 
 
+def _set_entity_type_filter(checkbox: Locator, *, checked: bool) -> None:
+    # the entity type checkboxes are controlled by the backend state, so their
+    # checked attribute only flips once the state update arrives. `Locator.check`
+    # asserts the new state right after clicking and would fail on that delay.
+    if (checkbox.get_attribute("aria-checked") == "true") != checked:
+        checkbox.click()
+    if checked:
+        expect(checkbox).to_be_checked()
+    else:
+        expect(checkbox).not_to_be_checked()
+
+
 @pytest.mark.integration
 def test_query_filter(advanced_search_page: Page) -> None:
     page = advanced_search_page
@@ -83,12 +95,14 @@ def test_entity_types_filter(
     all_checkboxes = page.get_by_test_id("filter-entity-types").get_by_role("checkbox")
     assert all_checkboxes.count() == len(MERGED_MODEL_CLASSES_BY_NAME)
     for checkbox in all_checkboxes.all():
-        checkbox.uncheck()
+        _set_entity_type_filter(checkbox, checked=False)
 
     _make_screenshot(page, "test_entity_types_filter_all_unchecked")
 
     for entity_type in entity_types:
-        page.get_by_test_id(f"filter-entity-type-{entity_type}").check()
+        _set_entity_type_filter(
+            page.get_by_test_id(f"filter-entity-type-{entity_type}"), checked=True
+        )
 
     page.screenshot(
         path=f"test_entity_types_filter_checked_{'_'.join(entity_types)}.png"
@@ -164,7 +178,10 @@ def test_reference_filter_field_dependency(
 
     # select the correct filters
     for type_filter in entity_types_filter:
-        page.get_by_test_id(f"filter-entity-type-{type_filter.stemType}").check()
+        _set_entity_type_filter(
+            page.get_by_test_id(f"filter-entity-type-{type_filter.stemType}"),
+            checked=True,
+        )
 
     page.get_by_test_id("add-reference-filter-button").click()
     page.get_by_test_id("ref-filter-0-field").click()

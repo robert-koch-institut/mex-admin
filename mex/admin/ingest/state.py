@@ -3,9 +3,9 @@ from typing import Any
 
 import reflex as rx
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.ingest.models import ALL_AUX_PROVIDERS, AuxProvider, IngestResult
 from mex.admin.ingest.transform import transform_models_to_results
 from mex.admin.label_var import label_var
@@ -64,9 +64,9 @@ class IngestState(State, PaginationStateMixin):
         try:
             # TODO(ND): use the user auth for backend requests (stop-gap MX-1616)
             connector.ingest([model])
-        except HTTPError as exc:
+        except RequestException as exc:
             yield from escalate_error(
-                "backend", f"error ingesting {model.stemType}", exc.response.text
+                "backend", f"error ingesting {model.stemType}", response_payload(exc)
             )
         else:
             self.results_transformed[index].show_ingest_button = False
@@ -132,7 +132,7 @@ class IngestState(State, PaginationStateMixin):
                     "limit": str(self.limit),
                 },
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.is_loading = False
             self.results_transformed = []
             self.results_extracted = []
@@ -142,7 +142,7 @@ class IngestState(State, PaginationStateMixin):
             yield from escalate_error(
                 "backend",
                 f"error fetching {self.current_aux_provider.static_name} items",
-                exc.response.text,
+                response_payload(exc),
             )
         else:
             self.is_loading = False

@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Literal, cast
 import reflex as rx
 from pydantic import ValidationError
 from reflex.event import EventSpec
-from requests import HTTPError, RequestException
+from requests import RequestException
 from starlette import status
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.label_var import label_var
 from mex.admin.locale_service import LocaleService
 from mex.admin.models import EditorValue, sequence_is_equal
@@ -35,7 +35,7 @@ from mex.admin.transform import (
     transform_models_to_title,
 )
 from mex.admin.utils import resolve_editor_value, resolve_identifier
-from mex.common.backend_api.connector import BackendApiConnector
+from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     RULE_SET_REQUEST_CLASSES,
@@ -153,13 +153,6 @@ class RuleState(State, LocalStorageMixinState):
                             await resolve_editor_value(editor_value)
 
     @classmethod
-    def _error_payload(cls, exc: RequestException) -> str:
-        """Return the response body of a failed request, or the error itself."""
-        if exc.response is not None:
-            return exc.response.text
-        return str(exc)
-
-    @classmethod
     def _contains_any_rule(
         cls, rule_set: AnyRuleSetResponse | AnyRuleSetRequest
     ) -> bool:
@@ -177,7 +170,9 @@ class RuleState(State, LocalStorageMixinState):
         if self.item_id:
             connector = BackendApiConnector.get()
             extracted_items_response = connector.fetch_extracted_items(
-                stable_target_id=self.item_id
+                reference_filters=[
+                    ReferenceFilter(field="stableTargetId", identifiers=[self.item_id])
+                ]
             )
             return extracted_items_response.items
         return []
@@ -188,9 +183,10 @@ class RuleState(State, LocalStorageMixinState):
             connector = BackendApiConnector.get()
             try:
                 return connector.get_rule_set(self.item_id)
-            except HTTPError as exc:
+            except RequestException as exc:
                 if (
-                    exc.response.status_code == status.HTTP_404_NOT_FOUND
+                    exc.response is not None
+                    and exc.response.status_code == status.HTTP_404_NOT_FOUND
                     and self.stem_type
                 ):
                     rule_set_response_class = RULE_SET_RESPONSE_CLASSES_BY_NAME[
@@ -228,7 +224,7 @@ class RuleState(State, LocalStorageMixinState):
             self.is_loading = False
             self.load_error = "backend"
             yield from escalate_error(
-                "backend", "error fetching extracted items", self._error_payload(exc)
+                "backend", "error fetching extracted items", response_payload(exc)
             )
             return
 
@@ -248,7 +244,7 @@ class RuleState(State, LocalStorageMixinState):
                 else "backend"
             )
             yield from escalate_error(
-                "backend", "error fetching rule items", self._error_payload(exc)
+                "backend", "error fetching rule items", response_payload(exc)
             )
             return
 
@@ -315,10 +311,10 @@ class RuleState(State, LocalStorageMixinState):
             return
         try:
             rule_set_response = self._send_rule_set_request(rule_set_request)
-        except HTTPError as exc:
+        except RequestException as exc:
             self.reset()  # type: ignore[no-untyped-call]
             yield from escalate_error(
-                "backend", "error submitting rule set", exc.response.text
+                "backend", "error submitting rule set", response_payload(exc)
             )
             return
 

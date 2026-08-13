@@ -4,15 +4,15 @@ from zoneinfo import ZoneInfo
 
 import reflex as rx
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.label_var import label_var
 from mex.admin.models import NavItem, SearchResult
 from mex.admin.settings import AdminSettings
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
-from mex.common.backend_api.connector import BackendApiConnector
+from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.models import (
     AdditiveConsent,
     AnyRuleSetRequest,
@@ -90,14 +90,18 @@ class ConsentState(State):
             response = connector.fetch_preview_items(
                 query_string=None,
                 entity_type=["MergedConsent"],
-                referenced_identifier=[str(self.merged_login_person.identifier)],
-                reference_field="hasDataSubject",
+                reference_filters=[
+                    ReferenceFilter(
+                        field="hasDataSubject",
+                        identifiers=[str(self.merged_login_person.identifier)],
+                    )
+                ],
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.is_loading = False
             yield None
             yield from escalate_error(
-                "backend", "No Consent could be fetched.", exc.response.text
+                "backend", "No Consent could be fetched.", response_payload(exc)
             )
         else:
             if response.total > 0:
@@ -145,10 +149,10 @@ class ConsentState(State):
         rule_set_request = ConsentRuleSetRequest(additive=additive_consent)
         try:
             self._send_rule_set_request(rule_set_request)
-        except HTTPError as exc:
+        except RequestException as exc:
             self.reset()  # type: ignore[no-untyped-call]
             yield from escalate_error(
-                "backend", "error submitting rule set", exc.response.text
+                "backend", "error submitting rule set", response_payload(exc)
             )
             return
         else:

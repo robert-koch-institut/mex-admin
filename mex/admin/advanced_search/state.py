@@ -7,12 +7,12 @@ from typing import Any
 import reflex as rx
 from pydantic import BaseModel
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.fields import STRINGIFIED_TYPES_BY_FIELD_BY_CLASS_NAME
 from mex.admin.label_var import label_var
-from mex.admin.models import SearchResult
+from mex.admin.models import SearchResult, ValueLabelCheckboxItem
 from mex.admin.pagination_component import PaginationStateMixin
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
@@ -101,6 +101,21 @@ class AdvancedSearchState(State, PaginationStateMixin):
     search_results: list[SearchResult] = []
 
     @rx.var
+    def label_entity_types(self) -> list[ValueLabelCheckboxItem]:
+        """Get entity types with value, label and checked."""
+        return sorted(
+            [
+                ValueLabelCheckboxItem(
+                    label=self._locale_service.get_ui_label(self.current_locale, key),
+                    value=key,
+                    checked=key in self.entity_types,
+                )
+                for key in self.all_entity_types
+            ],
+            key=lambda x: x.label,
+        )
+
+    @rx.var
     def all_fields_for_entity_types(self) -> list[ValueLabelSelectItem]:
         """Get all fields for the currently selected entity types filter.
 
@@ -150,7 +165,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
         """Perform the search with the current filters."""
         entity_type = [ensure_prefix(x, "Merged") for x in self.entity_types]
         skip = self.limit * (self.current_page - 1)
-        references = _build_reference_filters(self.refs)
+        reference_filters = _build_reference_filters(self.refs)
 
         self.is_searching = True
         yield None
@@ -158,14 +173,14 @@ class AdvancedSearchState(State, PaginationStateMixin):
         connector = BackendApiConnector.get()
         start_time = time.monotonic()
         try:
-            fetch_result = connector.search_preview_items(
+            fetch_result = connector.fetch_preview_items(
                 query_string=self.query or None,
                 entity_type=entity_type,
-                references=references,
+                reference_filters=reference_filters or None,
                 skip=skip,
                 limit=self.limit,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.search_duration_seconds = time.monotonic() - start_time
             self.search_results = []
             self.total = 0
@@ -173,7 +188,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
             yield from escalate_error(
                 "backend",
                 "advanced search :: error fetching preview items",
-                exc.response.text,
+                response_payload(exc),
             )
         else:
             self.search_duration_seconds = time.monotonic() - start_time
@@ -190,15 +205,6 @@ class AdvancedSearchState(State, PaginationStateMixin):
                 if preview.identifier and not preview.text:
                     async with self:
                         await resolve_editor_value(preview)
-
-    @rx.event
-    def set_query(self, query: str) -> None:
-        """Set the search query.
-
-        Args:
-            query: The search query string.
-        """
-        self.query = query
 
     @rx.event
     def on_query_form_submit(self, form_data: dict[str, Any]) -> None:

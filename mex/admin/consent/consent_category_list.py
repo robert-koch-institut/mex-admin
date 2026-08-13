@@ -4,12 +4,12 @@ from typing import Any, Literal
 
 import reflex as rx
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
 from mex.admin.component_option_helper import build_pagination_options
 from mex.admin.consent.state import ConsentState
 from mex.admin.consent.transform import add_external_links_to_results
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.models import MergedLoginPerson, SearchResult
 from mex.admin.pagination_component import PaginationStateMixin, pagination
 from mex.admin.search_results_component import (
@@ -17,7 +17,7 @@ from mex.admin.search_results_component import (
 )
 from mex.admin.transform import transform_models_to_search_results
 from mex.admin.utils import resolve_editor_value
-from mex.common.backend_api.connector import BackendApiConnector
+from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.models import AnyMergedModel
 
 
@@ -73,20 +73,24 @@ class ConsentCategoryList(rx.ComponentState, PaginationStateMixin):
                     entity_type=[self.config.entity_type],
                     skip=self.skip,
                     limit=self.limit,
-                    reference_field=ref_field,
-                    referenced_identifier=[str(self.merged_login_person.identifier)],
+                    reference_filters=[
+                        ReferenceFilter(
+                            field=ref_field,
+                            identifiers=[str(self.merged_login_person.identifier)],
+                        )
+                    ],
                 )
                 all_results.extend(response.items)
                 total += response.total
 
-        except HTTPError as exc:
+        except RequestException as exc:
             self.is_loading = False
             self.set_current_page(1)  # type:ignore[operator]
             self.set_total(0)  # type:ignore[operator]
             self.items = []
             yield None
             yield from escalate_error(
-                "backend", "error fetching merged items", exc.response.text
+                "backend", "error fetching merged items", response_payload(exc)
             )
             return
 

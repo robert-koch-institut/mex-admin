@@ -6,9 +6,9 @@ from typing import Literal
 import reflex as rx
 from pydantic import BaseModel
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.label_var import label_var
 from mex.admin.models import SearchResult
 from mex.admin.pagination_component import build_page_selection
@@ -259,7 +259,7 @@ class MergeState(State):
                 skip=self._skip(side),
                 limit=self.limit,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.search_duration_seconds[side] = time.monotonic() - start_time
             self.is_loading = False
             self._set_results(side, [])
@@ -267,7 +267,7 @@ class MergeState(State):
             self.total_count[side] = 0
             yield None
             yield from escalate_error(
-                "backend", "error fetching merged items", exc.response.text
+                "backend", "error fetching merged items", response_payload(exc)
             )
         else:
             self.search_duration_seconds[side] = time.monotonic() - start_time
@@ -297,10 +297,10 @@ class MergeState(State):
                     "keeperIdentifier": str(keeper_identifier),
                 },
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             # keep the selections, so a transient error can be retried as-is
             yield from escalate_error(
-                "backend", "error merging items", exc.response.text
+                "backend", "error merging items", response_payload(exc)
             )
         else:
             yield rx.toast.success(
