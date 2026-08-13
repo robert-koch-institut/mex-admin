@@ -6,7 +6,7 @@ import reflex as rx
 from reflex.event import EventSpec
 from requests import RequestException
 
-from mex.admin.exceptions import response_payload
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.label_var import label_var
 from mex.admin.models import SearchResult
 from mex.admin.rules.state import RuleState
@@ -78,13 +78,27 @@ class EditState(RuleState):
 
     @rx.event
     def delete_reset(self) -> Generator[EventSpec | None]:
-        """Call the delete or reset function."""
+        """Delete the merged item or reset its rules."""
         self.is_deleting = True
         yield None
 
         if self.item_id:
             connector = BackendApiConnector.get()
-            connector.delete_rule_set(self.item_id)
+            # TODO(ND): use user auth for backend requests (stop-gap MX-1616)
+            try:
+                if self.delete_reset_mode == "delete":
+                    connector.delete_merged_item(self.item_id, include_rule_set=True)
+                else:
+                    connector.delete_rule_set(self.item_id)
+            except RequestException as exc:
+                self.is_deleting = False
+                yield from escalate_error(
+                    "backend", "error deleting item", response_payload(exc)
+                )
+                return
+
+            # drop local edits, they would be re-applied on the next refresh
+            yield EditState.delete_local_state  # type: ignore[misc]
 
             if self.delete_reset_mode == "delete":
                 yield rx.redirect("/")

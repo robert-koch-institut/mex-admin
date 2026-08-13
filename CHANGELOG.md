@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- show "delete item" on the edit page for items without rules and delete the merged item
+  including its rule set, instead of only deleting the rule set
+- update mex-backend to 4.3
 - update merge page to comply with backend and new ADR
 - bump mex-common to 3.2
 - prioritize the first 10 pages in the pagination drop-down

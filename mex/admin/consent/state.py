@@ -162,6 +162,7 @@ class ConsentState(State):
     def _send_rule_set_request(self, rule_set: AnyRuleSetRequest) -> AnyRuleSetResponse:
         """Send the rule set to the backend."""
         connector = BackendApiConnector.get()
+        # TODO(ND): use user auth for backend requests (stop-gap MX-1616)
         if self.consent_status:
             return connector.update_rule_set(self.consent_status.identifier, rule_set)
         return connector.create_rule_set(rule_set)
