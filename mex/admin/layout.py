@@ -6,7 +6,7 @@ import reflex as rx
 from mex.admin.components import icon_by_stem_type, render_title
 from mex.admin.create.state import CreateState
 from mex.admin.edit.state import EditState
-from mex.admin.locale_service import LocaleService
+from mex.admin.locale_service import LocaleService, MExLocale
 from mex.admin.models import NavItem, User
 from mex.admin.rules.models import UserDraft
 from mex.admin.rules.state import RuleState
@@ -106,29 +106,51 @@ def user_menu(user_type: Literal["user_mex", "user_ldap"] = "user_mex") -> rx.Co
     )
 
 
-def language_switcher() -> rx.Component:
-    """Render a language switcher."""
-    return rx.menu.root(
-        rx.menu.trigger(
-            rx.button(
-                State.current_locale,
-                style=rx.Style(fontWeight="var(--font-weight-medium)"),
-                variant="ghost",
+def language_switcher_segment(locale: MExLocale) -> rx.Component:
+    """Render one segment of the language switcher for the given locale."""
+    is_current = State.current_locale == locale.id
+    return rx.button(
+        locale.code,
+        on_click=State.change_locale(locale.id),  # type: ignore[operator]
+        title=locale.label,
+        variant="ghost",
+        radius="none",
+        style=rx.Style(
+            margin="0",
+            paddingLeft="var(--space-3)",
+            paddingRight="var(--space-3)",
+            fontWeight="var(--font-weight-bold)",
+            backgroundColor=rx.cond(is_current, "var(--accent-11)", "transparent"),
+            # gray-1 inverts with the color mode, staying readable on the accent fill
+            color=rx.cond(is_current, "var(--gray-1)", "var(--accent-11)"),
+        ),
+        _hover={
+            "backgroundColor": rx.cond(
+                is_current, "var(--accent-11)", rx.color("accent", 4)
             ),
-            custom_attrs={"data-testid": "language-switcher"},
+        },
+        custom_attrs={
+            "data-testid": f"language-switcher-{locale.id}",
+            "aria-pressed": is_current,
+        },
+    )
+
+
+def language_switcher() -> rx.Component:
+    """Render a language switcher with one button segment per available locale."""
+    return rx.hstack(
+        rx.foreach(
+            locale_service.get_available_locales(),
+            language_switcher_segment,
         ),
-        rx.menu.content(
-            rx.foreach(
-                locale_service.get_available_locales(),
-                lambda locale: rx.menu.item(
-                    rx.text(locale.label),
-                    on_click=State.change_locale(locale.id),  # type: ignore[operator]
-                    custom_attrs={
-                        "data-testid": f"language-switcher-menu-item-{locale.id}"
-                    },
-                ),
-            )
+        spacing="0",
+        style=rx.Style(
+            alignItems="stretch",
+            border=f"1px solid {rx.color('accent', 8)}",
+            borderRadius="var(--radius-3)",
+            overflow="hidden",
         ),
+        custom_attrs={"data-testid": "language-switcher"},
     )
 
 

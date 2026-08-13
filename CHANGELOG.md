@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - bump mex-common to 3.2
 - prioritize the first 10 pages in the pagination drop-down
+- replace the language drop-down with a segmented DEU/ENG button
 
 ### Deprecated
 
