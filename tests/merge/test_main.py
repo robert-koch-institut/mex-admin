@@ -1,12 +1,14 @@
+import re
+
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Locator, Page, expect
 
 from mex.common.models import (
     AnyExtractedModel,
     ExtractedContactPoint,
     ExtractedResource,
 )
-from tests.conftest import build_pagination_regex, build_ui_label_regex
+from tests.conftest import build_search_summary_regex, build_ui_label_regex
 
 
 @pytest.fixture
@@ -21,15 +23,47 @@ def merge_page(
     return page
 
 
+def select_entity_type(page: Page, stem_type: str) -> None:
+    """Pick the given stem type in the shared entity type select."""
+    page.get_by_test_id("entity-type-select").click()
+    page.get_by_test_id(
+        re.compile(rf"^value-label-select-item-\d+-{stem_type}$")
+    ).click()
+
+
+def select_result(page: Page, side: str, identifier: str) -> None:
+    """Tick the checkbox of the given result on the given side."""
+    page.get_by_test_id(f"{side}-search-results-container").get_by_test_id(
+        f"search-result-{identifier}"
+    ).get_by_role("checkbox").click()
+
+
+def expect_summary(container: Locator, first: int, last: int, total: int) -> None:
+    """Expect the detailed result summary of the container to show these counts."""
+    expect(
+        container.get_by_test_id("search-results-summary").get_by_text(
+            build_search_summary_regex(
+                first, last, total, "merge.result_summary.format"
+            )
+        )
+    ).to_be_visible()
+
+
 @pytest.mark.integration
 def test_index(merge_page: Page) -> None:
     page = merge_page
 
-    # load page and establish both section headings are visible
-    section = page.get_by_test_id("create-heading-merged")
-    expect(section).to_be_visible()
-    section = page.get_by_test_id("create-heading-extracted")
-    expect(section).to_be_visible()
+    # load page and establish the heading with the entity type select is visible
+    expect(page.get_by_test_id("merge-heading")).to_be_visible()
+    expect(page.get_by_test_id("entity-type-select")).to_be_visible()
+
+    # establish both section headings are visible and name the two roles
+    expect(page.get_by_test_id("search-heading-goner")).to_have_text(
+        build_ui_label_regex("merge.search.title_goner")
+    )
+    expect(page.get_by_test_id("search-heading-keeper")).to_have_text(
+        build_ui_label_regex("merge.search.title_keeper")
+    )
 
     # check submit button is showing
     expect(page.get_by_test_id("submit-button")).to_be_visible()
@@ -37,133 +71,274 @@ def test_index(merge_page: Page) -> None:
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
-def test_search_input_merged(merge_page: Page) -> None:
+def test_entity_type_select_filters_both_sides(merge_page: Page) -> None:
     page = merge_page
+    goner_results = page.get_by_test_id("goner-search-results-container")
+    keeper_results = page.get_by_test_id("keeper-search-results-container")
 
-    # check merged search input is showing and working
-    search_input_merged = page.get_by_test_id("search-input-merged")
-    expect(search_input_merged).to_be_visible()
-    search_input_merged.fill("Unit 1")
-    entity_types_merged = page.get_by_test_id("entity-types-merged")
-    expect(entity_types_merged).to_be_visible()
-    entity_types_merged.get_by_test_id("merged-entity-type-OrganizationalUnit").click()
-    checked = entity_types_merged.get_by_role("checkbox", checked=True)
-    expect(checked).to_have_count(1)
-    page.get_by_test_id("search-button-merged").click()
-    expect(page.get_by_text(build_pagination_regex(1, 1))).to_be_visible()
-    page.screenshot(
-        path="tests_merge_items_test_main-test_merged_search_input-on-search-input-1-found.png"
-    )
+    # selecting an entity type filters both sides
+    select_entity_type(page, "ContactPoint")
+    expect_summary(goner_results, 1, 2, 2)
+    expect_summary(keeper_results, 1, 2, 2)
 
-    # check merged clear button is working
-    page.get_by_test_id("clear-button-merged").click()
-    checked = entity_types_merged.get_by_role("checkbox", checked=True)
-    expect(checked).to_have_count(0)
-    assert page.get_by_test_id("search-input-merged").input_value() == ""
-    page.screenshot(
-        path="tests_merge_items_test_main-test_merged_search_input-clear-input.png"
-    )
+    # switching the entity type filters both sides again
+    select_entity_type(page, "OrganizationalUnit")
+    expect_summary(goner_results, 1, 1, 1)
+    expect_summary(keeper_results, 1, 1, 1)
 
-    # check search trigger by entity type
-    entity_types_merged.get_by_test_id("merged-entity-type-ContactPoint").click()
-    expect(page.get_by_text(build_pagination_regex(2, 2))).to_be_visible()
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_pagination_dummy_data")
+def test_entity_type_select_resets_pagination(merge_page: Page) -> None:
+    page = merge_page
+    goner_results = page.get_by_test_id("goner-search-results-container")
+    page_select = goner_results.get_by_test_id("pagination-page-select")
+
+    select_entity_type(page, "ContactPoint")
+    goner_results.get_by_test_id("pagination-next-button").click()
+    expect(page_select).to_have_text("2")
+    expect_summary(goner_results, 51, 100, 102)
+
+    # switching the entity type has to go back to page 1, otherwise the skip of
+    # the old page would leap clean over the whole new result set
+    select_entity_type(page, "Resource")
+    expect(page_select).to_have_text("1")
+    expect_summary(goner_results, 1, 2, 2)
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_pagination_dummy_data")
+def test_pagination(merge_page: Page) -> None:
+    page = merge_page
+    select_entity_type(page, "ContactPoint")
+
+    # both sides paginate on their own, so each starts on page 1 of 102 items
+    for side in ("goner", "keeper"):
+        container = page.get_by_test_id(f"{side}-search-results-container")
+        previous_button = container.get_by_test_id("pagination-previous-button")
+        next_button = container.get_by_test_id("pagination-next-button")
+        page_select = container.get_by_test_id("pagination-page-select")
+        page_select.scroll_into_view_if_needed()
+
+        expect(page_select).to_have_text("1")
+        expect(previous_button).to_be_disabled()
+        expect(next_button).to_be_enabled()
+        expect_summary(container, 1, 50, 102)
+
+        next_button.click()
+        expect(page_select).to_have_text("2")
+        expect(previous_button).to_be_enabled()
+        expect_summary(container, 51, 100, 102)
+
+        next_button.click()
+        expect(page_select).to_have_text("3")
+        expect(next_button).to_be_disabled()
+        expect_summary(container, 101, 102, 102)
+
+        previous_button.click()
+        expect(page_select).to_have_text("2")
+        expect_summary(container, 51, 100, 102)
+
+    page.screenshot(path="tests_merge_test_main-test_pagination.png")
 
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
-def test_search_input_extracted(merge_page: Page) -> None:
+def test_search_input_goner(merge_page: Page) -> None:
     page = merge_page
+    goner_results = page.get_by_test_id("goner-search-results-container")
 
-    # check extracted search input is showing and working
-    search_input_extracted = page.get_by_test_id("search-input-extracted")
-    expect(search_input_extracted).to_be_visible()
-    search_input_extracted.fill("Unit 1")
-    entity_types_extracted = page.get_by_test_id("entity-types-extracted")
-    expect(entity_types_extracted).to_be_visible()
-    entity_types_extracted.get_by_test_id(
-        "extracted-entity-type-OrganizationalUnit"
-    ).click()
-    checked = entity_types_extracted.get_by_role("checkbox", checked=True)
-    expect(checked).to_have_count(1)
-    page.get_by_test_id("search-button-extracted").click()
-    expect(page.get_by_text(build_pagination_regex(1, 1))).to_be_visible()
+    # check goner search input is showing and working
+    search_input_goner = page.get_by_test_id("search-input-goner")
+    expect(search_input_goner).to_be_visible()
+    search_input_goner.fill("Unit 1")
+    select_entity_type(page, "OrganizationalUnit")
+    page.get_by_test_id("search-button-goner").click()
+    expect_summary(goner_results, 1, 1, 1)
     page.screenshot(
-        path="tests_merge_items_test_main-test_extracted_search_input-on-search-input-1-found.png"
+        path="tests_merge_items_test_main-test_goner_search_input-on-search-input-1-found.png"
     )
-
-    # check extracted clear button is working
-    page.get_by_test_id("clear-button-extracted").click()
-    checked = entity_types_extracted.get_by_role("checkbox", checked=True)
-    expect(checked).to_have_count(0)
-    assert page.get_by_test_id("search-input-extracted").input_value() == ""
-    page.screenshot(
-        path="tests_merge_items_test_main-test_extracted_search_input-clear-input.png"
-    )
-
-    # check search trigger by entity type
-    entity_types_extracted.get_by_test_id("extracted-entity-type-ContactPoint").click()
-    expect(page.get_by_text(build_pagination_regex(2, 2))).to_be_visible()
 
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
-def test_select_result_extracted(
+def test_search_input_keeper(merge_page: Page) -> None:
+    page = merge_page
+    keeper_results = page.get_by_test_id("keeper-search-results-container")
+
+    # check keeper search input is showing and working
+    search_input_keeper = page.get_by_test_id("search-input-keeper")
+    expect(search_input_keeper).to_be_visible()
+    search_input_keeper.fill("Unit 1")
+    select_entity_type(page, "OrganizationalUnit")
+    page.get_by_test_id("search-button-keeper").click()
+    expect_summary(keeper_results, 1, 1, 1)
+    page.screenshot(
+        path="tests_merge_items_test_main-test_keeper_search_input-on-search-input-1-found.png"
+    )
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_dummy_data")
+def test_select_result_keeper(
     merge_page: Page,
     dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
 ) -> None:
     page = merge_page
+    keeper_results = page.get_by_test_id("keeper-search-results-container")
 
-    # check extracted search result selection is working
-    search_input_extracted = page.get_by_test_id("search-input-extracted")
-    expect(search_input_extracted).to_be_visible()
-    search_input_extracted.fill("contact")
-    entity_types_extracted = page.get_by_test_id("entity-types-extracted")
-    expect(entity_types_extracted).to_be_visible()
-
-    entity_types_extracted.get_by_test_id("extracted-entity-type-ContactPoint").click()
-    page.get_by_test_id("search-button-extracted").click()
-    expect(page.get_by_text(build_pagination_regex(2, 2))).to_be_visible()
+    # check keeper search result selection is working
+    search_input_keeper = page.get_by_test_id("search-input-keeper")
+    expect(search_input_keeper).to_be_visible()
+    search_input_keeper.fill("contact")
+    select_entity_type(page, "ContactPoint")
+    page.get_by_test_id("search-button-keeper").click()
+    expect_summary(keeper_results, 1, 2, 2)
     contact_point_1 = dummy_data_by_identifier_in_primary_source["cp-1"]
-    extracted_search_results = page.get_by_test_id("extracted-search-results-container")
-    result = extracted_search_results.get_by_test_id(
-        f"search-result-{contact_point_1.identifier}"
-    )
-    result.get_by_role("checkbox").click()
-    checked = entity_types_extracted.get_by_role("checkbox", checked=True)
-    expect(checked).to_have_count(1)
+    select_result(page, "keeper", str(contact_point_1.stableTargetId))
+    expect(keeper_results.get_by_role("checkbox", checked=True)).to_have_count(1)
     page.screenshot(
-        path="tests_merge_items_test_main-test_select_result_extracted-select.png"
+        path="tests_merge_items_test_main-test_select_result_keeper-select.png"
     )
 
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("load_dummy_data")
-def test_select_result_merged(
+def test_select_result_goner(
     merge_page: Page,
     dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
 ) -> None:
     page = merge_page
+    goner_results = page.get_by_test_id("goner-search-results-container")
 
-    # check merged search result selection is working
-    search_input_merged = page.get_by_test_id("search-input-merged")
-    expect(search_input_merged).to_be_visible()
-    search_input_merged.fill("contact")
-    entity_types_merged = page.get_by_test_id("entity-types-merged")
-    expect(entity_types_merged).to_be_visible()
-    entity_types_merged.get_by_test_id("merged-entity-type-ContactPoint").click()
-    page.get_by_test_id("search-button-merged").click()
-    expect(page.get_by_text(build_pagination_regex(2, 2))).to_be_visible()
+    # check goner search result selection is working
+    search_input_goner = page.get_by_test_id("search-input-goner")
+    expect(search_input_goner).to_be_visible()
+    search_input_goner.fill("contact")
+    select_entity_type(page, "ContactPoint")
+    page.get_by_test_id("search-button-goner").click()
+    expect_summary(goner_results, 1, 2, 2)
     contact_point_1 = dummy_data_by_identifier_in_primary_source["cp-1"]
-    merged_search_results = page.get_by_test_id("merged-search-results-container")
-    result = merged_search_results.get_by_test_id(
-        f"search-result-{contact_point_1.stableTargetId}"
-    )
-    result.get_by_role("checkbox").click()
-    checked = entity_types_merged.get_by_role("checkbox", checked=True)
-    expect(checked).to_have_count(1)
+    select_result(page, "goner", str(contact_point_1.stableTargetId))
+    expect(goner_results.get_by_role("checkbox", checked=True)).to_have_count(1)
     page.screenshot(
-        path="tests_merge_items_test_main-test_select_result_merged-select.png"
+        path="tests_merge_items_test_main-test_select_result_goner-select.png"
     )
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_dummy_data")
+def test_submit_button_needs_both_selections(
+    merge_page: Page,
+    dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
+) -> None:
+    page = merge_page
+    submit_button = page.get_by_test_id("submit-button")
+    contact_point_1 = dummy_data_by_identifier_in_primary_source["cp-1"]
+    contact_point_2 = dummy_data_by_identifier_in_primary_source["cp-2"]
+
+    # without any selection there is nothing to merge
+    expect(submit_button).to_be_disabled()
+    select_entity_type(page, "ContactPoint")
+    expect(submit_button).to_be_disabled()
+
+    # selecting only the goner side is still not enough
+    select_result(page, "goner", str(contact_point_1.stableTargetId))
+    expect(submit_button).to_be_disabled()
+
+    # only with a selection on both sides the merge can be submitted
+    select_result(page, "keeper", str(contact_point_2.stableTargetId))
+    expect(submit_button).to_be_enabled()
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_dummy_data")
+def test_submit_dialog_can_be_cancelled(
+    merge_page: Page,
+    dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
+) -> None:
+    page = merge_page
+    contact_point_1 = dummy_data_by_identifier_in_primary_source["cp-1"]
+    contact_point_2 = dummy_data_by_identifier_in_primary_source["cp-2"]
+
+    select_entity_type(page, "ContactPoint")
+    select_result(page, "goner", str(contact_point_1.stableTargetId))
+    select_result(page, "keeper", str(contact_point_2.stableTargetId))
+    page.get_by_test_id("submit-button").click()
+
+    # the dialog names both items, so the user can see what is about to happen
+    description = page.get_by_test_id("submit-merge-description")
+    expect(description).to_be_visible()
+    expect(description).to_contain_text(str(contact_point_1.stableTargetId))
+    expect(description).to_contain_text(str(contact_point_2.stableTargetId))
+    page.screenshot(path="tests_merge_test_main-test_submit_dialog.png")
+
+    # both identifiers open their edit page in a new tab
+    for contact_point in (contact_point_1, contact_point_2):
+        link = description.get_by_role("link", name=str(contact_point.stableTargetId))
+        expect(link).to_have_attribute("href", f"/item/{contact_point.stableTargetId}")
+        expect(link).to_have_attribute("target", "_blank")
+
+    # cancelling closes the dialog without sending anything to the backend
+    page.get_by_test_id("submit-merge-cancel-button").click()
+    expect(description).not_to_be_visible()
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("load_dummy_data")
+def test_submit_merge_surfaces_backend_error(
+    merge_page: Page,
+    dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
+) -> None:
+    page = merge_page
+    contact_point_1 = dummy_data_by_identifier_in_primary_source["cp-1"]
+
+    # picking the same item on both sides is rejected by the backend's
+    # `not_self_merge` precondition, which makes this a stable way to cover the
+    # dialog -> submit -> escalate_error path
+    select_entity_type(page, "ContactPoint")
+    select_result(page, "goner", str(contact_point_1.stableTargetId))
+    select_result(page, "keeper", str(contact_point_1.stableTargetId))
+    page.get_by_test_id("submit-button").click()
+    page.get_by_test_id("submit-merge-confirm-button").click()
+
+    expect(page.get_by_text("backend Error")).to_be_visible()
+    page.screenshot(path="tests_merge_test_main-test_submit_merge_error.png")
+
+
+@pytest.mark.integration
+@pytest.mark.xfail(
+    reason="the backend's /v0/merge is stubbed and fails with 500 NotImplementedError",
+    strict=False,
+)
+@pytest.mark.usefixtures("load_dummy_data")
+def test_submit_merge(
+    merge_page: Page,
+    dummy_data_by_identifier_in_primary_source: dict[str, AnyExtractedModel],
+) -> None:
+    page = merge_page
+    contact_point_1 = dummy_data_by_identifier_in_primary_source["cp-1"]
+    contact_point_2 = dummy_data_by_identifier_in_primary_source["cp-2"]
+    goner_identifier = str(contact_point_1.stableTargetId)
+
+    select_entity_type(page, "ContactPoint")
+    select_result(page, "goner", goner_identifier)
+    select_result(page, "keeper", str(contact_point_2.stableTargetId))
+    page.get_by_test_id("submit-button").click()
+    page.get_by_test_id("submit-merge-confirm-button").click()
+
+    # a green toast confirms the merge
+    expect(
+        page.get_by_text(build_ui_label_regex("merge.toast_success.title"))
+    ).to_be_visible()
+
+    # and both sides refresh, so the superseded item is gone from either list
+    for side in ("goner", "keeper"):
+        container = page.get_by_test_id(f"{side}-search-results-container")
+        expect_summary(container, 1, 1, 1)
+        expect(
+            container.get_by_test_id(f"search-result-{goner_identifier}")
+        ).not_to_be_visible()
 
 
 @pytest.mark.integration
@@ -177,19 +352,13 @@ def test_resolves_identifier(
     assert isinstance(contact_point_1, ExtractedContactPoint)
     activity_1 = dummy_data_by_identifier_in_primary_source["a-1"]
 
-    entity_types_extracted = page.get_by_test_id("entity-types-extracted")
-    expect(entity_types_extracted).to_be_visible()
-    entity_types_extracted.get_by_test_id("extracted-entity-type-Activity").click()
+    select_entity_type(page, "Activity")
 
-    page.get_by_test_id("search-button-extracted").click()
-    extracted_results = page.get_by_test_id("extracted-search-results-container")
-    expect(
-        extracted_results.get_by_test_id("search-results-summary").get_by_text(
-            build_pagination_regex(1, 1)
-        )
-    ).to_be_visible()
+    page.get_by_test_id("search-button-goner").click()
+    goner_results = page.get_by_test_id("goner-search-results-container")
+    expect_summary(goner_results, 1, 1, 1)
     page.screenshot(path="tests_merge_test_main-test_resolves_identifier.png")
-    result = extracted_results.get_by_test_id(f"search-result-{activity_1.identifier}")
+    result = goner_results.get_by_test_id(f"search-result-{activity_1.stableTargetId}")
     email = result.get_by_text(f"{contact_point_1.email[0]}")
     expect(email).to_be_visible()
 
@@ -202,15 +371,13 @@ def test_additional_titles_badge(
 ) -> None:
     # search for resources
     page = merge_page
-    page.get_by_test_id("entity-types-extracted").get_by_test_id(
-        "extracted-entity-type-Resource"
-    ).click()
+    select_entity_type(page, "Resource")
 
     resource_r2 = dummy_data_by_identifier_in_primary_source["r-2"]
     assert isinstance(resource_r2, ExtractedResource)
-    extracted_results = page.get_by_test_id("extracted-search-results-container")
-    resource_r2_result = extracted_results.get_by_test_id(
-        f"search-result-{resource_r2.identifier}"
+    goner_results = page.get_by_test_id("goner-search-results-container")
+    resource_r2_result = goner_results.get_by_test_id(
+        f"search-result-{resource_r2.stableTargetId}"
     )
     expect(resource_r2_result).to_be_visible()
     page.screenshot(path="tests_merge_test_additional_titles_badge_on_load.png")

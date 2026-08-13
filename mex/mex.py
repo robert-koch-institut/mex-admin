@@ -75,6 +75,7 @@ app.add_page(
     on_load=[
         State.check_mex_login,
         State.load_nav,
+        MergeState.reset_stem_type,
         MergeState.refresh,
         MergeState.resolve_identifiers,
     ],

@@ -90,7 +90,7 @@ msgid "ingest.toast_success.message_format"
 msgstr "{} was ingested successfully."
 
 msgid "merge.result_summary.format"
-msgstr "Showing {0} of {1} items"
+msgstr "Showing items {0}-{1} of {2} total. Took {3:.1f} seconds."
 
 msgid "merge.submit_button"
 msgstr "Submit merge"
@@ -98,14 +98,34 @@ msgstr "Submit merge"
 msgid "merge.search_input.placeholder"
 msgstr "Search here..."
 
-msgid "merge.search.title_format"
-msgstr "Search {0} items"
+msgid "merge.search.title_goner"
+msgstr "Superseded Item"
 
-msgid "merge.search.clear_button"
-msgstr "Clear"
+msgid "merge.search.title_keeper"
+msgstr "Kept Item"
 
-msgid "merge.filter_entity_type.title"
-msgstr "Filter by entity type"
+msgid "merge.title.merge_items"
+msgstr "Merge items of type"
+
+msgid "merge.submit_dialog.title"
+msgstr "Confirm merge"
+
+msgid "merge.submit_dialog.description_format"
+msgstr ""
+"{0} will be superseded and lose all of its data. Its rules and extracted "
+"items move to {1}. This cannot be undone."
+
+msgid "merge.submit_dialog.cancel_button"
+msgstr "Cancel"
+
+msgid "merge.submit_dialog.confirm_button"
+msgstr "Merge"
+
+msgid "merge.toast_success.title"
+msgstr "Merged"
+
+msgid "merge.toast_success.message_format"
+msgstr "{0} was merged into {1}."
 
 msgid "rules.additive_rule.add_button_prefix"
 msgstr "New"

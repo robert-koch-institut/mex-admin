@@ -90,7 +90,7 @@ msgid "ingest.toast_success.message_format"
 msgstr "{} wurde erfolgreich aufgenommen."
 
 msgid "merge.result_summary.format"
-msgstr "Zeige {0} von {1} Einträgen"
+msgstr "Zeige {0}-{1} von insgesamt {2} Einträgen. Gefunden in {3:.1f} Sekunden."
 
 msgid "merge.submit_button"
 msgstr "Zusammenführung einreichen"
@@ -98,14 +98,34 @@ msgstr "Zusammenführung einreichen"
 msgid "merge.search_input.placeholder"
 msgstr "Hier Suchen..."
 
-msgid "merge.search.title_format"
-msgstr "Suche {0} Einträge"
+msgid "merge.search.title_goner"
+msgstr "Abgelöster Eintrag"
 
-msgid "merge.search.clear_button"
-msgstr "Leeren"
+msgid "merge.search.title_keeper"
+msgstr "Behaltener Eintrag"
 
-msgid "merge.filter_entity_type.title"
-msgstr "Filtern nach Entitätstyp"
+msgid "merge.title.merge_items"
+msgstr "Zusammenführen von Einträgen des Typs"
+
+msgid "merge.submit_dialog.title"
+msgstr "Zusammenführung bestätigen"
+
+msgid "merge.submit_dialog.description_format"
+msgstr ""
+"{0} wird abgelöst und verliert alle Daten. Regeln und extrahierte Einträge "
+"gehen an {1} über. Dies kann nicht rückgängig gemacht werden."
+
+msgid "merge.submit_dialog.cancel_button"
+msgstr "Abbrechen"
+
+msgid "merge.submit_dialog.confirm_button"
+msgstr "Zusammenführen"
+
+msgid "merge.toast_success.title"
+msgstr "Zusammengeführt"
+
+msgid "merge.toast_success.message_format"
+msgstr "{0} wurde in {1} zusammengeführt."
 
 msgid "rules.additive_rule.add_button_prefix"
 msgstr "Hinzufügen von"

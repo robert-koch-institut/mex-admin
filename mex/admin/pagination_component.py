@@ -20,6 +20,30 @@ PAGE_SELECTION_LIMIT = (
 )
 
 
+def build_page_selection(max_page: int, current_page: int) -> list[str]:
+    """Return the selectable pages, thinned out when there are too many.
+
+    Up to `PAGE_SELECTION_LIMIT` pages are offered one by one. Beyond that, only
+    the first `PAGE_SELECTION_HEAD` and the last `PAGE_SELECTION_TAIL` pages are
+    offered, plus one shortcut per entry in `PAGE_SELECTION_PERCENTILES` for the
+    pages in between (e.g. 1288, 2565, 4002, 5280, 6558 for 8000 pages).
+    """
+    if max_page <= PAGE_SELECTION_LIMIT:
+        return [f"{i + 1}" for i in range(max_page)]
+    middle = max_page - PAGE_SELECTION_HEAD - PAGE_SELECTION_TAIL
+    pages = {
+        *range(1, PAGE_SELECTION_HEAD + 1),
+        *(
+            PAGE_SELECTION_HEAD + round(percentile * middle)
+            for percentile in PAGE_SELECTION_PERCENTILES
+        ),
+        *range(max_page - PAGE_SELECTION_TAIL + 1, max_page + 1),
+        # keep the current page selectable, so the select can display its own value
+        current_page,
+    }
+    return [f"{page}" for page in sorted(pages)]
+
+
 class PaginationStateMixin(rx.State, mixin=True):
     """State-Mixin for pagination behavior."""
 
@@ -39,27 +63,8 @@ class PaginationStateMixin(rx.State, mixin=True):
 
     @rx.var
     def page_selection(self) -> list[str]:
-        """Return the selectable pages, thinned out when there are too many.
-
-        Up to `PAGE_SELECTION_LIMIT` pages are offered one by one. Beyond that, only
-        the first `PAGE_SELECTION_HEAD` and the last `PAGE_SELECTION_TAIL` pages are
-        offered, plus one shortcut per entry in `PAGE_SELECTION_PERCENTILES` for the
-        pages in between (e.g. 1288, 2565, 4002, 5280, 6558 for 8000 pages).
-        """
-        if self.max_page <= PAGE_SELECTION_LIMIT:
-            return [f"{i + 1}" for i in range(self.max_page)]
-        middle = self.max_page - PAGE_SELECTION_HEAD - PAGE_SELECTION_TAIL
-        pages = {
-            *range(1, PAGE_SELECTION_HEAD + 1),
-            *(
-                PAGE_SELECTION_HEAD + round(percentile * middle)
-                for percentile in PAGE_SELECTION_PERCENTILES
-            ),
-            *range(self.max_page - PAGE_SELECTION_TAIL + 1, self.max_page + 1),
-            # keep the current page selectable, so the select can display its own value
-            self.current_page,
-        }
-        return [f"{page}" for page in sorted(pages)]
+        """Return the selectable pages, thinned out when there are too many."""
+        return build_page_selection(self.max_page, self.current_page)
 
     @rx.var
     def disable_page_selection(self) -> bool:
