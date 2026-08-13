@@ -36,6 +36,7 @@ def start_search_input() -> rx.Component:
             width="calc(720px * var(--scaling))",
         ),
         variant="ghost",
+        custom_attrs={"data-testid": "start-search"},
     )
 
 

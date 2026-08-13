@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- update merge page to comply with backend and new ADR
 - bump mex-common to 3.2
 - prioritize the first 10 pages in the pagination drop-down
 
