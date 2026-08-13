@@ -14,6 +14,7 @@ from mex.admin.search_results_component import (
     SearchResultsListOptions,
     search_results_component,
 )
+from mex.admin.state import State
 from mex.admin.value_label_select import value_label_select
 
 
@@ -126,55 +127,60 @@ def description_segment(segment: DescriptionSegment) -> rx.Component:
 
 def submit_button() -> rx.Component:
     """Render a submit button that asks for confirmation before merging."""
-    return rx.alert_dialog.root(
-        rx.alert_dialog.trigger(
-            rx.button(
-                MergeState.label_submit_button,
-                color_scheme="jade",
-                size="3",
-                disabled=MergeState.disable_submit_button,
-                style=rx.Style(margin="var(--line-height-1) 0"),
-                custom_attrs={"data-testid": "submit-button"},
-            ),
-        ),
-        rx.alert_dialog.content(
-            rx.alert_dialog.title(MergeState.label_submit_dialog_title),
-            rx.alert_dialog.description(
-                rx.foreach(
-                    MergeState.submit_dialog_description_segments,
-                    description_segment,
+    return rx.cond(
+        State.has_write_access,
+        rx.alert_dialog.root(
+            rx.alert_dialog.trigger(
+                rx.button(
+                    MergeState.label_submit_button,
+                    color_scheme="jade",
+                    size="3",
+                    disabled=MergeState.disable_submit_button,
+                    style=rx.Style(margin="var(--line-height-1) 0"),
+                    custom_attrs={"data-testid": "submit-button"},
                 ),
-                size="2",
-                custom_attrs={"data-testid": "submit-merge-description"},
             ),
-            rx.flex(
-                rx.alert_dialog.cancel(
-                    # the inert flex is what receives radix's close behavior; a
-                    # bare button child would render without it. the testid has
-                    # to sit on the button, `cancel` drops its own attrs
-                    rx.flex(
-                        rx.button(
-                            MergeState.label_submit_dialog_cancel_button,
-                            variant="soft",
-                            color_scheme="gray",
-                            custom_attrs={"data-testid": "submit-merge-cancel-button"},
+            rx.alert_dialog.content(
+                rx.alert_dialog.title(MergeState.label_submit_dialog_title),
+                rx.alert_dialog.description(
+                    rx.foreach(
+                        MergeState.submit_dialog_description_segments,
+                        description_segment,
+                    ),
+                    size="2",
+                    custom_attrs={"data-testid": "submit-merge-description"},
+                ),
+                rx.flex(
+                    rx.alert_dialog.cancel(
+                        # the inert flex is what receives radix's close behavior; a
+                        # bare button child would render without it. the testid has
+                        # to sit on the button, `cancel` drops its own attrs
+                        rx.flex(
+                            rx.button(
+                                MergeState.label_submit_dialog_cancel_button,
+                                variant="soft",
+                                color_scheme="gray",
+                                custom_attrs={
+                                    "data-testid": "submit-merge-cancel-button"
+                                },
+                            ),
                         ),
                     ),
-                ),
-                rx.alert_dialog.action(
-                    rx.button(
-                        MergeState.label_submit_dialog_confirm_button,
-                        color_scheme="tomato",
-                        variant="solid",
-                        on_click=MergeState.submit_merge_items,
-                        custom_attrs={"data-testid": "submit-merge-confirm-button"},
+                    rx.alert_dialog.action(
+                        rx.button(
+                            MergeState.label_submit_dialog_confirm_button,
+                            color_scheme="tomato",
+                            variant="solid",
+                            on_click=MergeState.submit_merge_items,
+                            custom_attrs={"data-testid": "submit-merge-confirm-button"},
+                        ),
                     ),
+                    spacing="3",
+                    margin_top="16px",
+                    justify="end",
                 ),
-                spacing="3",
-                margin_top="16px",
-                justify="end",
+                style=rx.Style(max_width=450),
             ),
-            style=rx.Style(max_width=450),
         ),
     )
 
@@ -183,9 +189,12 @@ def search_panel(side: MergeSide) -> rx.Component:
     """Return the search interface for one side of the merge page."""
 
     def render_checkbox(_: SearchResult, index: int) -> rx.Component:
-        return rx.checkbox(
-            checked=MergeState.selected_items[side] == index,
-            on_change=MergeState.select_item(side, index),  # type:ignore[operator]
+        return rx.cond(
+            State.has_write_access,
+            rx.checkbox(
+                checked=MergeState.selected_items[side] == index,
+                on_change=MergeState.select_item(side, index),  # type:ignore[operator]
+            ),
         )
 
     if side == "goner":

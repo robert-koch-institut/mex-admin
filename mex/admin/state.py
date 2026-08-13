@@ -44,6 +44,7 @@ class State(rx.State):
             title="layout.nav_bar.create_navitem",
             route_ids=["/create", "/create/[draft_id]"],
             raw_path="/create",
+            requires_write=True,
         ),
         NavItem(
             title="layout.nav_bar.edit_navitem",
@@ -54,13 +55,20 @@ class State(rx.State):
             title="layout.nav_bar.merge_navitem",
             route_ids=["/merge"],
             raw_path="/merge",
+            requires_write=True,
         ),
         NavItem(
             title="layout.nav_bar.ingest_navitem",
             route_ids=["/ingest"],
             raw_path="/ingest",
+            requires_write=True,
         ),
     ]
+
+    @rx.var
+    def has_write_access(self) -> bool:
+        """Whether the logged-in MEx user may trigger backend writes."""
+        return bool(self.user_mex and self.user_mex.write_access)
 
     def _translate_nav_item(self, item: NavItem) -> NavItem:
         return NavItem(
@@ -68,10 +76,14 @@ class State(rx.State):
             **item.model_dump(exclude={"title"}),
         )
 
-    @rx.var(deps=["current_locale"])
+    @rx.var(deps=["current_locale", "user_mex"])
     def nav_items_translated(self) -> list[NavItem]:
-        """The Navbar items with locale sensitive label."""
-        return [self._translate_nav_item(item) for item in self._nav_items]
+        """The Navbar items with locale sensitive label, filtered by access rights."""
+        return [
+            self._translate_nav_item(item)
+            for item in self._nav_items
+            if self.has_write_access or not item.requires_write
+        ]
 
     @rx.event
     def set_is_unsaved_changes_dialog_open(self, is_open: bool) -> None:  # noqa: FBT001

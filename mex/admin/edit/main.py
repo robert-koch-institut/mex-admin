@@ -16,6 +16,7 @@ from mex.admin.search_results_component import (
     SearchResultsListOptions,
     search_results_list,
 )
+from mex.admin.state import State
 from mex.admin.style_helper import flex1_col_style, flex3_style
 
 
@@ -51,18 +52,21 @@ def render_publish_target_switch(item: PublishTarget) -> rx.Component:
 
 
 def render_publish_target() -> rx.Component:
-    """Render switches to turn on/off publish targets."""
-    return rx.card(
-        rx.hstack(
-            rx.text.strong(EditState.label_publish_targets),
-            rx.foreach(EditState.publish_targets, render_publish_target_switch),
-            align="center",
-            height="100%",
-            custom_attrs={"data-testid": "publish-targets"},
-        ),
-        style=rx.Style(
-            padding="var(--space-1) var(--space-4)",
-            margin="var(--line-height-1) 0",
+    """Render switches to turn on/off publish targets, for users with write access."""
+    return rx.cond(
+        State.has_write_access,
+        rx.card(
+            rx.hstack(
+                rx.text.strong(EditState.label_publish_targets),
+                rx.foreach(EditState.publish_targets, render_publish_target_switch),
+                align="center",
+                height="100%",
+                custom_attrs={"data-testid": "publish-targets"},
+            ),
+            style=rx.Style(
+                padding="var(--space-1) var(--space-4)",
+                margin="var(--line-height-1) 0",
+            ),
         ),
     )
 
@@ -70,7 +74,7 @@ def render_publish_target() -> rx.Component:
 def delete_reset_button() -> rx.Component:
     """Render a button to show the delete or reset rules dialog."""
     return rx.cond(
-        EditState.delete_reset_mode != None,  # noqa: E711
+        State.has_write_access & (EditState.delete_reset_mode != None),  # noqa: E711
         rx.alert_dialog.root(
             rx.alert_dialog.trigger(
                 rx.button(
@@ -151,7 +155,7 @@ def delete_reset_button() -> rx.Component:
 def discard_changes_button() -> rx.Component:
     """Render a button to show discard changes dialog."""
     return rx.cond(
-        EditState.has_changes,
+        State.has_write_access & EditState.has_changes,
         rx.alert_dialog.root(
             rx.alert_dialog.trigger(
                 rx.button(

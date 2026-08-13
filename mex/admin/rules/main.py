@@ -13,6 +13,7 @@ from mex.admin.rules.models import (
 )
 from mex.admin.rules.state import RuleState
 from mex.admin.search_reference_dialog import search_reference_dialog
+from mex.admin.state import State
 from mex.admin.style_helper import (
     add_component_style,
     add_flex1,
@@ -89,7 +90,7 @@ def editor_static_value(
             rx.cond(primary_source.input_config.render_textarea, False, True),  # noqa: FBT003
         ),
         rx.cond(
-            primary_source.input_config.allow_subtractive,
+            State.has_write_access & primary_source.input_config.allow_subtractive,
             editor_value_switch(
                 field_name,
                 primary_source,
@@ -112,7 +113,7 @@ def editor_additive_value(
     return rx.hstack(
         rx.hstack(
             rx.cond(
-                value.being_edited,
+                State.has_write_access & value.being_edited,
                 add_flex1(
                     additive_rule_input(
                         field_translation,
@@ -132,12 +133,18 @@ def editor_additive_value(
                     )
                 ),
             ),
-            editor_edit_button(field_name, primary_source, value, index),
+            rx.cond(
+                State.has_write_access,
+                editor_edit_button(field_name, primary_source, value, index),
+            ),
             style=flex1_style,
         ),
-        remove_additive_button(
-            field_translation,
-            index,
+        rx.cond(
+            State.has_write_access,
+            remove_additive_button(
+                field_translation,
+                index,
+            ),
         ),
         custom_attrs={"data-testid": f"additive-rule-{field_name}-{index}"},
         spacing="8",
@@ -380,7 +387,10 @@ def primary_source_name(
         rx.hstack(
             add_flex1(render_value(primary_source.name)),
             rx.cond(
-                ~cast("rx.vars.BooleanVar", primary_source.input_config.allow_additive)
+                State.has_write_access
+                & ~cast(
+                    "rx.vars.BooleanVar", primary_source.input_config.allow_additive
+                )
                 & (primary_source.input_config.allow_preventive),
                 primary_source_switch(
                     field_name,
@@ -423,6 +433,17 @@ def new_additive_button(
     )
 
 
+def empty_value_card(field_name: str, primary_source_identifier: str) -> rx.Component:
+    """Render a placeholder for a primary source that holds no values."""
+    return rx.card(
+        render_span("—"),
+        style=rx.Style(color=rx.color("gray", 9)),
+        custom_attrs={
+            "data-testid": f"empty-value-{field_name}-{primary_source_identifier}"
+        },
+    )
+
+
 def editor_primary_source_stack(
     field_translation: FieldTranslation,
     primary_source: EditorPrimarySource,
@@ -439,10 +460,26 @@ def editor_primary_source_stack(
             ),
         ),
         rx.cond(
-            primary_source.input_config.allow_additive,
-            new_additive_button(
-                field_translation,
-                primary_source.identifier,
+            State.has_write_access,
+            rx.cond(
+                primary_source.input_config.allow_additive,
+                new_additive_button(
+                    field_translation,
+                    primary_source.identifier,
+                ),
+            ),
+            # the add button is what fills this column when a primary source has
+            # no values; without it a read-only user would get an empty flex
+            # child and the three column grid would collapse on that row
+            rx.cond(
+                cast(
+                    "rx.vars.ArrayVar[list[EditorValue]]", primary_source.editor_values
+                ).bool(),
+                rx.fragment(),
+                empty_value_card(
+                    field_translation.field.name,
+                    primary_source.identifier,
+                ),
             ),
         ),
         align="stretch",
@@ -557,24 +594,27 @@ def validation_errors() -> rx.Component:
 
 
 def submit_button() -> rx.Component:
-    """Render a submit button to save the rule set."""
-    return rx.button(
-        rx.cond(
-            RuleState.is_submitting,
-            rx.spinner(RuleState.label_save_button_saving_format),
-            rx.text(RuleState.label_save_button_format),
+    """Render a submit button to save the rule set, for users with write access."""
+    return rx.cond(
+        State.has_write_access,
+        rx.button(
+            rx.cond(
+                RuleState.is_submitting,
+                rx.spinner(RuleState.label_save_button_saving_format),
+                rx.text(RuleState.label_save_button_format),
+            ),
+            size="3",
+            color_scheme="jade",
+            on_click=[
+                RuleState.set_is_submitting(value=True),  # type: ignore[operator]
+                RuleState.submit_rule_set,
+                RuleState.resolve_identifiers,
+                RuleState.set_is_submitting(value=False),  # type: ignore[operator]
+            ],
+            disabled=RuleState.is_submitting,
+            style=rx.Style(margin="var(--line-height-1) 0"),
+            custom_attrs={"data-testid": "submit-button"},
         ),
-        size="3",
-        color_scheme="jade",
-        on_click=[
-            RuleState.set_is_submitting(value=True),  # type: ignore[operator]
-            RuleState.submit_rule_set,
-            RuleState.resolve_identifiers,
-            RuleState.set_is_submitting(value=False),  # type: ignore[operator]
-        ],
-        disabled=RuleState.is_submitting,
-        style=rx.Style(margin="var(--line-height-1) 0"),
-        custom_attrs={"data-testid": "submit-button"},
     )
 
 

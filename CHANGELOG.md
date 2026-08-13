@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added translation to advanced search entity type filter
+- added read-only mode, view only - authz not enforced yet
 
 ### Changes
 

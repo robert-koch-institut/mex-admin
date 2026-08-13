@@ -14,29 +14,33 @@ from mex.admin.search_results_component import (
     SearchResultsListOptions,
     search_results_component,
 )
+from mex.admin.state import State
 
 
 def ingest_button(result: IngestResult, index: int) -> rx.Component:
     """Render a button to ingest the ingest result to the MEx backend."""
     return rx.cond(
-        result.show_ingest_button,
-        rx.button(
-            IngestState.label_button_ingest,
-            align="end",
-            color_scheme="jade",
-            variant="surface",
-            on_click=IngestState.ingest_result(index),  # type: ignore[operator]
-            width="calc(8em * var(--scaling))",
-            custom_attrs={"data-testid": f"ingest-button-{index}"},
-        ),
-        rx.button(
-            IngestState.label_button_ingested,
-            align="end",
-            color_scheme="gray",
-            variant="surface",
-            disabled=True,
-            width="calc(8em * var(--scaling))",
-            custom_attrs={"data-testid": f"ingest-button-{index}"},
+        State.has_write_access,
+        rx.cond(
+            result.show_ingest_button,
+            rx.button(
+                IngestState.label_button_ingest,
+                align="end",
+                color_scheme="jade",
+                variant="surface",
+                on_click=IngestState.ingest_result(index),  # type: ignore[operator]
+                width="calc(8em * var(--scaling))",
+                custom_attrs={"data-testid": f"ingest-button-{index}"},
+            ),
+            rx.button(
+                IngestState.label_button_ingested,
+                align="end",
+                color_scheme="gray",
+                variant="surface",
+                disabled=True,
+                width="calc(8em * var(--scaling))",
+                custom_attrs={"data-testid": f"ingest-button-{index}"},
+            ),
         ),
     )
 
