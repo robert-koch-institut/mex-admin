@@ -1,5 +1,4 @@
 import re
-from typing import Literal
 
 import pytest
 from playwright.sync_api import Page, expect
@@ -33,6 +32,7 @@ from mex.common.types import (
     TextLanguage,
     Theme,
 )
+from tests.conftest import build_ui_label_regex
 
 
 @pytest.fixture
@@ -100,7 +100,7 @@ def load_superseded_by_entites(
 @pytest.fixture
 def load_delete_reset_data(
     dummy_data: list[AnyExtractedModel],
-) -> dict[Literal["delete", "reset"] | None, str]:
+) -> dict[str, str]:
     connector = BackendApiConnector.get()
     connector.ingest(dummy_data)
 
@@ -119,14 +119,16 @@ def load_delete_reset_data(
         ),
     )
 
-    ou1: AnyExtractedModel = next(
-        x for x in dummy_data if x.identifierInPrimarySource == "ou-1"
+    # r-1 has no rules and is not referenced by any other dummy item,
+    # so it can safely be deleted
+    r1: AnyExtractedModel = next(
+        x for x in dummy_data if x.identifierInPrimarySource == "r-1"
     )
 
     return {
-        "delete": delete_resp.stableTargetId,
+        "delete_rules_only": delete_resp.stableTargetId,
         "reset": cp1.stableTargetId,
-        None: ou1.stableTargetId,
+        "delete_no_rules": r1.stableTargetId,
     }
 
 
@@ -134,22 +136,22 @@ def load_delete_reset_data(
 def test_edit_page_delete_reset_button(
     base_url: str,
     writer_user_page: Page,
-    load_delete_reset_data: dict[Literal["delete", "reset"] | None, str],
+    load_delete_reset_data: dict[str, str],
 ) -> None:
     page = writer_user_page
+    reset_label = build_ui_label_regex("edit.reset_rules.button")
+    delete_label = build_ui_label_regex("edit.delete_rules.button")
 
     def _navigate(stable_id: str) -> None:
         page.goto(f"{base_url}/item/{stable_id}")
         page_body = page.get_by_test_id("page-body")
         expect(page_body).to_be_visible()
 
-    _navigate(load_delete_reset_data[None])
-    expect(page.get_by_test_id("delete-reset-dialog-button")).not_to_be_visible()
-
     reset_id = load_delete_reset_data["reset"]
     _navigate(reset_id)
     dialog_button = page.get_by_test_id("delete-reset-dialog-button")
     expect(dialog_button).to_be_visible()
+    expect(dialog_button).to_have_text(reset_label)
 
     # cancelling the dialog must close it and leave the rules untouched
     dialog_button.click()
@@ -166,12 +168,34 @@ def test_edit_page_delete_reset_button(
     )
     page.wait_for_url(f"{base_url}/item/{reset_id}")
     expect(page.locator(".editor-toast")).to_be_visible()
-    expect(page.get_by_test_id("delete-reset-dialog-button")).not_to_be_visible()
+    # the extracted item remains, so it can now only be deleted as a whole
+    dialog_button = page.get_by_test_id("delete-reset-dialog-button")
+    expect(dialog_button).to_have_text(delete_label)
 
-    delete_id = load_delete_reset_data["delete"]
+    # an item without any rules offers the delete button right away
+    delete_no_rules_id = load_delete_reset_data["delete_no_rules"]
+    _navigate(delete_no_rules_id)
+    dialog_button = page.get_by_test_id("delete-reset-dialog-button")
+    expect(dialog_button).to_be_visible()
+    expect(dialog_button).to_have_text(delete_label)
+    dialog_button.click()
+    page.get_by_test_id("delete-reset-button").click()
+    page.screenshot(
+        path="tests_edit_test_main-test_edit_page_delete_reset_button-"
+        "delete_no_rules_clicked.png"
+    )
+    page.wait_for_url(f"{base_url}/")
+    expect(page.locator(".editor-toast")).to_be_visible()
+
+    # the deleted item is gone for good
+    _navigate(delete_no_rules_id)
+    expect(page.get_by_test_id("edit-load-error")).to_be_visible()
+
+    delete_id = load_delete_reset_data["delete_rules_only"]
     _navigate(delete_id)
     dialog_button = page.get_by_test_id("delete-reset-dialog-button")
     expect(dialog_button).to_be_visible()
+    expect(dialog_button).to_have_text(delete_label)
     dialog_button.click()
     page.get_by_test_id("delete-reset-button").click()
     page.screenshot(

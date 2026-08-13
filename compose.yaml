@@ -43,7 +43,7 @@ services:
       mex-backend:
         condition: service_healthy
   mex-backend:
-    image: ghcr.io/robert-koch-institut/mex-backend:4.2.2@sha256:b122baae0d12298f54628cd141b1d4bf386cbd441dc8b3a81ebd25699ab5f4ae
+    image: ghcr.io/robert-koch-institut/mex-backend:4.3.0@sha256:2bf56266af2cda657c995ef315b713c1feed3bfaed136cda87e7bf11cdde0127
     ports:
       - 8080:8080
     environment:

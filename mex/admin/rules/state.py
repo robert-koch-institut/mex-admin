@@ -261,8 +261,14 @@ class RuleState(State, LocalStorageMixinState):
             )
             self.item_title = transform_models_to_title([preview])
 
-        if rule_set and self._contains_any_rule(rule_set):
-            self.delete_reset_mode = "reset" if extracted_items else "delete"
+        if self.item_id:
+            # rules can be reset as long as extracted items remain,
+            # otherwise the whole merged item has to be deleted
+            self.delete_reset_mode = (
+                "reset"
+                if extracted_items and self._contains_any_rule(rule_set)
+                else "delete"
+            )
 
         loaded_fields = transform_models_to_fields(
             extracted_items,
@@ -290,7 +296,7 @@ class RuleState(State, LocalStorageMixinState):
     def _send_rule_set_request(self, rule_set: AnyRuleSetRequest) -> AnyRuleSetResponse:
         """Send the rule set to the backend."""
         connector = BackendApiConnector.get()
-        # TODO(ND): use the user auth for backend requests (stop-gap MX-1616)
+        # TODO(ND): use user auth for backend requests (stop-gap MX-1616)
         if self.item_id:
             return connector.update_rule_set(self.item_id, rule_set)
         return connector.create_rule_set(rule_set)

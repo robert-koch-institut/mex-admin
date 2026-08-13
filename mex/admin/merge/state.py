@@ -289,6 +289,7 @@ class MergeState(State):
         connector = BackendApiConnector.get()
         try:
             # TODO(ND): use the dedicated connector method once it is available
+            # TODO(ND): use user auth for backend requests (stop-gap MX-1616)
             connector.request(
                 method="POST",
                 endpoint="merge",

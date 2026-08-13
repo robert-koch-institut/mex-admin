@@ -62,7 +62,7 @@ class IngestState(State, PaginationStateMixin):
         connector = BackendApiConnector.get()
         model = self.get_value(self.results_extracted[index])  # type: ignore[arg-type]
         try:
-            # TODO(ND): use the user auth for backend requests (stop-gap MX-1616)
+            # TODO(ND): use user auth for backend requests (stop-gap MX-1616)
             connector.ingest([model])
         except RequestException as exc:
             yield from escalate_error(
