@@ -7,9 +7,9 @@ from typing import Any
 import reflex as rx
 from pydantic import BaseModel
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.fields import STRINGIFIED_TYPES_BY_FIELD_BY_CLASS_NAME
 from mex.admin.label_var import label_var
 from mex.admin.models import SearchResult, ValueLabelCheckboxItem
@@ -165,7 +165,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
         """Perform the search with the current filters."""
         entity_type = [ensure_prefix(x, "Merged") for x in self.entity_types]
         skip = self.limit * (self.current_page - 1)
-        references = _build_reference_filters(self.refs)
+        reference_filters = _build_reference_filters(self.refs)
 
         self.is_searching = True
         yield None
@@ -173,14 +173,14 @@ class AdvancedSearchState(State, PaginationStateMixin):
         connector = BackendApiConnector.get()
         start_time = time.monotonic()
         try:
-            fetch_result = connector.search_preview_items(
+            fetch_result = connector.fetch_preview_items(
                 query_string=self.query or None,
                 entity_type=entity_type,
-                references=references,
+                reference_filters=reference_filters or None,
                 skip=skip,
                 limit=self.limit,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.search_duration_seconds = time.monotonic() - start_time
             self.search_results = []
             self.total = 0
@@ -188,7 +188,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
             yield from escalate_error(
                 "backend",
                 "advanced search :: error fetching preview items",
-                exc.response.text,
+                response_payload(exc),
             )
         else:
             self.search_duration_seconds = time.monotonic() - start_time

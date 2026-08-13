@@ -6,35 +6,33 @@ from urllib.parse import parse_qs, urlparse
 import reflex as rx
 from reflex.event import EventSpec
 from reflex.istate.data import RouterData
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.label_var import label_var
 from mex.admin.locale_service import LocaleService
 from mex.admin.models import SearchResult, ValueLabelCheckboxItem
 from mex.admin.pagination_component import PaginationStateMixin
-from mex.admin.search.models import ReferenceFieldParameters, SearchPrimarySource
+from mex.admin.search.models import SearchPrimarySource
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
 from mex.admin.utils import resolve_editor_value
-from mex.common.backend_api.connector import BackendApiConnector
+from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.exceptions import MExError
 from mex.common.models import MERGED_MODEL_CLASSES, MergedPrimarySource
 from mex.common.transform import ensure_prefix
 
 
-def _build_had_primary_source_refresh_params(
+def _build_had_primary_source_filters(
     had_primary_sources: dict[str, SearchPrimarySource],
-) -> ReferenceFieldParameters:
-    had_primary_source = [
+) -> list[ReferenceFilter] | None:
+    if identifiers := [
         identifier
         for identifier, primary_source in had_primary_sources.items()
         if primary_source.checked
-    ]
-    return {
-        "reference_field": "hadPrimarySource" if had_primary_source else None,
-        "referenced_identifier": had_primary_source,
-    }
+    ]:
+        return [ReferenceFilter(field="hadPrimarySource", identifiers=identifiers)]
+    return None
 
 
 class SearchState(State, PaginationStateMixin):
@@ -151,9 +149,7 @@ class SearchState(State, PaginationStateMixin):
         entity_type = [
             ensure_prefix(k, "Merged") for k, v in self.entity_types.items() if v
         ]
-        had_primary_source_params = _build_had_primary_source_refresh_params(
-            self.had_primary_sources
-        )
+        reference_filters = _build_had_primary_source_filters(self.had_primary_sources)
 
         skip = self.limit * (self.current_page - 1)
         self.is_loading = True
@@ -163,18 +159,18 @@ class SearchState(State, PaginationStateMixin):
             response = connector.fetch_preview_items(
                 query_string=self.query_string,
                 entity_type=entity_type,
+                reference_filters=reference_filters,
                 skip=skip,
                 limit=self.limit,
-                **had_primary_source_params,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             self.search_duration_seconds = time.monotonic() - start_time
             self.is_loading = False
             self.results = []
             yield SearchState.set_total(0)  # type: ignore[operator]
             yield SearchState.set_current_page(1)  # type: ignore[operator]
             yield from escalate_error(
-                "backend", "error fetching merged items", exc.response.text
+                "backend", "error fetching merged items", response_payload(exc)
             )
         else:
             self.search_duration_seconds = time.monotonic() - start_time
@@ -193,9 +189,9 @@ class SearchState(State, PaginationStateMixin):
                 skip=0,
                 limit=maximum_number_of_primary_sources,
             )
-        except HTTPError as exc:
+        except RequestException as exc:
             yield from escalate_error(
-                "backend", "error fetching primary sources", exc.response.text
+                "backend", "error fetching primary sources", response_payload(exc)
             )
         else:
             available_primary_sources = transform_models_to_search_results(

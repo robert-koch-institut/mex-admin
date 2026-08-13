@@ -4,9 +4,9 @@ from enum import StrEnum
 from typing import Any
 
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
-from mex.admin.exceptions import escalate_error
+from mex.admin.exceptions import escalate_error, response_payload
 from mex.admin.models import SearchResult
 from mex.common.backend_api.connector import BackendApiConnector
 
@@ -43,11 +43,11 @@ class AuxProvider:
             )
             if response.items:
                 self.dynamic_name = str(response.items[0].title[-1].value)  # type: ignore[union-attr]
-        except HTTPError as exc:
+        except RequestException as exc:
             yield from escalate_error(
                 "backend",
                 f"error fetching title for {self.key.value}",
-                exc.response.text,
+                response_payload(exc),
             )
 
 

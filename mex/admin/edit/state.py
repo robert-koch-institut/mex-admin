@@ -4,14 +4,15 @@ from urllib.parse import parse_qs, urlparse
 
 import reflex as rx
 from reflex.event import EventSpec
-from requests import HTTPError
+from requests import RequestException
 
+from mex.admin.exceptions import response_payload
 from mex.admin.label_var import label_var
 from mex.admin.models import SearchResult
 from mex.admin.rules.state import RuleState
 from mex.admin.transform import transform_models_to_search_results
 from mex.admin.utils import resolve_editor_value
-from mex.common.backend_api.connector import BackendApiConnector
+from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.logging import logger
 from mex.common.types import PublishingTarget
 
@@ -39,17 +40,20 @@ class EditState(RuleState):
                 results = await asyncio.to_thread(
                     lambda: transform_models_to_search_results(
                         connector.fetch_all_merged_items(
-                            reference_field="supersededBy",
-                            referenced_identifier=[item_id],
+                            reference_filters=[
+                                ReferenceFilter(
+                                    field="supersededBy", identifiers=[item_id]
+                                )
+                            ]
                         )
                     )
                 )
-            except HTTPError as ex:
+            except RequestException as ex:
                 logger.error(
                     "%s - %s: %s",
                     "backend",
                     "error fetching superseding items using 'fetch_all_merged_items'.",
-                    ex.response.json(),
+                    response_payload(ex),
                     exc_info=False,
                 )
 
