@@ -964,8 +964,9 @@ def test_edit_page_submit_button_disabled_while_submitting(edit_page: Page) -> N
 def test_edit_page_additive_add_remove_button_text_translation(
     edit_page: Page, locale_id: str, field_name: str, expected_field_label: str
 ) -> None:
-    edit_page.get_by_test_id("language-switcher").click()
-    edit_page.get_by_test_id(f"language-switcher-menu-item-{locale_id}").click()
+    locale_segment = edit_page.get_by_test_id(f"language-switcher-{locale_id}")
+    locale_segment.click()
+    expect(locale_segment).to_have_attribute("aria-pressed", "true")
     add_alt_title_btn = edit_page.get_by_test_id(
         f"new-additive-{field_name}-{MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID}"
     )

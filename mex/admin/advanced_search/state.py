@@ -10,7 +10,6 @@ from reflex.event import EventSpec
 from requests import RequestException
 
 from mex.admin.exceptions import escalate_error, response_payload
-from mex.admin.fields import STRINGIFIED_TYPES_BY_FIELD_BY_CLASS_NAME
 from mex.admin.label_var import label_var
 from mex.admin.models import SearchResult, ValueLabelCheckboxItem
 from mex.admin.pagination_component import PaginationStateMixin
@@ -19,7 +18,10 @@ from mex.admin.transform import transform_models_to_search_results
 from mex.admin.utils import resolve_editor_value
 from mex.admin.value_label_select import ValueLabelSelectItem
 from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
-from mex.common.fields import REFERENCE_FIELDS_BY_CLASS_NAME
+from mex.common.fields import (
+    REFERENCE_FIELDS_BY_CLASS_NAME,
+    STRINGIFIED_TYPES_BY_FIELD_BY_CLASS_NAME,
+)
 from mex.common.models import MERGED_MODEL_CLASSES
 from mex.common.transform import ensure_prefix
 

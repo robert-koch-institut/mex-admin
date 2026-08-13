@@ -4,12 +4,7 @@ from typing import cast
 
 from pydantic import ValidationError
 
-from mex.admin.fields import STRINGIFIED_TYPES_BY_FIELD_BY_CLASS_NAME
-from mex.admin.models import (
-    LANGUAGE_VALUE_NONE,
-    MODEL_CONFIG_BY_STEM_TYPE,
-    EditorValue,
-)
+from mex.admin.models import LANGUAGE_VALUE_NONE, MODEL_CONFIG_BY_STEM_TYPE, EditorValue
 from mex.admin.rules.models import (
     EditorField,
     EditorPrimarySource,
@@ -26,6 +21,7 @@ from mex.common.fields import (
     MUTABLE_FIELDS_BY_CLASS_NAME,
     REFERENCE_FIELDS_BY_CLASS_NAME,
     REQUIRED_FIELDS_BY_CLASS_NAME,
+    STRINGIFIED_TYPES_BY_FIELD_BY_CLASS_NAME,
     TEMPORAL_FIELDS_BY_CLASS_NAME,
     TEMPORAL_PRECISIONS_BY_FIELD_BY_CLASS_NAMES,
     TEXT_FIELDS_BY_CLASS_NAME,

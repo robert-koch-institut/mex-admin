@@ -55,10 +55,7 @@ def render_publish_target() -> rx.Component:
     return rx.card(
         rx.hstack(
             rx.text.strong(EditState.label_publish_targets),
-            rx.el.div(
-                rx.foreach(EditState.publish_targets, render_publish_target_switch),
-                style={"display": "grid", "grid-template-columns": "1fr 1fr"},
-            ),
+            rx.foreach(EditState.publish_targets, render_publish_target_switch),
             align="center",
             height="100%",
             custom_attrs={"data-testid": "publish-targets"},
