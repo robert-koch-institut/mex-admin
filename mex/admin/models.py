@@ -68,6 +68,7 @@ class NavItem(BaseModel):
     route_ids: list[str]
     raw_path: str
     active: bool = False
+    requires_write: bool = False
 
 
 class ModelConfig(BaseModel):

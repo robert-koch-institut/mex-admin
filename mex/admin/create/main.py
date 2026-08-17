@@ -11,6 +11,7 @@ from mex.admin.rules.main import (
 )
 from mex.admin.rules.models import FieldTranslation
 from mex.admin.rules.state import RuleState
+from mex.admin.state import State
 from mex.admin.style_helper import (
     add_component_style,
     flex1_col_style,
@@ -56,16 +57,19 @@ def create_title() -> rx.Component:
             CreateState.label_title_create_new,
             style=rx.Style(userSelect="none"),
         ),
-        value_label_select(
-            CreateState.value_label_available_stem_types,
-            value=rx.cond(RuleState.stem_type, RuleState.stem_type, ""),
-            on_change=[
-                CreateState.set_stem_type,
-                RuleState.delete_local_state,
-                RuleState.refresh,
-                RuleState.update_local_state,
-            ],
-            custom_attrs={"data-testid": "entity-type-select"},
+        rx.cond(
+            State.has_write_access,
+            value_label_select(
+                CreateState.value_label_available_stem_types,
+                value=rx.cond(RuleState.stem_type, RuleState.stem_type, ""),
+                on_change=[
+                    CreateState.set_stem_type,
+                    RuleState.delete_local_state,
+                    RuleState.refresh,
+                    RuleState.update_local_state,
+                ],
+                custom_attrs={"data-testid": "entity-type-select"},
+            ),
         ),
         custom_attrs={"data-testid": "create-heading"},
     )
@@ -74,7 +78,7 @@ def create_title() -> rx.Component:
 def discard_draft_button() -> rx.Component:
     """Render a button to show discard draft dialog."""
     return rx.cond(
-        CreateState.has_local_draft,
+        State.has_write_access & CreateState.has_local_draft,
         rx.alert_dialog.root(
             rx.alert_dialog.trigger(
                 rx.button(
