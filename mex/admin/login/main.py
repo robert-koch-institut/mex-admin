@@ -1,5 +1,4 @@
 import reflex as rx
-from reflex.event import EventType
 
 from mex.admin.layout import app_logo
 from mex.admin.login.state import LoginMExState, LoginState
@@ -60,8 +59,8 @@ def login_button() -> rx.Component:
     )
 
 
-def login_form(login_callback: EventType[()]) -> rx.Component:
-    """Return a login form."""
+def index() -> rx.Component:
+    """Return the index for the login page."""
     return rx.center(
         rx.card(
             rx.vstack(
@@ -77,7 +76,7 @@ def login_form(login_callback: EventType[()]) -> rx.Component:
                         login_button(),
                         style=rx.Style(width="100%"),
                     ),
-                    on_submit=login_callback,
+                    on_submit=LoginMExState.login,
                     spacing="4",
                 ),
             ),
@@ -89,8 +88,3 @@ def login_form(login_callback: EventType[()]) -> rx.Component:
             custom_attrs={"data-testid": "login-card"},
         )
     )
-
-
-def mex_login() -> rx.Component:
-    """Return the index for the login component."""
-    return login_form(LoginMExState.login)

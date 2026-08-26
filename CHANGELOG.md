@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - set exact version for neo4j:2026.07.1
 - pin the app appearance to light mode
+- rename `State.user_mex` to `State.user`, now that it is the only user
+- rename the login page component `mex_login` to `index`, matching the other page
+  modules, and inline the single-caller `login_form` helper into it
 
 ### Deprecated
 

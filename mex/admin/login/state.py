@@ -51,7 +51,7 @@ class LoginMExState(LoginState):
         read_access = has_read_access_mex(self.username, self.password)
         write_access = has_write_access_mex(self.username, self.password)
         if read_access:
-            self.user_mex = User(
+            self.user = User(
                 name=self.username,
                 write_access=write_access,
             )

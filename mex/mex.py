@@ -11,7 +11,7 @@ from mex.admin.edit.state import EditState
 from mex.admin.home.main import index as home_index
 from mex.admin.ingest.main import index as ingest_index
 from mex.admin.ingest.state import IngestState
-from mex.admin.login.main import mex_login as login_mex_index
+from mex.admin.login.main import index as login_index
 from mex.admin.merge.main import index as merge_index
 from mex.admin.merge.state import MergeState
 from mex.admin.rules.state import RuleState
@@ -131,7 +131,7 @@ app.add_page(
     ],
 )
 app.add_page(
-    login_mex_index,
+    login_index,
     route="/login",
     title="MEx Admin | Login",
 )

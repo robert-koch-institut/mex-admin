@@ -23,7 +23,7 @@ class State(rx.State):
         _available_locales[0],
     ).id
     navigate_target: str | None = None
-    user_mex: User | None = None
+    user: User | None = None
     target_path_after_login: str | None = None
     is_unsaved_changes_dialog_open: bool = False
 
@@ -66,7 +66,7 @@ class State(rx.State):
     @rx.var
     def has_write_access(self) -> bool:
         """Whether the logged-in MEx user may trigger backend writes."""
-        return bool(self.user_mex and self.user_mex.write_access)
+        return bool(self.user and self.user.write_access)
 
     def _translate_nav_item(self, item: NavItem) -> NavItem:
         return NavItem(
@@ -74,7 +74,7 @@ class State(rx.State):
             **item.model_dump(exclude={"title"}),
         )
 
-    @rx.var(deps=["current_locale", "user_mex"])
+    @rx.var(deps=["current_locale", "user"])
     def nav_items_translated(self) -> list[NavItem]:
         """The Navbar items with locale sensitive label, filtered by access rights."""
         return [
@@ -119,7 +119,7 @@ class State(rx.State):
     @rx.event
     def check_mex_login(self) -> Generator[EventSpec]:
         """Check if a user is logged in."""
-        if self.user_mex is None:
+        if self.user is None:
             self.target_path_after_login = self._strip_frontend_path(self.router.url)
             yield rx.redirect("/login", replace=True)
 
