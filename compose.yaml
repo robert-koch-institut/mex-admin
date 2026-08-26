@@ -58,8 +58,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
-    # the testing backend mocks ldap and serves the graph flush endpoint,
-    # both of which the integration test suite relies on
+    # the testing backend serves the graph flush endpoint,
+    # which the integration test suite relies on
     entrypoint: testing-backend
     depends_on:
       neo4j:

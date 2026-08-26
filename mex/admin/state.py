@@ -7,7 +7,7 @@ from reflex.istate.data import ReflexURL
 
 from mex.admin.label_var import label_var
 from mex.admin.locale_service import LocaleService
-from mex.admin.models import MergedLoginPerson, NavItem, User
+from mex.admin.models import NavItem, User
 from mex.admin.utils import replace_url_params
 from mex.common.models import MEX_PRIMARY_SOURCE_STABLE_TARGET_ID
 
@@ -24,8 +24,6 @@ class State(rx.State):
     ).id
     navigate_target: str | None = None
     user_mex: User | None = None
-    user_ldap: User | None = None
-    merged_login_person: MergedLoginPerson | None = None
     target_path_after_login: str | None = None
     is_unsaved_changes_dialog_open: bool = False
 
@@ -124,13 +122,6 @@ class State(rx.State):
         if self.user_mex is None:
             self.target_path_after_login = self._strip_frontend_path(self.router.url)
             yield rx.redirect("/login", replace=True)
-
-    @rx.event
-    def check_ldap_login(self) -> Generator[EventSpec]:
-        """Check if a user is logged in to ldap."""
-        if self.user_ldap is None:
-            self.target_path_after_login = self._strip_frontend_path(self.router.url)
-            yield rx.redirect("/login-ldap", replace=True)
 
     def push_url_params(
         self,
