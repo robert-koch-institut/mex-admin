@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - set exact version for neo4j:2026.07.1
+- upgrade mex-backend to 4.4.0
+- upgrade mex-common to 3.4.0
 
 ### Deprecated
 

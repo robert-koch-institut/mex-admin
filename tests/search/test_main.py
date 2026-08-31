@@ -206,7 +206,7 @@ def test_load_search_params(
     # check entity types are loaded from url
     entity_types = page.get_by_test_id("entity-types")
     unchecked = entity_types.get_by_role("checkbox", checked=False)
-    expect(unchecked).to_have_count(11)
+    expect(unchecked).to_have_count(12)
     checked = entity_types.get_by_role("checkbox", checked=True)
     expect(checked).to_have_count(2)
 

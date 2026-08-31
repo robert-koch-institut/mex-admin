@@ -92,7 +92,7 @@ def test_create_page_renders_heading(create_page: Page) -> None:
 def test_create_page_renders_fields(create_page: Page) -> None:
     page = create_page
     page.get_by_test_id("entity-type-select").click()
-    page.get_by_test_id(re.compile(r"value-label-select-item-(.+)-Resource")).click()
+    page.get_by_test_id(re.compile(r"^value-label-select-item-\d+-Resource$")).click()
     page.screenshot(
         path="tests_create_test_main-test_create_page_renders_fields_select.png"
     )
@@ -192,7 +192,7 @@ def test_language_switcher(
     # select entity_type resource
     entity_type_select.click(timeout=30_000)
     create_page.get_by_test_id(
-        re.compile(r"value-label-select-item-(.+)-Resource")
+        re.compile(r"^value-label-select-item-\d+-Resource$")
     ).click()
     # find the accessPlatform field label and check the text
     field_access_platform = create_page.get_by_test_id("field-accessPlatform-name")
@@ -257,7 +257,7 @@ def test_create_page_test_draft_creation_on_entity_type_change(
 
     create_page.get_by_test_id("entity-type-select").click()
     create_page.get_by_test_id(
-        re.compile(r"value-label-select-item-(.+)-Resource")
+        re.compile(r"^value-label-select-item-\d+-Resource$")
     ).click()
 
     expect(draft_create_page["discard_dialog_button"]).to_be_visible()
