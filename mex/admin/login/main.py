@@ -1,11 +1,7 @@
-from collections.abc import Callable
-
 import reflex as rx
-from reflex.event import EventType
 
-from mex.admin.consent.layout import consent_logo
 from mex.admin.layout import app_logo
-from mex.admin.login.state import LoginLdapState, LoginMExState, LoginState
+from mex.admin.login.state import LoginMExState, LoginState
 
 
 def login_user() -> rx.Component:
@@ -63,23 +59,13 @@ def login_button() -> rx.Component:
     )
 
 
-def login_form(
-    login_callback: EventType[()],
-    logo_factory: Callable[[], rx.Component] = app_logo,
-) -> rx.Component:
-    """Return a login form."""
+def index() -> rx.Component:
+    """Return the index for the login page."""
     return rx.center(
         rx.card(
             rx.vstack(
                 rx.hstack(
-                    logo_factory(),
-                    rx.spacer(spacing="4"),
-                    rx.button(
-                        rx.icon("sun_moon"),
-                        variant="ghost",
-                        style=rx.Style(marginTop="0"),
-                        on_click=rx.toggle_color_mode,
-                    ),
+                    app_logo(),
                     style=rx.Style(width="100%"),
                 ),
                 rx.divider(size="4"),
@@ -90,7 +76,7 @@ def login_form(
                         login_button(),
                         style=rx.Style(width="100%"),
                     ),
-                    on_submit=login_callback,
+                    on_submit=LoginMExState.login,
                     spacing="4",
                 ),
             ),
@@ -102,13 +88,3 @@ def login_form(
             custom_attrs={"data-testid": "login-card"},
         )
     )
-
-
-def ldap_login() -> rx.Component:
-    """Return the index for the login component."""
-    return login_form(LoginLdapState.login, consent_logo)
-
-
-def mex_login() -> rx.Component:
-    """Return the index for the login component."""
-    return login_form(LoginMExState.login, app_logo)

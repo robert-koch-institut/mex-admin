@@ -32,7 +32,6 @@ dev = [
     "pytest>=9",
     "ruff>=0.15",
     "sphinx>=9",
-    "types-ldap3",
     "types-polib",
     "types-PyYAML",
     "types-requests",

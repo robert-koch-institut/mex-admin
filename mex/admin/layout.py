@@ -1,5 +1,4 @@
-from collections.abc import Callable
-from typing import Literal, cast
+from typing import cast
 
 import reflex as rx
 
@@ -15,14 +14,11 @@ from mex.admin.state import State
 locale_service = LocaleService.get()
 
 
-def user_button(
-    user_type: Literal["user_mex", "user_ldap"] = "user_mex",
-) -> rx.Component:
+def user_button() -> rx.Component:
     """Return a user button with an icon that indicates their access rights."""
-    user = getattr(State, user_type)
     return rx.button(
         rx.cond(
-            cast("User", user).write_access,
+            cast("User", State.user).write_access,
             rx.icon("user_round_cog"),
             rx.icon("user_round"),
         ),
@@ -81,16 +77,15 @@ def unsaved_changes_dialog() -> rx.Component:
     )
 
 
-def user_menu(user_type: Literal["user_mex", "user_ldap"] = "user_mex") -> rx.Component:
+def user_menu() -> rx.Component:
     """Return a user menu with a trigger, the user's name and a logout button."""
-    user = getattr(State, user_type)
     return rx.menu.root(
         rx.menu.trigger(
-            user_button(user_type),
+            user_button(),
             custom_attrs={"data-testid": "user-menu"},
         ),
         rx.menu.content(
-            rx.menu.item(cast("User", user).name, disabled=True),
+            rx.menu.item(cast("User", State.user).name, disabled=True),
             rx.menu.separator(),
             rx.menu.item(
                 State.label_nav_bar_logout_button,
@@ -236,29 +231,18 @@ def app_logo() -> rx.Component:
     )
 
 
-def nav_bar(
-    nav_items_source: list[NavItem] | None = None,
-    user_type: Literal["user_mex", "user_ldap"] = "user_mex",
-    logo_factory: Callable[[], rx.Component] = app_logo,
-) -> rx.Component:
+def nav_bar() -> rx.Component:
     """Return a navigation bar component."""
-    nav_items_to_use = (
-        nav_items_source if nav_items_source is not None else State.nav_items_translated
-    )
-    nav_items_section: rx.Component = (
-        rx.fragment()
-        if isinstance(nav_items_to_use, list) and not nav_items_to_use
-        else rx.cond(
-            nav_items_to_use,
-            rx.fragment(
-                rx.divider(orientation="vertical", size="2"),
-                rx.hstack(
-                    rx.foreach(nav_items_to_use, nav_link),
-                    justify="start",
-                    spacing="4",
-                ),
+    nav_items_section = rx.cond(
+        State.nav_items_translated,
+        rx.fragment(
+            rx.divider(orientation="vertical", size="2"),
+            rx.hstack(
+                rx.foreach(State.nav_items_translated, nav_link),
+                justify="start",
+                spacing="4",
             ),
-        )
+        ),
     )
     return rx.vstack(
         rx.box(
@@ -270,18 +254,12 @@ def nav_bar(
         ),
         rx.card(
             rx.hstack(
-                logo_factory(),
+                app_logo(),
                 nav_items_section,
                 rx.spacer(),
                 rx.hstack(
                     language_switcher(),
-                    user_menu(user_type),
-                    rx.button(
-                        rx.icon("sun_moon"),
-                        variant="ghost",
-                        style=rx.Style(marginTop="0"),
-                        on_click=rx.toggle_color_mode,
-                    ),
+                    user_menu(),
                     style=rx.Style(alignItems="center"),
                     spacing="4",
                 ),
@@ -307,25 +285,14 @@ def nav_bar(
     )
 
 
-def page(
-    *children: rx.Component,
-    user_type: Literal["user_mex", "user_ldap"] = "user_mex",
-    nav_items_source: list[NavItem] | None = None,
-    logo_factory: Callable[[], rx.Component] = app_logo,
-) -> rx.Component:
+def page(*children: rx.Component) -> rx.Component:
     """Return a page fragment with navigation bar and given children.
 
     Args:
         *children: Components to render in the page body
-        user_type: State attribute to check for user login
-        nav_items_source: Custom navigation items, if None uses default
-        logo_factory: Function that returns a logo component
     """
-    user_check = getattr(State, user_type)
-    navbar_component = nav_bar(nav_items_source, user_type, logo_factory)
-
     page_content = [
-        navbar_component,
+        nav_bar(),
         rx.hstack(
             *children,
             style=rx.Style(
@@ -340,7 +307,7 @@ def page(
     ]
 
     return rx.cond(
-        user_check,
+        State.user,
         rx.center(
             *page_content,
             style=rx.Style(

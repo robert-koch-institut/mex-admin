@@ -2,7 +2,6 @@ from pydantic import Field
 
 from mex.admin.types import AdminUserDatabase
 from mex.common.settings import BaseSettings
-from mex.common.types import AssetsPath
 
 
 class AdminSettings(BaseSettings):
@@ -38,9 +37,4 @@ class AdminSettings(BaseSettings):
         AdminUserDatabase(),
         description="Database of users.",
         validation_alias="MEX_ADMIN_USER_DATABASE",
-    )
-    admin_assets_dir: AssetsPath = Field(
-        AssetsPath(""),
-        description="Admin-specific assets directory, e.g. for consent markdowns.",
-        validation_alias="MEX_ADMIN_ASSETS_DIR",
     )

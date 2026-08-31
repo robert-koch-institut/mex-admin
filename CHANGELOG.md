@@ -14,10 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - set exact version for neo4j:2026.07.1
 - upgrade mex-backend to 4.4.0
 - upgrade mex-common to 3.4.0
+- pin the app appearance to light mode
+- rename `State.user_mex` to `State.user`, now that it is the only user
+- rename the login page component `mex_login` to `index`, matching the other page
+  modules, and inline the single-caller `login_form` helper into it
 
 ### Deprecated
 
 ### Removed
+
+- removed the GDPR consent micro-page, which now lives in its own repo (mex-consent):
+  the `/consent` and `/login-ldap` routes, the LDAP login, the `mex.admin.consent`
+  package and its assets, and the `consent.*` UI labels
+- removed the `MEX_ADMIN_ASSETS_DIR` setting, which only located the consent markdowns
+- removed the light/dark mode toggle from the nav bar and the login form
 
 ### Fixed
 
