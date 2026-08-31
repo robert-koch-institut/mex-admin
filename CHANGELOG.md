@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - set exact version for neo4j:2026.07.1
+- upgrade mex-backend to 4.4.0
+- upgrade mex-common to 3.4.0
 
 ### Deprecated
 
@@ -433,7 +435,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix editing for link fields without a title value
 - only show allowed precisions in temporal field drop-down
-- concept label in rules test
 
 ## [0.20.0] - 2025-07-08
 
