@@ -296,10 +296,10 @@ def test_transform_model_values_to_editor_values(
             "license",
             InputConfig(
                 badge_default=License[
-                    "CREATIVE_COMMONS_ATTRIBUTION_INTERNATIONAL"
+                    "CREATIVE_COMMONS_ATTRIBUTION_4_0_INTERNATIONAL"
                 ].name,
                 badge_options=[
-                    License["CREATIVE_COMMONS_ATTRIBUTION_INTERNATIONAL"].name
+                    License["CREATIVE_COMMONS_ATTRIBUTION_4_0_INTERNATIONAL"].name
                 ],
                 badge_titles=["License"],
                 editable_badge=True,
