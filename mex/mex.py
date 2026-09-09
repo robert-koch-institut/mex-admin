@@ -4,8 +4,6 @@ from reflex.components.radix import themes
 from mex.admin.advanced_search.main import index as advanced_search_index
 from mex.admin.advanced_search.state import AdvancedSearchState
 from mex.admin.api.main import api as admin_api
-from mex.admin.consent.main import index as consent_index
-from mex.admin.consent.state import ConsentState
 from mex.admin.create.main import index as create_index
 from mex.admin.create.state import CreateState
 from mex.admin.edit.main import index as edit_index
@@ -13,8 +11,7 @@ from mex.admin.edit.state import EditState
 from mex.admin.home.main import index as home_index
 from mex.admin.ingest.main import index as ingest_index
 from mex.admin.ingest.state import IngestState
-from mex.admin.login.main import ldap_login as login_ldap_index
-from mex.admin.login.main import mex_login as login_mex_index
+from mex.admin.login.main import index as login_index
 from mex.admin.merge.main import index as merge_index
 from mex.admin.merge.state import MergeState
 from mex.admin.rules.state import RuleState
@@ -24,7 +21,11 @@ from mex.admin.state import State
 from mex.admin.utils import load_settings
 
 app = rx.App(
-    theme=themes.theme(accent_color="blue", has_background=False),
+    theme=themes.theme(
+        accent_color="blue",
+        has_background=False,
+        appearance="light",
+    ),
     style={
         ">a": {"opacity": "0"},
         ".truncate": {
@@ -130,23 +131,9 @@ app.add_page(
     ],
 )
 app.add_page(
-    login_mex_index,
+    login_index,
     route="/login",
     title="MEx Admin | Login",
-)
-app.add_page(
-    login_ldap_index,
-    route="/login-ldap",
-    title="MEx Admin | Login",
-)
-app.add_page(
-    consent_index,
-    route="/consent",
-    title="MEx Consent",
-    on_load=[
-        State.check_ldap_login,
-        ConsentState.get_consent,
-    ],
 )
 app.register_lifespan_task(
     load_settings,

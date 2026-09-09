@@ -3,7 +3,6 @@ import re
 from collections.abc import Generator
 from re import Pattern
 from typing import Any, cast
-from urllib.parse import urlsplit
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,10 +14,7 @@ from mex.admin.api.main import api
 from mex.admin.locale_service import LocaleService
 from mex.admin.settings import AdminSettings
 from mex.admin.types import AdminUserDatabase, AdminUserPassword
-from mex.common.backend_api.connector import (
-    BackendApiConnector,
-    LDAPBackendApiConnector,
-)
+from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.logging import logger
 from mex.common.models import (
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -34,9 +30,6 @@ from mex.common.types import (
     Identifier,
     IdentityProvider,
     Link,
-    MergedContactPointIdentifier,
-    MergedOrganizationalUnitIdentifier,
-    MergedPersonIdentifier,
     MergedPrimarySourceIdentifier,
     Text,
     TextLanguage,
@@ -158,9 +151,7 @@ def flush_graph_database(is_integration_test: bool) -> None:  # noqa: FBT001
 
 
 @pytest.fixture
-def dummy_data(
-    request: pytest.FixtureRequest,
-) -> list[AnyExtractedModel]:
+def dummy_data() -> list[AnyExtractedModel]:
     """Create a set of interlinked dummy data."""
     primary_source_1 = ExtractedPrimarySource(
         hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -189,12 +180,7 @@ def dummy_data(
         name=[Text(value="Unit 1", language=TextLanguage.EN)],
         shortName=["OU1"],
     )
-    test_module = request.module.__name__
-
-    if "consent" in test_module:
-        user_id = get_logged_in_user_id()
-    else:
-        user_id = contact_point_1.stableTargetId  # type: ignore[assignment]
+    user_id = contact_point_1.stableTargetId
     activity_1 = ExtractedActivity(
         abstract=[
             Text(value="An active activity.", language=TextLanguage.EN),
@@ -280,9 +266,8 @@ def load_dummy_data(
 def load_pagination_dummy_data(
     dummy_data: list[AnyExtractedModel],
     flush_graph_database: None,  # noqa: ARG001
-    request: pytest.FixtureRequest,
 ) -> None:
-    """Ingest dummy data into the backend with dynamic model types based on test context."""
+    """Ingest dummy data plus a page-spanning batch of contact points."""
     connector = BackendApiConnector.get()
     primary_source_1 = next(
         x for x in dummy_data if x.identifierInPrimarySource == "ps-1"
@@ -291,53 +276,18 @@ def load_pagination_dummy_data(
     pagination_dummy_data = []
     pagination_dummy_data.extend(dummy_data)
 
-    # Determine which type of models to create based on test module
-    test_module = request.module.__name__
-
-    if "consent" in test_module:
-        user_id = get_logged_in_user_id()
-        organizational_unit_1 = next(
-            x for x in dummy_data if x.identifierInPrimarySource == "ou-1"
-        )
-        pagination_dummy_data.extend(
-            [
-                ExtractedResource(
-                    hadPrimarySource=cast(
-                        "MergedPrimarySourceIdentifier", primary_source_1.stableTargetId
-                    ),
-                    identifierInPrimarySource=f"r-pagination-test-{i}",
-                    accessRestriction=AccessRestriction["OPEN"],
-                    contact=[
-                        cast(
-                            "MergedContactPointIdentifier",
-                            user_id,
-                        )
-                    ],
-                    theme=[Theme["BIOINFORMATICS_AND_SYSTEMS_BIOLOGY"]],
-                    title=[Text(value=f"Pagination Test Resource {i}", language=None)],
-                    unitInCharge=[
-                        cast(
-                            "MergedOrganizationalUnitIdentifier",
-                            organizational_unit_1.stableTargetId,
-                        )
-                    ],
-                )
-                for i in range(100)
-            ]
-        )
-    else:
-        pagination_dummy_data.extend(
-            [
-                ExtractedContactPoint(
-                    email=[f"help-{i}@pagination.abc"],
-                    hadPrimarySource=cast(
-                        "MergedPrimarySourceIdentifier", primary_source_1.stableTargetId
-                    ),
-                    identifierInPrimarySource=f"cp-pagination-test-{i}",
-                )
-                for i in range(100)
-            ]
-        )
+    pagination_dummy_data.extend(
+        [
+            ExtractedContactPoint(
+                email=[f"help-{i}@pagination.abc"],
+                hadPrimarySource=cast(
+                    "MergedPrimarySourceIdentifier", primary_source_1.stableTargetId
+                ),
+                identifierInPrimarySource=f"cp-pagination-test-{i}",
+            )
+            for i in range(100)
+        ]
+    )
 
     connector.ingest(pagination_dummy_data)
 
@@ -379,17 +329,3 @@ def build_ui_label_regex(label_id: str) -> Pattern[str]:
         for locale in service.get_available_locales()
     )
     return re.compile(f"({'|'.join(ui_labels)})")
-
-
-def get_logged_in_user_id() -> MergedPersonIdentifier:
-    """Return the merged person identifier of the currently logged in user."""
-    settings = AdminSettings.get()
-    url = urlsplit(settings.ldap_url.get_secret_value())
-    connector = LDAPBackendApiConnector.get()
-    persons = connector.merged_person_from_login(
-        username=str(url.username), password=str(url.password)
-    )
-    if not persons:
-        msg = "No merged login person found for the logged in user."
-        raise RuntimeError(msg)
-    return persons.identifier
