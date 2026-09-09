@@ -8,7 +8,7 @@
       "short_summary": "Metadata admin web application.",
       "long_summary": "The `mex-admin` is a browser application that allows creating and editing rules to non-destructively manipulate metadata. This can be used to enrich data with manual input or insert new data from scratch.",
       "containerize": true,
-      "publish_to_pypi": true,
+      "publish_to_pypi": false,
       "python_version_min": "3.14",
       "python_version_max": "3.14",
       "_template": "https://github.com/robert-koch-institut/mex-template",
