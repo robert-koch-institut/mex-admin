@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - rename `State.user_mex` to `State.user`, now that it is the only user
 - rename the login page component `mex_login` to `index`, matching the other page
   modules, and inline the single-caller `login_form` helper into it
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.1
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.0
 - trim the search and ingest roundtrip test down to the ldap aux provider, which the
   testing backend mocks; wikidata and orcid are covered in mex-backend
