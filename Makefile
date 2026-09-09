@@ -37,7 +37,7 @@ unit:
 test:
 	# run the unit and integration test suites
 	@ echo running all tests; \
-	uv run pytest -m 'not requires_rki_infrastructure' --reruns=2; \
+	uv run pytest --reruns=2; \
 
 wheel:
 	# build the python package

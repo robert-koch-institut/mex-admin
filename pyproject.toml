@@ -76,7 +76,6 @@ addopts = [
 console_output_style = "progress-even-when-capture-no"
 markers = [
     "integration: mark a test as integration test",
-    "requires_rki_infrastructure: mark a test as requiring rki infrastructure"
 ]
 
 [tool.ruff]
