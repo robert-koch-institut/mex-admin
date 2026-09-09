@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.4.0] - 2026-09-09
+
+### Changes
+
 - set exact version for neo4j:2026.07.1
 - upgrade mex-backend to 4.4.0
 - upgrade mex-common to 3.4.0
@@ -22,8 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.0
 - trim the search and ingest roundtrip test down to the ldap aux provider, which the
   testing backend mocks; wikidata and orcid are covered in mex-backend
-
-### Deprecated
 
 ### Removed
 
@@ -38,8 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - success toast after creating an item, which was lost because the valueless `saved`
   query parameter was dropped by `parse_qs`
-
-### Security
 
 ## [4.3.0] - 2026-08-31
 
