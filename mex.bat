@@ -47,7 +47,7 @@ exit /b %errorlevel%
 :test
 @REM run the unit and integration test suites
 echo running all tests
-uv run pytest -m "not requires_rki_infrastructure"
+uv run pytest
 exit /b %errorlevel%
 
 
@@ -55,5 +55,6 @@ exit /b %errorlevel%
 @REM use sphinx to auto-generate html docs from code
 echo generating docs
 uv run sphinx-apidoc -f -o docs/source mex
+if %errorlevel% neq 0 exit /b %errorlevel%
 uv run sphinx-build -aE -b dirhtml docs docs/dist
 exit /b %errorlevel%

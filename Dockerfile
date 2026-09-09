@@ -1,6 +1,6 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1@sha256:ecfaec9ed6d810b56388c508f4121597bfbba70d41a6dfeee4d8cad5f295fc32
 
-FROM python:3.14-trixie AS builder
+FROM python:3.14@sha256:8edbf9e42c7fb168b9c523718ed907117e6d2e60f5889c0c499bbda3a787da53 AS builder
 
 WORKDIR /build
 
@@ -12,13 +12,9 @@ ENV PIP_PROGRESS_BAR=off
 COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
-RUN uv export --frozen --no-hashes --no-dev --output-file requirements.lock
+RUN uv export --no-dev --no-editable | uv pip install --system --no-deps -r -
 
-RUN pip wheel --no-cache-dir --wheel-dir /build/wheels -r requirements.lock
-RUN pip wheel --no-cache-dir --wheel-dir /build/wheels --no-deps .
-
-
-FROM python:3.14-slim-trixie
+FROM python:3.14-slim@sha256:cad9a2c871761c413caa6fdd6441c783451e740a48aaeba60ae62a8b53525ef6
 
 LABEL org.opencontainers.image.authors="mex@rki.de"
 LABEL org.opencontainers.image.description="Metadata admin web application."
@@ -40,30 +36,21 @@ ENV REFLEX_DIR=/app/reflex
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y unzip curl && rm -rf /var/lib/apt/lists/*
+# curl and unzip are only needed by the bun installer that reflex runs on startup
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl unzip \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /build/wheels /wheels
+COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
+COPY --from=builder /usr/local/bin/admin /usr/local/bin/admin
+COPY --from=builder /usr/local/bin/admin-api /usr/local/bin/admin-api
+COPY --from=builder /usr/local/bin/admin-frontend /usr/local/bin/admin-frontend
+COPY --from=builder --chown=10001 /build/assets assets
+COPY --from=builder --chown=10001 /build/rxconfig.py rxconfig.py
 
-RUN pip install --no-cache-dir \
-    --no-index \
-    --find-links=/wheels \
-    /wheels/*.whl \
-    && rm -rf /wheels
+RUN chown 10001 /app
 
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    --uid "10001" \
-    mex
-
-RUN chown mex:mex /app
-
-COPY --chown=mex assets assets
-COPY --chown=mex rxconfig.py rxconfig.py
-
-USER mex
+USER 10001
 
 EXPOSE 8030
 EXPOSE 8031

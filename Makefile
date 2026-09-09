@@ -1,6 +1,9 @@
 .PHONY: all setup hooks install lint unit test wheel image run start docs
 all: install lint test
 
+SHELL := /bin/bash
+.SHELLFLAGS := -ec
+
 LATEST = $(shell git describe --tags $(shell git rev-list --tags --max-count=1))
 PWD = $(shell pwd)
 
@@ -34,7 +37,7 @@ unit:
 test:
 	# run the unit and integration test suites
 	@ echo running all tests; \
-	uv run pytest -m 'not requires_rki_infrastructure' --reruns=2; \
+	uv run pytest --reruns=2; \
 
 wheel:
 	# build the python package
@@ -61,7 +64,7 @@ run: image
 start:
 	# start the service using docker compose
 	@ echo start mex-admin:${LATEST} with compose; \
-	docker compose up --remove-orphans; \
+	docker compose up --build --remove-orphans; \
 
 docs:
 	# use sphinx to auto-generate html docs from code

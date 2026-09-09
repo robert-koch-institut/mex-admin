@@ -127,7 +127,8 @@ class EditState(RuleState):
     def show_submit_success_toast_on_redirect(self) -> Generator[EventSpec]:
         """Show a success toast when the saved param is set."""
         parsed_url = urlparse(self.router.url)
-        params = parse_qs(parsed_url.query)
+        # `saved` is set as a valueless flag, which `parse_qs` drops by default
+        params = parse_qs(parsed_url.query, keep_blank_values=True)
         if "saved" in params:
             yield EditState.show_submit_success_toast  # type: ignore[misc]
             params.pop("saved")

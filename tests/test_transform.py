@@ -3,7 +3,9 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 
 from mex.admin.models import LANGUAGE_VALUE_NONE, EditorValue
+from mex.admin.rules.models import EditorField, EditorPrimarySource, InputConfig
 from mex.admin.transform import (
+    transform_fields_to_title,
     transform_model_to_all_properties,
     transform_models_to_preview,
     transform_models_to_search_results,
@@ -13,6 +15,7 @@ from mex.admin.transform import (
     transform_values,
 )
 from mex.common.models import (
+    MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     AdditiveContactPoint,
     AnyExtractedModel,
     PreviewOrganizationalUnit,
@@ -166,6 +169,72 @@ def test_transform_models_to_title(dummy_data: list[AnyExtractedModel]) -> None:
 def test_test_transform_models_to_title_fallback() -> None:
     assert transform_models_to_title([AdditiveContactPoint()]) == [
         EditorValue(text="ContactPoint"),
+    ]
+
+
+def build_editor_field(name: str, editor_values: list[EditorValue]) -> EditorField:
+    """Return a single-primary-source editor field for the given values."""
+    return EditorField(
+        name=name,
+        value_type=["string"],
+        is_required=False,
+        primary_sources=[
+            EditorPrimarySource(
+                name=EditorValue(text="Primary Source One"),
+                identifier=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
+                input_config=InputConfig(),
+                editor_values=editor_values,
+                enabled=True,
+            )
+        ],
+    )
+
+
+def test_transform_fields_to_title() -> None:
+    fields = [
+        # the configured title field for ContactPoint is `email`
+        build_editor_field("email", [EditorValue(text="info@contact-point.one")]),
+        build_editor_field("fullName", [EditorValue(text="Not The Title")]),
+    ]
+    assert transform_fields_to_title("ContactPoint", fields) == [
+        EditorValue(text="info@contact-point.one")
+    ]
+
+
+def test_transform_fields_to_title_keeps_all_values() -> None:
+    fields = [
+        build_editor_field(
+            "title",
+            [
+                EditorValue(text="Some Resource with many titles 1"),
+                EditorValue(text="Some Resource with many titles 2"),
+            ],
+        )
+    ]
+    assert transform_fields_to_title("Resource", fields) == [
+        EditorValue(text="Some Resource with many titles 1"),
+        EditorValue(text="Some Resource with many titles 2"),
+    ]
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        pytest.param([], id="no fields"),
+        pytest.param([build_editor_field("email", [])], id="title field is empty"),
+        pytest.param(
+            [build_editor_field("fullName", [EditorValue(text="Not The Title")])],
+            id="title field is missing",
+        ),
+        pytest.param(
+            [build_editor_field("email", [EditorValue(identifier="000000000012345")])],
+            id="title value has no text",
+        ),
+    ],
+)
+def test_transform_fields_to_title_fallback(fields: list[EditorField]) -> None:
+    assert transform_fields_to_title("ContactPoint", fields) == [
+        EditorValue(text="ContactPoint")
     ]
 
 

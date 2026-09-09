@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - rename `State.user_mex` to `State.user`, now that it is the only user
 - rename the login page component `mex_login` to `index`, matching the other page
   modules, and inline the single-caller `login_form` helper into it
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.0
+- trim the search and ingest roundtrip test down to the ldap aux provider, which the
+  testing backend mocks; wikidata and orcid are covered in mex-backend
 
 ### Deprecated
 
@@ -28,10 +31,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   package and its assets, and the `consent.*` UI labels
 - removed the `MEX_ADMIN_ASSETS_DIR` setting, which only located the consent markdowns
 - removed the light/dark mode toggle from the nav bar and the login form
+- the `requires_rki_infrastructure` marker, which only led to test rot
 
 ### Fixed
 
+- success toast after creating an item, which was lost because the valueless `saved`
+  query parameter was dropped by `parse_qs`
+
 ### Security
+
+## [4.3.0] - 2026-08-31
+
+### Changes
+
+- set exact version for neo4j:2026.07.1
+- upgrade mex-backend to 4.4.0
+- upgrade mex-common to 3.4.0
 
 ## [4.2.0] - 2026-08-17
 
