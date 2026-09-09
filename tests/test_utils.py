@@ -1,11 +1,16 @@
 import asyncio
 import concurrent.futures
 from collections.abc import Coroutine
+from unittest.mock import MagicMock, patch
 
 import pytest
+from requests import RequestException
+from starlette import status
 
 from mex.admin.models import EditorValue
+from mex.admin.settings import AdminSettings
 from mex.admin.utils import (
+    load_settings,
     replace_url_params,
     resolve_editor_value,
     resolve_identifier,
@@ -34,6 +39,35 @@ def test_resolve_identifier(
 
     with pytest.raises(EmptySearchResultError):
         resolve_identifier("IdentifierDoesNotExist")
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        pytest.param(None, id="no response"),
+        pytest.param(
+            MagicMock(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR),
+            id="server error",
+        ),
+    ],
+)
+def test_resolve_identifier_reraises_non_404(response: MagicMock | None) -> None:
+    resolve_identifier.cache_clear()
+    connector = MagicMock()
+    connector.get_preview_item.side_effect = RequestException(response=response)
+    with (
+        patch("mex.admin.utils.BackendApiConnector.get", return_value=connector),
+        pytest.raises(RequestException),
+    ):
+        resolve_identifier("000000000012345")
+    resolve_identifier.cache_clear()
+
+
+def test_load_settings() -> None:
+    settings = load_settings()
+    assert isinstance(settings, AdminSettings)
+    # the store was reset, so a second call returns the same fresh singleton
+    assert AdminSettings.get() is settings
 
 
 @pytest.mark.integration
