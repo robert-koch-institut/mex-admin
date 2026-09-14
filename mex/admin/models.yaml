@@ -92,10 +92,22 @@ Resource:
     - hasPurpose
     - instrumentToolOrApparatus
     - methodDescription
-    - publicationCoverage
+    - populationCoverage
     - provenance
     - qualityInformation
     - rights
+    - title
+ResourceSeries:
+  title: title
+  preview:
+    - contact
+    - publisher
+    - accrualPeriodicity
+    - start
+  textarea:
+    - alternativeTitle
+    - description
+    - hasLegalBasis
     - title
 Variable:
   title: label

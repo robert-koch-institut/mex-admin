@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- add a frontend display config for the new `ResourceSeries` entity type, which made
+  the create page crash with a `KeyError` when that type was selected
+- fix a typo in the resource display config: `publicationCoverage` (no such field) is
+  now `populationCoverage`, so that field renders as a textarea again
+
 ### Security
 
 ## [4.4.0] - 2026-09-09
