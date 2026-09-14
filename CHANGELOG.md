@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.5.0] - 2026-09-14
+
+### Changes
+
 - upgrade mex-common to 3.4.1 and mex-model to 5.1.4, which ships the missing
   `ResourceSeries` translations
 - flatten the user menu dropdown into an inline user name and logout button,
@@ -19,18 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - assign a `library` icon to the `ResourceSeries` entity type, which fell back to the
   generic unknown-type icon
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - add a frontend display config for the new `ResourceSeries` entity type, which made
   the create page crash with a `KeyError` when that type was selected
 - fix a typo in the resource display config: `publicationCoverage` (no such field) is
   now `populationCoverage`, so that field renders as a textarea again
-
-### Security
 
 ## [4.4.0] - 2026-09-09
 
