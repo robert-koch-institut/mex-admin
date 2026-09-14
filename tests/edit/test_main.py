@@ -8,6 +8,7 @@ from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.fields import (
     MERGEABLE_FIELDS_BY_CLASS_NAME,
     REQUIRED_FIELDS_BY_CLASS_NAME,
+    TEMPORAL_PRECISIONS_BY_FIELD_BY_CLASS_NAMES,
 )
 from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
@@ -683,9 +684,15 @@ def test_edit_page_renders_temporal_input(edit_page: Page) -> None:
     page.screenshot(
         path="tests_edit_test_main-test_edit_page_renders_temporal_input_open.png"
     )
+    expected_precisions = [
+        precision.value
+        for precision in TEMPORAL_PRECISIONS_BY_FIELD_BY_CLASS_NAMES[
+            "AdditiveActivity"
+        ]["end"]
+    ]
     precision_options = page.get_by_role("group").get_by_role("option")
-    expect(precision_options).to_have_count(3)
-    expect(precision_options).to_have_text(["year", "month", "day"])
+    expect(precision_options).to_have_count(len(expected_precisions))
+    expect(precision_options).to_have_text(expected_precisions)
 
 
 @pytest.mark.integration
