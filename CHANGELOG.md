@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - upgrade mex-common to 3.4.1 and mex-model to 5.1.4, which ships the missing
   `ResourceSeries` translations
+- flatten the user menu dropdown into an inline user name and logout button,
+  dropping the write-access user icon
+- render the nav bar as a solid accent surface with the MEx wordmark logo
+- assign a `library` icon to the `ResourceSeries` entity type, which fell back to the
+  generic unknown-type icon
 
 ### Deprecated
 
