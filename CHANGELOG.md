@@ -11,9 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- inline the MEx wordmark as an svg component, so it no longer depends on the
-  assets path
-
 ### Deprecated
 
 ### Removed
@@ -21,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [4.5.1] - 2026-09-14
+
+### Changes
+
+- inline the MEx wordmark as an svg component, so it no longer depends on the
+  assets path
 
 ## [4.5.0] - 2026-09-14
 
