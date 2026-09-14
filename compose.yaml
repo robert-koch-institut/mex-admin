@@ -65,7 +65,7 @@ services:
       neo4j:
         condition: service_healthy
   neo4j:
-    image: neo4j:2026.07.1-community@sha256:dbc377fb9cd8fe8dabc19d3041b197d5ca0ef8bae514cea175b8df265e5b7a76
+    image: neo4j:2026.08.1-community@sha256:7f2c38fa0de8caf875d35237fa7dabda74de4f4fc2fc7c3c9e4b53c2add268ad
     environment:
       - NEO4J_AUTH=neo4j/password
     ports:
