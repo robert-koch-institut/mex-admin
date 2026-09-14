@@ -8,6 +8,7 @@ from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    RULE_SET_REQUEST_CLASSES,
     AnyExtractedModel,
 )
 from tests.conftest import build_ui_label_regex
@@ -102,6 +103,23 @@ def test_create_page_renders_fields(create_page: Page) -> None:
             | set(MERGEABLE_FIELDS_BY_CLASS_NAME["AdditiveResource"])
         )
     )
+
+
+@pytest.mark.integration
+def test_create_page_renders_fields_for_all_entity_types(create_page: Page) -> None:
+    page = create_page
+    entity_type_select = page.get_by_test_id("entity-type-select")
+    for stem_type in sorted(cls.stemType for cls in RULE_SET_REQUEST_CLASSES):
+        entity_type_select.click()
+        page.get_by_test_id(
+            re.compile(rf"^value-label-select-item-\d+-{stem_type}$")
+        ).click()
+        expect(page.get_by_role("row")).to_have_count(
+            len(
+                set(MERGEABLE_FIELDS_BY_CLASS_NAME[f"Extracted{stem_type}"])
+                | set(MERGEABLE_FIELDS_BY_CLASS_NAME[f"Additive{stem_type}"])
+            )
+        )
 
 
 @pytest.mark.integration

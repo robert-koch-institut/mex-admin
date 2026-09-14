@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- upgrade mex-common to 3.4.1 and mex-model to 5.1.4, which ships the missing
+  `ResourceSeries` translations
+
 ### Deprecated
 
 ### Removed
