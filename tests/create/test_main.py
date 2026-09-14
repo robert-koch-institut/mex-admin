@@ -338,7 +338,7 @@ def test_logout_unsaved_changes_dialog_on_draft_logout_normal(
     _screenshot("changes")
 
     # click logout and expect dialog
-    page.get_by_test_id("user-menu").click()
+    expect(page.get_by_test_id("user-menu")).to_be_visible()
     page.get_by_test_id("logout-button").click()
     _screenshot("dialog")
     expect(page.get_by_test_id("unsaved-changes-dialog")).to_be_visible()
@@ -352,7 +352,7 @@ def test_logout_unsaved_changes_dialog_on_draft_logout_normal(
     _screenshot("changes_removed")
 
     # logout should work normal (no dialog anymore)
-    page.get_by_test_id("user-menu").click()
+    expect(page.get_by_test_id("user-menu")).to_be_visible()
     logout_button = page.get_by_test_id("logout-button")
     expect(logout_button).to_be_visible()
     _screenshot("user_menu")
@@ -379,7 +379,7 @@ def test_logout_unsaved_changes_dialog_on_draft(draft_create_page: DraftPage) ->
     _screenshot("changes")
 
     # click logout and expect dialog
-    page.get_by_test_id("user-menu").click()
+    expect(page.get_by_test_id("user-menu")).to_be_visible()
     page.get_by_test_id("logout-button").click()
     _screenshot("dialog")
     expect(page.get_by_test_id("unsaved-changes-dialog")).to_be_visible()

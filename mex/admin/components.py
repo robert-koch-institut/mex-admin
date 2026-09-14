@@ -215,6 +215,10 @@ def icon_by_stem_type(
             rx.icon("archive", size=size, style=style, title=stem_type),
         ),
         (
+            "ResourceSeries",
+            rx.icon("library", size=size, style=style, title=stem_type),
+        ),
+        (
             "Variable",
             rx.icon("box", size=size, style=style, title=stem_type),
         ),
