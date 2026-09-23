@@ -18,7 +18,7 @@ dependencies = [
     "requests>=2.32,<3",
     "starlette>=1,<1.7",
     "typer>=0.27,<0.28",
-    "uvicorn>=0.52,<0.53",
+    "uvicorn>=0.53,<0.54",
 ]
 
 [dependency-groups]
