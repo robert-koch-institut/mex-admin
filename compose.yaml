@@ -43,10 +43,11 @@ services:
       mex-backend:
         condition: service_healthy
   mex-backend:
-    image: ghcr.io/robert-koch-institut/mex-backend:4.4.0@sha256:ebeedd8301032978c06eed36cf968e8c98cd96c5b4e2804ad7e8e80c0661c517
+    image: ghcr.io/robert-koch-institut/mex-backend:4.6.1@sha256:943de3865bb3dc39eb04ee9523ff7023d6df1ffafe3fdeac3d34fa7d5b9f3bb4
     ports:
       - 8080:8080
     environment:
+      - MEX_BACKEND_HOST=0.0.0.0
       - MEX_BACKEND_API_KEY_DATABASE={"read":["read_key"],"write":["write_key"]}
       - MEX_DEBUG=True
       - MEX_GRAPH_URL=neo4j://neo4j:7687
