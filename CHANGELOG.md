@@ -9,13 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- add `MEX_ADMIN_FRONTEND_HOST` to set the host for `admin-frontend`
+- add `MEX_ADMIN_FRONTEND_DIRECTORY` to set the directory of the pre-built frontends
+
 ### Changes
 
 - bump mex-backend to 4.6.1
+- BREAKING: pre-build the frontend for `/` and `/admin` while building the docker image
+  and serve it from python, so `admin-frontend` no longer installs bun or npm packages
+  at runtime and `REFLEX_FRONTEND_PATH` must be one of `/` or `/admin`
 
 ### Deprecated
 
 ### Removed
+
+- remove curl and unzip from the docker image
+- BREAKING: remove the combined `admin` entrypoint from the docker image, the image
+  now starts `admin-frontend` by default (also used by `make run`)
 
 ### Fixed
 

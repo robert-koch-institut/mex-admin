@@ -52,13 +52,11 @@ image:
 		--tag rki/mex-admin:latest .; \
 
 run: image
-	# run the service as a docker container
+	# run the frontend as a docker container
 	@ echo running docker container mex-admin:${LATEST}; \
 	docker run \
-		--env MEX_ADMIN_API_HOST=0.0.0.0 \
-		--env MEX_ADMIN_USER_DATABASE='{"mex":["mex"]}' \
+		--env MEX_ADMIN_FRONTEND_HOST=0.0.0.0 \
 		--publish 8030:8030 \
-		--publish 8031:8031 \
 		rki/mex-admin:${LATEST}; \
 
 start:
