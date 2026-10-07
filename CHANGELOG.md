@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.6.0] - 2026-10-07
+
+### Added
+
 - add `MEX_ADMIN_FRONTEND_HOST` to set the host for `admin-frontend`
 - add `MEX_ADMIN_FRONTEND_DIRECTORY` to set the directory of the pre-built frontends
 
@@ -19,8 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and serve it from python, so `admin-frontend` no longer installs bun or npm packages
   at runtime and `REFLEX_FRONTEND_PATH` must be one of `/` or `/admin`
 
-### Deprecated
-
 ### Removed
 
 - remove curl and unzip from the docker image
@@ -30,8 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - added missing greenlet dependency via `sqlalchemy[asyncio]`
-
-### Security
 
 ## [4.5.1] - 2026-09-14
 
