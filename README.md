@@ -90,6 +90,9 @@ components of the MEx project are open-sourced under the same license as well.
 - build image with `make image`
 - run directly using docker `make run`
 - start with docker compose `make start`
+- the image contains pre-built frontends for serving `admin-frontend` on `/` and on
+  `/admin`, select one via `REFLEX_FRONTEND_PATH` and set the api url via
+  `REFLEX_API_URL` at runtime
 
 ### Container verification
 
