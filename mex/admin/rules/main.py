@@ -38,7 +38,7 @@ def editor_value_switch(
         custom_attrs={
             "data-testid": f"switch-{field_name}-{primary_source.identifier}-{index}"
         },
-        color_scheme=rx.cond(primary_source.enabled, "blue", "gray"),
+        color_scheme=rx.cond(primary_source.enabled, "blue", "gray"),  # type: ignore[call-overload]
     )
 
 
@@ -87,7 +87,7 @@ def editor_static_value(
     return rx.hstack(
         render_value(
             value,
-            rx.cond(primary_source.input_config.render_textarea, False, True),  # noqa: FBT003
+            rx.cond(primary_source.input_config.render_textarea, False, True),  # type: ignore[call-overload]  # noqa: FBT003
         ),
         rx.cond(
             State.has_write_access & primary_source.input_config.allow_subtractive,
@@ -125,7 +125,7 @@ def editor_additive_value(
                 add_flex1(
                     render_value(
                         value,
-                        rx.cond(
+                        rx.cond(  # type: ignore[call-overload]
                             primary_source.input_config.render_textarea,
                             False,  # noqa: FBT003
                             True,  # noqa: FBT003
@@ -184,7 +184,7 @@ def href_input(
     """Render an input component for editing a href attribute."""
     return rx.input(
         placeholder="URL",
-        value=rx.cond(href, href, ""),
+        value=rx.cond(href, href, ""),  # type: ignore[call-overload]
         on_change=RuleState.set_href_value(field_name, index),  # type: ignore[operator]
         style=rx.Style(
             margin="calc(-1 * var(--space-1))",
@@ -202,7 +202,7 @@ def text_input(
     """Render an input component for editing a text attribute."""
     return rx.input(
         placeholder="Text",
-        value=rx.cond(text, text, ""),
+        value=rx.cond(text, text, ""),  # type: ignore[call-overload]
         on_change=RuleState.set_text_value(field_name, index),  # type: ignore[operator]
         style=rx.Style(
             margin="calc(-1 * var(--space-1))",
@@ -220,7 +220,7 @@ def textarea_input(
     """Render a textarea component for editing a textarea attribute."""
     return rx.text_area(
         placeholder="Text",
-        value=rx.cond(text, text, ""),
+        value=rx.cond(text, text, ""),  # type: ignore[call-overload]
         on_change=RuleState.set_text_value(field_name, index),  # type: ignore[operator]
         style=rx.Style(
             margin="calc(-1 * var(--space-1))",
@@ -242,7 +242,7 @@ def identifier_input(
     return rx.hstack(
         rx.input(
             placeholder="Identifier",
-            value=rx.cond(identifier, identifier, ""),
+            value=rx.cond(identifier, identifier, ""),  # type: ignore[call-overload]
             on_change=RuleState.set_identifier_value(field.name, index),  # type: ignore[operator]
             style=rx.Style(
                 margin="calc(-1 * var(--space-1))",
@@ -277,10 +277,10 @@ def badge_input(
         rx.box(
             rx.select(
                 input_config.badge_options,
-                value=rx.cond(
+                value=rx.cond(  # type: ignore[arg-type]
                     badge,
                     badge,
-                    rx.cond(input_config.badge_default, input_config.badge_default, ""),
+                    rx.cond(input_config.badge_default, input_config.badge_default, ""),  # type: ignore[call-overload]
                 ),
                 size="1",
                 variant="soft",
@@ -351,7 +351,7 @@ def editor_value_card(
                 value,
             ),
         ),
-        background=rx.cond(
+        background=rx.cond(  # type: ignore[call-overload]
             primary_source.enabled & value.enabled, "inherit", "var(--gray-a4)"
         ),
         custom_attrs={
@@ -398,7 +398,7 @@ def primary_source_name(
                 ),
             ),
         ),
-        background=rx.cond(primary_source.enabled, "inherit", "var(--gray-a4)"),
+        background=rx.cond(primary_source.enabled, "inherit", "var(--gray-a4)"),  # type: ignore[call-overload]
         custom_attrs={
             "data-testid": (
                 f"primary-source-{field_name}-{primary_source.identifier}-name"
