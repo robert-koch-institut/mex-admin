@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- update reflex to `>=0.9.12,<0.10`
+- configure the radix theme via `RadixThemesPlugin` in `rxconfig.py`
+- disable pre-compression of the exported frontend
+
 ### Deprecated
 
 ### Removed
@@ -32,9 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING: pre-build the frontend for `/` and `/admin` while building the docker image
   and serve it from python, so `admin-frontend` no longer installs bun or npm packages
   at runtime and `REFLEX_FRONTEND_PATH` must be one of `/` or `/admin`
-- update reflex to `>=0.9.12,<0.10`
-- configure the radix theme via `RadixThemesPlugin` in `rxconfig.py`
-- disable pre-compression of the exported frontend
 
 ### Removed
 
