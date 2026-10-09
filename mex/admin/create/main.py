@@ -61,7 +61,7 @@ def create_title() -> rx.Component:
             State.has_write_access,
             value_label_select(
                 CreateState.value_label_available_stem_types,
-                value=rx.cond(RuleState.stem_type, RuleState.stem_type, ""),
+                value=rx.cond(RuleState.stem_type, RuleState.stem_type, ""),  # type: ignore[call-overload]
                 on_change=[
                     CreateState.set_stem_type,
                     RuleState.delete_local_state,

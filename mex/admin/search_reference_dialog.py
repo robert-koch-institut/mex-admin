@@ -274,7 +274,7 @@ def search_reference_dialog(
         ),
         rx.dialog.content(
             rx.dialog.title(
-                rx.cond(
+                rx.cond(  # type: ignore[call-overload]
                     field_label,
                     f"{SearchReferenceDialogState.label_title} ({field_label})",
                     f"{SearchReferenceDialogState.label_title}",

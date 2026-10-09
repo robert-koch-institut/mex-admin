@@ -88,7 +88,7 @@ def _search_results_item(
         title_line_children.append(
             rx.button(
                 rx.icon(
-                    rx.cond(
+                    rx.cond(  # type: ignore[call-overload]
                         item.show_all_properties,
                         "minimize_2",
                         "maximize_2",
@@ -142,7 +142,7 @@ def _search_results_item(
     height: str | rx.Var[str] = "calc(2 * var(--card-padding) + var(--space-3) + 3em)"
     if options.enable_show_all_properties:
         # ... unless the item is expanded, which is meant to reveal every property
-        height = rx.cond(item.show_all_properties, "auto", height)
+        height = rx.cond(item.show_all_properties, "auto", height)  # type: ignore[call-overload]
 
     return rx.card(
         rx.hstack(
