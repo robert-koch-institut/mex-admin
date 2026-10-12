@@ -1,6 +1,8 @@
 import asyncio
 import concurrent.futures
 from collections.abc import Coroutine
+from types import TracebackType
+from typing import Self
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,6 +15,7 @@ from mex.admin.utils import (
     load_settings,
     replace_url_params,
     resolve_editor_value,
+    resolve_editor_values_in_background,
     resolve_identifier,
 )
 from mex.common.exceptions import EmptySearchResultError, MExError
@@ -89,6 +92,57 @@ def test_resolve_editor_value(
 
     with pytest.raises(MExError):
         run_async(resolve_editor_value(EditorValue(identifier=None)))
+
+
+class ReloadingState:
+    """Stand-in for a background task state, that reloads on every `async with`."""
+
+    def __init__(self, stored: list[EditorValue]) -> None:
+        self.stored = stored
+        self.values = [value.model_copy() for value in stored]
+        self.locked = False
+
+    async def __aenter__(self) -> Self:
+        """Lock and reload the values from the store."""
+        self.locked = True
+        self.values = [value.model_copy() for value in self.stored]
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        """Persist the values to the store and unlock."""
+        self.stored = self.values
+        self.locked = False
+
+
+def test_resolve_editor_values_in_background() -> None:
+    state = ReloadingState(
+        [
+            EditorValue(identifier="id-1"),
+            EditorValue(identifier="id-2", text="Already Resolved"),
+            EditorValue(text="Plain Text"),
+            EditorValue(identifier="id-1"),
+        ]
+    )
+
+    def resolve(identifier: str) -> str:
+        assert not state.locked, "resolved while holding the state lock"
+        return f"Resolved {identifier}"
+
+    with patch("mex.admin.utils.resolve_identifier", side_effect=resolve) as mocked:
+        run_async(resolve_editor_values_in_background(state, lambda: state.values))
+
+    mocked.assert_called_once_with("id-1")
+    assert state.stored == [
+        EditorValue(identifier="id-1", text="Resolved id-1"),
+        EditorValue(identifier="id-2", text="Already Resolved"),
+        EditorValue(text="Plain Text"),
+        EditorValue(identifier="id-1", text="Resolved id-1"),
+    ]
 
 
 @pytest.mark.parametrize(

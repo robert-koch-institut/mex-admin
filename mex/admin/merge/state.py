@@ -14,7 +14,7 @@ from mex.admin.models import SearchResult
 from mex.admin.pagination_component import build_page_selection
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
-from mex.admin.utils import resolve_editor_value
+from mex.admin.utils import resolve_editor_values_in_background
 from mex.admin.value_label_select import ValueLabelSelectItem
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.models import MERGED_MODEL_CLASSES
@@ -224,15 +224,27 @@ class MergeState(State):
         """Navigate to the next page of one side."""
         self.set_current_page(side, self.current_pages[side] + 1)  # type: ignore[operator]
 
+    @rx.event
+    def resolve_identifiers(self) -> Generator[EventSpec]:
+        """Resolve identifiers to human readable display values.
+
+        Background events start right away and do not wait for the events queued
+        before them, so they are yielded from here once those have been processed.
+        """
+        yield MergeState.resolve_identifiers_in_background
+
     @rx.event(background=True)
-    async def resolve_identifiers(self) -> None:
+    async def resolve_identifiers_in_background(self) -> None:
         """Resolve identifiers to human readable display values."""
-        for result_list in (self.results_goner, self.results_keeper):
-            for result in result_list:
-                for preview in result.preview:
-                    if preview.identifier and not preview.text:
-                        async with self:
-                            await resolve_editor_value(preview)
+        await resolve_editor_values_in_background(
+            self,
+            lambda: (
+                preview
+                for result_list in (self.results_goner, self.results_keeper)
+                for result in result_list
+                for preview in result.preview
+            ),
+        )
 
     @rx.event
     def refresh(
@@ -316,7 +328,7 @@ class MergeState(State):
             )
             # the goner is a tombstone now, so both result lists are stale
             yield from self.refresh()  # type: ignore[operator]
-            yield MergeState.resolve_identifiers()  # type: ignore[misc]
+            yield MergeState.resolve_identifiers  # type: ignore[misc]
 
     def _result_summary_args(self, side: MergeSide) -> list[float]:
         # the range is 1-based and inclusive, but collapses to 0-0 without results

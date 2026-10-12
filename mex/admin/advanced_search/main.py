@@ -258,7 +258,7 @@ def search_results() -> rx.Component:
                 pagination_options=build_pagination_options(
                     AdvancedSearchState,
                     AdvancedSearchState.search,  # type: ignore[arg-type]
-                    AdvancedSearchState.resolve_identifiers,
+                    AdvancedSearchState.resolve_identifiers,  # type: ignore[arg-type]
                 ),
             ),
             style=rx.Style(
