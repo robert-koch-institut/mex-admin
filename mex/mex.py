@@ -1,5 +1,4 @@
 import reflex as rx
-from reflex.components.radix import themes
 
 from mex.admin.advanced_search.main import index as advanced_search_index
 from mex.admin.advanced_search.state import AdvancedSearchState
@@ -21,11 +20,6 @@ from mex.admin.state import State
 from mex.admin.utils import load_settings
 
 app = rx.App(
-    theme=themes.theme(
-        accent_color="blue",
-        has_background=False,
-        appearance="light",
-    ),
     style={
         ">a": {"opacity": "0"},
         ".truncate": {

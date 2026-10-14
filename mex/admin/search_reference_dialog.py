@@ -21,7 +21,7 @@ from mex.admin.search_results_component import (
 )
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
-from mex.admin.utils import resolve_editor_value
+from mex.admin.utils import resolve_editor_values_in_background
 from mex.common.backend_api.connector import BackendApiConnector
 
 
@@ -104,14 +104,26 @@ class SearchReferenceDialogState(State, PaginationStateMixin):
         """Set the user reference type value."""
         self.user_reference_types = value
 
+    @rx.event
+    def resolve_identifiers(self) -> Generator[EventSpec]:
+        """Resolve identifiers to human readable display values.
+
+        Background events start right away and do not wait for the events queued
+        before them, so they are yielded from here once those have been processed.
+        """
+        yield SearchReferenceDialogState.resolve_identifiers_in_background
+
     @rx.event(background=True)
-    async def resolve_identifiers(self) -> None:
+    async def resolve_identifiers_in_background(self) -> None:
         """Resolve identifiers to human readable display values."""
-        for result in self.results:
-            for value in [*result.preview, *result.title, *result.all_properties]:
-                if value.identifier and not value.text:
-                    async with self:
-                        await resolve_editor_value(value)
+        await resolve_editor_values_in_background(
+            self,
+            lambda: (
+                value
+                for result in self.results
+                for value in [*result.preview, *result.title, *result.all_properties]
+            ),
+        )
 
     @rx.event
     def search(self) -> Generator[EventSpec | None]:
@@ -142,7 +154,7 @@ class SearchReferenceDialogState(State, PaginationStateMixin):
             self.is_loading = False
             self.results = transform_models_to_search_results(response.items, True)  # noqa: FBT003
             yield SearchReferenceDialogState.set_total(response.total)  # type: ignore[operator]
-            yield SearchReferenceDialogState.resolve_identifiers()  # type: ignore[misc]
+            yield SearchReferenceDialogState.resolve_identifiers  # type: ignore[misc]
 
 
 def search_reference_dialog(
@@ -274,7 +286,7 @@ def search_reference_dialog(
         ),
         rx.dialog.content(
             rx.dialog.title(
-                rx.cond(
+                rx.cond(  # type: ignore[call-overload]
                     field_label,
                     f"{SearchReferenceDialogState.label_title} ({field_label})",
                     f"{SearchReferenceDialogState.label_title}",
