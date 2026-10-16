@@ -73,6 +73,17 @@ class PublishTarget(BaseModel):
     enabled: bool
 
 
+class SuggestionChip(BaseModel):
+    """Model for one suggested vocabulary value of a field."""
+
+    badge: str  # name of the vocabulary enum member, like `EditorValue.badge`
+    confidence: float
+    percent: int  # confidence rounded to whole percent for display
+    support: int
+    sample_size: int
+    tooltip: str = ""  # translated explanation, filled in by the state
+
+
 class FieldTranslation(BaseModel):
     """Wraps an editor field to add translated label and description."""
 

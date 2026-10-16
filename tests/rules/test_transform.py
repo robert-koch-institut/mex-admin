@@ -9,6 +9,7 @@ from mex.admin.rules.models import (
     EditorPrimarySource,
     InputConfig,
     PublishTarget,
+    SuggestionChip,
     ValidationMessage,
 )
 from mex.admin.rules.transform import (
@@ -22,8 +23,10 @@ from mex.admin.rules.transform import (
     _transform_model_values_to_editor_values,
     get_required_mergeable_field_names,
     transform_fields_to_rule_set,
+    transform_fields_to_suggestion_payload,
     transform_models_to_fields,
     transform_publish_targets_to_workflow,
+    transform_suggestion_response,
     transform_validation_error_to_messages,
     transform_workflow_to_publish_targets,
 )
@@ -1211,3 +1214,130 @@ def test_no_workflow_to_all_publish_targets_enabled() -> None:
         for target in PublishingTarget
     ]
     assert transform_workflow_to_publish_targets(None) == expected_targets
+
+
+def _suggestion_field(
+    name: str,
+    editor_values: list[EditorValue],
+    input_config: InputConfig | None = None,
+    primary_source_identifier: str = MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    *,
+    enabled: bool = True,
+) -> EditorField:
+    return EditorField(
+        name=name,
+        is_required=False,
+        value_type=[],
+        primary_sources=[
+            EditorPrimarySource(
+                name=EditorValue(text="Primary Source"),
+                identifier=MergedPrimarySourceIdentifier(primary_source_identifier),
+                editor_values=editor_values,
+                input_config=input_config or InputConfig(),
+                enabled=enabled,
+            )
+        ],
+    )
+
+
+def test_transform_fields_to_suggestion_payload() -> None:
+    payload = transform_fields_to_suggestion_payload(
+        "Resource",
+        [
+            _suggestion_field(
+                "title", [EditorValue(text="Influenza", badge=LANGUAGE_VALUE_NONE)]
+            ),
+            # values from other primary sources count towards the draft, too
+            _suggestion_field(
+                "theme",
+                [EditorValue(text="Theme", badge="PUBLIC_HEALTH")],
+                primary_source_identifier="PrimarySource001",
+            ),
+            # disabled sources and values do not
+            _suggestion_field(
+                "keyword",
+                [EditorValue(text="ignored")],
+                primary_source_identifier="PrimarySource002",
+                enabled=False,
+            ),
+            _suggestion_field(
+                "alternativeTitle", [EditorValue(text="ignored", enabled=False)]
+            ),
+            # empty values that are still being typed are skipped
+            _suggestion_field("description", [EditorValue(being_edited=True)]),
+        ],
+        exclude_identifier="bFQoRhcVH5DHUu",
+    )
+
+    assert payload == {
+        "additive": {
+            "$type": "AdditiveResource",
+            "title": [{"value": "Influenza"}],
+            "theme": ["https://mex.rki.de/item/theme-1"],
+        },
+        "excludeIdentifier": "bFQoRhcVH5DHUu",
+        "limit": 3,
+    }
+
+
+def test_transform_fields_to_suggestion_payload_invalid() -> None:
+    payload = transform_fields_to_suggestion_payload(
+        "Resource",
+        [
+            _suggestion_field(
+                "created",
+                [EditorValue(text="not a date", badge="day")],
+            )
+        ],
+        exclude_identifier=None,
+    )
+
+    assert payload is None
+
+
+def test_transform_suggestion_response() -> None:
+    chips = transform_suggestion_response(
+        "Resource",
+        {
+            "entityType": "MergedResource",
+            "cohortSize": 16,
+            "neighbourhoodSize": 4,
+            "suggestions": [
+                {
+                    "field": "theme",
+                    "candidates": [
+                        {
+                            "value": "https://mex.rki.de/item/theme-11",
+                            "confidence": 0.75,
+                            "support": 12,
+                        },
+                        {
+                            "value": "https://mex.rki.de/item/unknown-1",
+                            "confidence": 0.5,
+                            "support": 3,
+                        },
+                    ],
+                    "sampleSize": 16,
+                    "source": "cohort",
+                },
+                {
+                    "field": "language",
+                    "candidates": [],
+                    "sampleSize": 0,
+                    "source": "corpus",
+                },
+            ],
+        },
+    )
+
+    assert chips == {
+        "theme": [
+            SuggestionChip(
+                badge="INFECTIOUS_DISEASES_AND_EPIDEMIOLOGY",
+                confidence=0.75,
+                percent=75,
+                support=12,
+                sample_size=16,
+            )
+        ]
+    }
