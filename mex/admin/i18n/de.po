@@ -127,6 +127,12 @@ msgstr "Zusammengeführt"
 msgid "merge.toast_success.message_format"
 msgstr "{0} wurde in {1} zusammengeführt."
 
+msgid "rules.suggestions.prefix"
+msgstr "Vorschläge:"
+
+msgid "rules.suggestions.tooltip_format"
+msgstr "{0} von {1} ähnlichen Einträgen vom Typ {2} haben {3} als {4}"
+
 msgid "rules.additive_rule.add_button_prefix"
 msgstr "Hinzufügen von"
 

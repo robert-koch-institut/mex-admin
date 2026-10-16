@@ -127,6 +127,12 @@ msgstr "Merged"
 msgid "merge.toast_success.message_format"
 msgstr "{0} was merged into {1}."
 
+msgid "rules.suggestions.prefix"
+msgstr "Suggested:"
+
+msgid "rules.suggestions.tooltip_format"
+msgstr "{0} out of {1} similar {2} items used {3} as their {4}"
+
 msgid "rules.additive_rule.add_button_prefix"
 msgstr "New"
 

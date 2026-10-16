@@ -9,6 +9,7 @@ from mex.admin.rules.models import (
     EditorPrimarySource,
     FieldTranslation,
     InputConfig,
+    SuggestionChip,
     ValidationMessage,
 )
 from mex.admin.rules.state import RuleState
@@ -411,24 +412,69 @@ def new_additive_button(
     field_translation: FieldTranslation,
     primary_source_identifier: str,
 ) -> rx.Component:
-    """Render a button for adding new additive rules to a given field."""
+    """Render a button for adding new additive rules, followed by suggestions."""
     field_name = field_translation.field.name
     return rx.card(
-        rx.button(
-            rx.icon(
-                "circle-plus",
-                height="1rem",
-                width="1rem",
+        rx.flex(
+            rx.button(
+                rx.icon(
+                    "circle-plus",
+                    height="1rem",
+                    width="1rem",
+                ),
+                f"{RuleState.label_additive_rule_add_button_prefix} "
+                f"{field_translation.label}",
+                color_scheme="jade",
+                variant="soft",
+                size="1",
+                on_click=RuleState.add_additive_value(field_name),  # type: ignore[operator]
+                custom_attrs={
+                    "data-testid": (
+                        f"new-additive-{field_name}-{primary_source_identifier}"
+                    )
+                },
             ),
-            f"{RuleState.label_additive_rule_add_button_prefix} "
-            f"{field_translation.label}",
-            color_scheme="jade",
-            variant="soft",
-            size="1",
-            on_click=RuleState.add_additive_value(field_name),  # type: ignore[operator]
-            custom_attrs={
-                "data-testid": f"new-additive-{field_name}-{primary_source_identifier}"
-            },
+            suggestion_chips(field_name),
+            align="center",
+            gap="var(--space-4)",
+            wrap="wrap",
+        ),
+    )
+
+
+def suggestion_chip(field_name: str, chip: SuggestionChip) -> rx.Component:
+    """Render a button that adds a suggested vocabulary value to the given field."""
+    return rx.button(
+        chip.badge,
+        rx.text(
+            f"{chip.percent}%",
+            style=rx.Style(color=rx.color("gray", 10)),
+        ),
+        color_scheme="iris",
+        variant="soft",
+        size="1",
+        title=chip.tooltip,
+        on_click=RuleState.add_suggested_value(field_name, chip.badge),  # type: ignore[operator]
+        custom_attrs={"data-testid": f"suggestion-{field_name}-{chip.badge}"},
+    )
+
+
+def suggestion_chips(field_name: str) -> rx.Component:
+    """Render the suggested vocabulary values for the given field, if any."""
+    chips = cast(
+        "rx.vars.ArrayVar[list[SuggestionChip]]",
+        RuleState.translated_suggestions.get(field_name, []),
+    )
+    return rx.cond(
+        chips.length() > 0,
+        rx.flex(
+            rx.text(RuleState.label_suggestions_prefix, size="1"),
+            rx.foreach(chips, lambda chip: suggestion_chip(field_name, chip)),
+            align="center",
+            gap="var(--space-2)",
+            wrap="wrap",
+            style=rx.Style(color=rx.color("gray", 10)),
+            custom_attrs={"data-testid": f"suggestions-{field_name}"},
         ),
     )
 

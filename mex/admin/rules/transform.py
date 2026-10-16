@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from functools import lru_cache
-from typing import cast
+from typing import Any, cast
 
 from pydantic import ValidationError
 
@@ -10,6 +10,7 @@ from mex.admin.rules.models import (
     EditorPrimarySource,
     InputConfig,
     PublishTarget,
+    SuggestionChip,
     ValidationMessage,
 )
 from mex.admin.transform import ensure_list, transform_value
@@ -29,6 +30,7 @@ from mex.common.fields import (
     VOCABULARY_FIELDS_BY_CLASS_NAME,
 )
 from mex.common.models import (
+    ADDITIVE_MODEL_CLASSES_BY_NAME,
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
     MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
     RULE_SET_REQUEST_CLASSES_BY_NAME,
@@ -440,6 +442,105 @@ def transform_fields_to_rule_set(
             "subtractive": _transform_fields_to_subtractive(fields, stem_type),
         }
     )
+
+
+def transform_fields_to_suggestion_payload(
+    stem_type: str,
+    fields: list[EditorField],
+    exclude_identifier: str | None,
+) -> dict[str, Any] | None:
+    """Transform the given fields to a request payload for the suggest endpoint.
+
+    Unlike the additive rule, the draft covers every enabled value of every enabled
+    primary source, so the backend sees the item as the user currently sees it.
+
+    Args:
+        stem_type: The stemType of the edited item
+        fields: A list of editor fields as currently shown in the editor
+        exclude_identifier: Identifier of the edited item, so it cannot vote for itself
+
+    Returns:
+        Payload for the suggest endpoint, or None if the fields are not valid yet
+    """
+    additive_class_name = ensure_prefix(stem_type, "Additive")
+    field_names = MERGEABLE_FIELDS_BY_CLASS_NAME[additive_class_name]
+    raw_draft: dict[str, list[AnyModelValue]] = {}
+    for field in fields:
+        if field.name not in field_names:
+            continue
+        field_values = raw_draft.setdefault(field.name, [])
+        for primary_source in field.primary_sources:
+            if not primary_source.enabled:
+                continue
+            for editor_value in primary_source.editor_values:
+                if not editor_value.enabled:
+                    continue
+                try:
+                    draft_value = _transform_editor_value_to_model_value(
+                        editor_value,
+                        field.name,
+                        additive_class_name,
+                        primary_source.input_config,
+                    )
+                except KeyError, ValueError:
+                    return None
+                if draft_value and draft_value not in field_values:
+                    field_values.append(draft_value)
+    try:
+        draft = ADDITIVE_MODEL_CLASSES_BY_NAME[additive_class_name].model_validate(
+            raw_draft
+        )
+    except ValidationError:
+        return None
+    return {
+        "additive": {
+            "$type": additive_class_name,
+            **draft.model_dump(mode="json", by_alias=True, exclude_defaults=True),
+        },
+        "excludeIdentifier": exclude_identifier,
+        "limit": 3,
+    }
+
+
+def transform_suggestion_response(
+    stem_type: str,
+    response: dict[str, Any],
+) -> dict[str, list[SuggestionChip]]:
+    """Transform a suggest endpoint response to suggestion chips by field name.
+
+    The backend suggests vocabulary values, whereas the editor works with the names
+    of the vocabulary enum members, so candidates are mapped back to those names.
+    Candidates that are unknown to the editor and fields without any are dropped.
+
+    Args:
+        stem_type: The stemType of the edited item
+        response: Raw response of the suggest endpoint
+
+    Returns:
+        Lists of suggestion chips keyed by field name
+    """
+    additive_class_name = ensure_prefix(stem_type, "Additive")
+    vocabularies_by_field = VOCABULARIES_BY_FIELDS_BY_CLASS_NAMES[additive_class_name]
+    chips_by_field: dict[str, list[SuggestionChip]] = {}
+    for suggestion in response["suggestions"]:
+        names_by_value = {
+            member.value: member.name
+            for member in vocabularies_by_field.get(suggestion["field"], [])
+        }
+        chips = [
+            SuggestionChip(
+                badge=names_by_value[candidate["value"]],
+                confidence=candidate["confidence"],
+                percent=round(candidate["confidence"] * 100),
+                support=candidate["support"],
+                sample_size=suggestion["sampleSize"],
+            )
+            for candidate in suggestion["candidates"]
+            if candidate["value"] in names_by_value
+        ]
+        if chips:
+            chips_by_field[suggestion["field"]] = chips
+    return chips_by_field
 
 
 def transform_validation_error_to_messages(

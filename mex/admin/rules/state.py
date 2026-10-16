@@ -1,3 +1,4 @@
+import asyncio
 import copy
 from collections.abc import AsyncGenerator, Generator
 from typing import TYPE_CHECKING, Literal, cast
@@ -20,12 +21,15 @@ from mex.admin.rules.models import (
     LocalDraft,
     LocalEdit,
     PublishTarget,
+    SuggestionChip,
     ValidationMessage,
 )
 from mex.admin.rules.transform import (
     transform_fields_to_rule_set,
+    transform_fields_to_suggestion_payload,
     transform_models_to_fields,
     transform_publish_targets_to_workflow,
+    transform_suggestion_response,
     transform_validation_error_to_messages,
     transform_workflow_to_publish_targets,
 )
@@ -40,6 +44,7 @@ from mex.admin.utils import (
     resolve_identifier,
 )
 from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
+from mex.common.logging import logger
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
     RULE_SET_REQUEST_CLASSES,
@@ -55,11 +60,15 @@ from mex.common.types import Identifier, Validation
 
 locale_service = LocaleService.get()
 
+# wait this long after the last edit before asking the backend for suggestions
+SUGGESTION_DEBOUNCE_SECONDS = 0.4
+
 
 class RuleState(State, LocalStorageMixinState):
     """Base state for the edit and create components."""
 
     _api_fields: list[EditorField] = []
+    _suggestion_generation: int = 0
 
     is_submitting: bool = False
     is_loading: bool = True
@@ -70,6 +79,7 @@ class RuleState(State, LocalStorageMixinState):
     stem_type: str | None = None
     validation_messages: list[ValidationMessage] = []
     workflow_rule: AnyWorkflowModel | None = None
+    suggestions: dict[str, list[SuggestionChip]] = {}
 
     if TYPE_CHECKING:
         item_id: str
@@ -94,7 +104,7 @@ class RuleState(State, LocalStorageMixinState):
         return transform_workflow_to_publish_targets(self.workflow_rule)
 
     @rx.event
-    def update_local_state(self) -> None:
+    def update_local_state(self) -> Generator[EventSpec]:
         """Updates the local edits and drafts with current values."""
         _fields = self.get_value("fields")
         if self.item_id:
@@ -110,6 +120,59 @@ class RuleState(State, LocalStorageMixinState):
                     stem_type=self.stem_type or "",
                 ),
             )  # type: ignore[operator]
+        yield RuleState.fetch_suggestions  # type: ignore[misc]
+
+    @rx.event
+    def fetch_suggestions(self) -> Generator[EventSpec]:
+        """Request vocabulary suggestions for the current fields, debounced.
+
+        Every call supersedes the previous ones, so only the last of a burst of
+        edits actually reaches the backend.
+        """
+        self._suggestion_generation += 1
+        yield RuleState.fetch_suggestions_in_background
+
+    @rx.event(background=True)
+    async def fetch_suggestions_in_background(self) -> None:
+        """Fetch vocabulary suggestions unless superseded by a newer edit."""
+        async with self:
+            generation = self._suggestion_generation
+            payload = (
+                transform_fields_to_suggestion_payload(
+                    self.stem_type, self.fields, self.item_id or None
+                )
+                if self.stem_type and self.has_write_access
+                else None
+            )
+        if payload is None:
+            # keep the last suggestions while the fields are not valid yet
+            return
+        await asyncio.sleep(SUGGESTION_DEBOUNCE_SECONDS)
+        async with self:
+            if generation != self._suggestion_generation:
+                return
+        connector = BackendApiConnector.get()
+        try:
+            # TODO(ND): use the dedicated connector method once it is available
+            # TODO(ND): use user auth for backend requests (stop-gap MX-1616)
+            response = await asyncio.to_thread(
+                connector.request,
+                method="POST",
+                endpoint="rule-item/_suggest",
+                payload=payload,
+            )
+        except RequestException as exc:
+            # suggestions are a nicety, so failures must not get in the way
+            logger.warning("error fetching suggestions: %s", response_payload(exc))
+            response = None
+        async with self:
+            if generation != self._suggestion_generation or not self.stem_type:
+                return
+            self.suggestions = (
+                transform_suggestion_response(self.stem_type, response)
+                if response
+                else {}
+            )
 
     @rx.event
     def delete_local_state(self) -> None:
@@ -141,6 +204,44 @@ class RuleState(State, LocalStorageMixinState):
                 for field in fields
             ]
         return []
+
+    @rx.var(cache=True, deps=["suggestions", "current_locale"])
+    def translated_suggestions(self) -> dict[str, list[SuggestionChip]]:
+        """Add a translated tooltip to the suggestions based on current_locale.
+
+        Returns:
+            Suggestion chips keyed by field name, with tooltips explaining them.
+        """
+        if not self.stem_type:
+            return {}
+        suggestions = cast(
+            "dict[str, list[SuggestionChip]]", self.get_value("suggestions")
+        )
+        tooltip_format = locale_service.get_ui_label(
+            self.current_locale, "rules.suggestions.tooltip_format"
+        )
+        stem_type_label = locale_service.get_ui_label(
+            self.current_locale, self.stem_type
+        )
+        return {
+            field_name: [
+                chip.model_copy(
+                    update={
+                        "tooltip": tooltip_format.format(
+                            chip.support,
+                            chip.sample_size,
+                            stem_type_label,
+                            chip.badge,
+                            locale_service.get_field_label(
+                                self.current_locale, self.stem_type, field_name
+                            ),
+                        )
+                    }
+                )
+                for chip in chips
+            ]
+            for field_name, chips in suggestions.items()
+        }
 
     @rx.event
     def resolve_identifiers(self) -> Generator[EventSpec]:
@@ -218,6 +319,7 @@ class RuleState(State, LocalStorageMixinState):
     def refresh(self) -> Generator[EventSpec | None]:
         """Refresh the edit or create page."""
         self.delete_reset_mode = None
+        self.suggestions = {}
         self.fields.clear()
         self.validation_messages.clear()
         self.load_error = None
@@ -304,6 +406,7 @@ class RuleState(State, LocalStorageMixinState):
 
         self._api_fields = copy.deepcopy(loaded_fields)
         self.is_loading = False
+        yield RuleState.fetch_suggestions  # type: ignore[misc]
 
     def _send_rule_set_request(self, rule_set: AnyRuleSetRequest) -> AnyRuleSetResponse:
         """Send the rule set to the backend."""
@@ -442,6 +545,15 @@ class RuleState(State, LocalStorageMixinState):
         yield RuleState.update_local_state  # type: ignore[misc]
 
     @rx.event
+    def add_suggested_value(self, field_name: str, badge: str) -> Generator[EventSpec]:
+        """Add an additive rule to the given field with a suggested badge."""
+        primary_source = self._get_editable_primary_source_by_field_name(field_name)
+        primary_source.editor_values.append(EditorValue(badge=badge, being_edited=True))
+        # hide the chips right away, the next fetch skips filled fields anyway
+        self.suggestions.pop(field_name, None)
+        yield RuleState.update_local_state  # type: ignore[misc]
+
+    @rx.event
     def remove_additive_value(
         self, field_name: str, index: int
     ) -> Generator[EventSpec]:
@@ -513,6 +625,10 @@ class RuleState(State, LocalStorageMixinState):
     @label_var(label_id="rules.additive_rule.remove_button_prefix")
     def label_additive_rule_remove_button_prefix(self) -> None:
         """Label for additive_rule.remove_button."""
+
+    @label_var(label_id="rules.suggestions.prefix")
+    def label_suggestions_prefix(self) -> None:
+        """Label for suggestions.prefix."""
 
     @label_var(label_id="rules.validation_result_dialog.close_button")
     def label_validation_result_dialog_close_button(self) -> None:
