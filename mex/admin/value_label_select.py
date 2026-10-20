@@ -4,7 +4,8 @@ from typing import Any
 import reflex as rx
 from pydantic import BaseModel
 from reflex.components import Component
-from reflex.components.radix.themes.components.select import (
+from reflex.vars.base import Var
+from reflex_components_radix.themes.components.select import (
     HighLevelSelect,
     SelectContent,
     SelectGroup,
@@ -13,7 +14,6 @@ from reflex.components.radix.themes.components.select import (
     SelectRoot,
     SelectTrigger,
 )
-from reflex.vars.base import Var
 
 
 class ValueLabelSelectItem(BaseModel):

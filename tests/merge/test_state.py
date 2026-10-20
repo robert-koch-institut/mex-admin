@@ -1,5 +1,5 @@
 import pytest
-from reflex.utils.types import _isinstance
+from reflex_base.utils.types import _isinstance
 
 from mex.admin.merge.state import MergeState
 

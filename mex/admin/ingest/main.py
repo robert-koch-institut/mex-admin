@@ -111,7 +111,8 @@ def search_results() -> rx.Component:
             SearchResultsComponentOptions(
                 summary_text=IngestState.label_search_result_summary_format,
                 pagination_options=build_pagination_for_state_options(
-                    IngestState, IngestState.flag_ingested_items
+                    IngestState,
+                    IngestState.flag_ingested_items,  # type: ignore[arg-type]
                 ),
                 list_options=SearchResultsListOptions(
                     item_options=SearchResultsListItemOptions(

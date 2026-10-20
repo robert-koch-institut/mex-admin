@@ -15,7 +15,7 @@ from mex.admin.models import SearchResult, ValueLabelCheckboxItem
 from mex.admin.pagination_component import PaginationStateMixin
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
-from mex.admin.utils import resolve_editor_value
+from mex.admin.utils import resolve_editor_values_in_background
 from mex.admin.value_label_select import ValueLabelSelectItem
 from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.fields import (
@@ -199,14 +199,24 @@ class AdvancedSearchState(State, PaginationStateMixin):
 
         self.is_searching = False
 
+    @rx.event
+    def resolve_identifiers(self) -> Generator[EventSpec]:
+        """Resolve identifiers to human readable display values.
+
+        Background events start right away and do not wait for the events queued
+        before them, so they are yielded from here once those have been processed.
+        """
+        yield AdvancedSearchState.resolve_identifiers_in_background
+
     @rx.event(background=True)
-    async def resolve_identifiers(self) -> None:
+    async def resolve_identifiers_in_background(self) -> None:
         """Resolve identifiers to human readable display values."""
-        for result in self.search_results:
-            for preview in result.preview:
-                if preview.identifier and not preview.text:
-                    async with self:
-                        await resolve_editor_value(preview)
+        await resolve_editor_values_in_background(
+            self,
+            lambda: (
+                preview for result in self.search_results for preview in result.preview
+            ),
+        )
 
     @rx.event
     def on_query_form_submit(self, form_data: dict[str, Any]) -> None:

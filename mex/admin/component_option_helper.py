@@ -54,7 +54,7 @@ def build_pagination_for_state_options(
     """Build pagination options for IngestState or SearchState."""
     return build_pagination_options(
         state,
-        *[
+        *[  # type: ignore[arg-type]
             state.scroll_to_top,
             state.refresh,
             state.resolve_identifiers,

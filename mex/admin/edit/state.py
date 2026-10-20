@@ -24,8 +24,17 @@ class EditState(RuleState):
     is_loading_superseded_by_backward: bool = True
     superseded_by_backward: list[SearchResult] = []
 
+    @rx.event
+    def resolve_superseded_by_backward(self) -> Generator[EventSpec]:
+        """Load the superseding items for the current item.
+
+        Background events start right away and do not wait for the events queued
+        before them, so they are yielded from here once those have been processed.
+        """
+        yield EditState.resolve_superseded_by_backward_in_background
+
     @rx.event(background=True)
-    async def resolve_superseded_by_backward(self) -> None:
+    async def resolve_superseded_by_backward_in_background(self) -> None:
         """Load the superseding items for the current item."""
         async with self:
             self.superseded_by_backward = []

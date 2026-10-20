@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Generator
 from typing import Any
 
@@ -11,7 +12,7 @@ from mex.admin.ingest.transform import transform_models_to_results
 from mex.admin.label_var import label_var
 from mex.admin.pagination_component import PaginationStateMixin
 from mex.admin.state import State
-from mex.admin.utils import resolve_editor_value
+from mex.admin.utils import resolve_editor_values_in_background
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.models import AnyExtractedModel, PaginatedItemsContainer
 
@@ -60,7 +61,7 @@ class IngestState(State, PaginationStateMixin):
     def ingest_result(self, index: int) -> Generator[EventSpec]:
         """Ingest the selected result to MEx backend."""
         connector = BackendApiConnector.get()
-        model = self.get_value(self.results_extracted[index])  # type: ignore[arg-type]
+        model = self.get_value("results_extracted")[index]
         try:
             # TODO(ND): use user auth for backend requests (stop-gap MX-1616)
             connector.ingest([model])
@@ -92,29 +93,61 @@ class IngestState(State, PaginationStateMixin):
         for provider in self.aux_providers:
             yield from provider.resolve_dynamic_name()
 
-    @rx.event(background=True)
-    async def resolve_identifiers(self) -> None:
-        """Resolve identifiers to human readable display values."""
-        for result in self.results_transformed:
-            for value in [*result.title, *result.preview, *result.all_properties]:
-                if value.identifier and not value.text:
-                    async with self:
-                        await resolve_editor_value(value)
+    @rx.event
+    def resolve_identifiers(self) -> Generator[EventSpec]:
+        """Resolve identifiers to human readable display values.
+
+        Background events start right away and do not wait for the events queued
+        before them, so they are yielded from here once those have been processed.
+        """
+        yield IngestState.resolve_identifiers_in_background
 
     @rx.event(background=True)
-    async def flag_ingested_items(self) -> None:
+    async def resolve_identifiers_in_background(self) -> None:
+        """Resolve identifiers to human readable display values."""
+        await resolve_editor_values_in_background(
+            self,
+            lambda: (
+                value
+                for result in self.results_transformed
+                for value in [*result.title, *result.preview, *result.all_properties]
+            ),
+        )
+
+    @rx.event
+    def flag_ingested_items(self) -> Generator[EventSpec]:
+        """Check and flag, if any result is already ingested into backend.
+
+        Background events start right away and do not wait for the events queued
+        before them, so they are yielded from here once those have been processed.
+        """
+        yield IngestState.flag_ingested_items_in_background
+
+    @rx.event(background=True)
+    async def flag_ingested_items_in_background(self) -> None:
         """Check and flag, if any result is already ingested into backend."""
         connector = BackendApiConnector.get()
-        for index, result in enumerate(self.results_transformed):
-            response = connector.fetch_identities(
-                identifier_in_primary_source=self.results_extracted[
-                    index
-                ].identifierInPrimarySource,
-                had_primary_source=self.results_extracted[index].hadPrimarySource,
+        async with self:
+            keys = [
+                (extracted.identifierInPrimarySource, extracted.hadPrimarySource)
+                for extracted in self.results_extracted
+            ]
+        for key in keys:
+            response = await asyncio.to_thread(
+                connector.fetch_identities,
+                identifier_in_primary_source=key[0],
+                had_primary_source=key[1],
             )
             if len(response.items) > 0:
                 async with self:
-                    result.show_ingest_button = False
+                    for extracted, result in zip(
+                        self.results_extracted, self.results_transformed, strict=True
+                    ):
+                        if (
+                            extracted.identifierInPrimarySource,
+                            extracted.hadPrimarySource,
+                        ) == key:
+                            result.show_ingest_button = False
 
     @rx.event
     def refresh(self) -> Generator[EventSpec | None]:

@@ -34,7 +34,11 @@ from mex.admin.transform import (
     transform_models_to_stem_type,
     transform_models_to_title,
 )
-from mex.admin.utils import resolve_editor_value, resolve_identifier
+from mex.admin.utils import (
+    resolve_editor_value,
+    resolve_editor_values_in_background,
+    resolve_identifier,
+)
 from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.merged.main import create_merged_item
 from mex.common.models import (
@@ -138,19 +142,27 @@ class RuleState(State, LocalStorageMixinState):
             ]
         return []
 
+    @rx.event
+    def resolve_identifiers(self) -> Generator[EventSpec]:
+        """Resolve identifiers to human readable display values.
+
+        Background events start right away and do not wait for the events queued
+        before them, so they are yielded from here once those have been processed.
+        """
+        yield RuleState.resolve_identifiers_in_background
+
     @rx.event(background=True)
-    async def resolve_identifiers(self) -> None:
+    async def resolve_identifiers_in_background(self) -> None:
         """Resolve identifiers to human readable display values."""
-        for field in self.fields:
-            for primary_source in field.primary_sources:
-                name = primary_source.name
-                if name.identifier and not name.text:
-                    async with self:
-                        await resolve_editor_value(name)
-                for editor_value in primary_source.editor_values:
-                    if editor_value.identifier and not editor_value.text:
-                        async with self:
-                            await resolve_editor_value(editor_value)
+        await resolve_editor_values_in_background(
+            self,
+            lambda: (
+                value
+                for field in self.fields
+                for primary_source in field.primary_sources
+                for value in [primary_source.name, *primary_source.editor_values]
+            ),
+        )
 
     @classmethod
     def _contains_any_rule(
@@ -334,7 +346,7 @@ class RuleState(State, LocalStorageMixinState):
         else:
             yield RuleState.refresh  # type: ignore[misc]
             yield RuleState.show_submit_success_toast  # type: ignore[misc]
-            yield RuleState.resolve_identifiers
+            yield RuleState.resolve_identifiers  # type: ignore[misc]
 
     @rx.event
     def set_is_submitting(self, value: bool) -> None:  # noqa: FBT001

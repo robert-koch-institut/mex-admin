@@ -85,16 +85,16 @@ def render_identifier(value: EditorValue) -> rx.Component:
     """Render an editor value as a clickable internal link that loads the edit page."""
     return rx.skeleton(
         rx.link(
-            rx.cond(value.text, value.text, ""),
-            href=rx.cond(value.href, value.href, ""),
+            rx.cond(value.text, value.text, ""),  # type: ignore[call-overload]
+            href=rx.cond(value.href, value.href, ""),  # type: ignore[call-overload]
             high_contrast=True,
             role="link",
             class_name="truncate",
-            title=rx.cond(value.text, value.text, ""),
+            title=rx.cond(value.text, value.text, ""),  # type: ignore[call-overload]
         ),
         min_width="16ch",
         min_height="1lh",
-        loading=rx.cond(value.text, False, True),  # noqa: FBT003
+        loading=rx.cond(value.text, False, True),  # type: ignore[call-overload]  # noqa: FBT003
     )
 
 
@@ -104,12 +104,12 @@ def render_external_link(value: EditorValue) -> rx.Component:
         rx.cond(
             value.text,
             value.text,
-            rx.cond(value.href, value.href, ""),
+            rx.cond(value.href, value.href, ""),  # type: ignore[call-overload]
         ),
-        href=rx.cond(value.href, value.href, ""),
+        href=rx.cond(value.href, value.href, ""),  # type: ignore[call-overload]
         high_contrast=True,
         is_external=True,
-        title=rx.cond(value.text, value.text, ""),
+        title=rx.cond(value.text, value.text, ""),  # type: ignore[call-overload]
         class_name="truncate",
         role="link",
     )
@@ -130,10 +130,10 @@ def render_span(
 ) -> rx.Component:
     """Render a generic span with the given text."""
     return rx.text(
-        rx.cond(text, text, ""),
+        rx.cond(text, text, ""),  # type: ignore[call-overload]
         as_="span",
-        class_name=rx.cond(truncate_text, "truncate", ""),
-        title=rx.cond(text, text, ""),
+        class_name=rx.cond(truncate_text, "truncate", ""),  # type: ignore[call-overload]
+        title=rx.cond(text, text, ""),  # type: ignore[call-overload]
     )
 
 
@@ -146,7 +146,7 @@ def render_text(
         render_span(value.text, truncate_text),
         min_width="16ch",
         min_height="1lh",
-        loading=rx.cond(value.text, False, True),  # noqa: FBT003
+        loading=rx.cond(value.text, False, True),  # type: ignore[call-overload]  # noqa: FBT003
     )
 
 
