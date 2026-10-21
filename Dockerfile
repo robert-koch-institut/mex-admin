@@ -26,7 +26,7 @@ RUN REFLEX_FRONTEND_PATH=/admin reflex export --frontend-only --no-zip --no-ssr 
     && mv .web/build/client dist/admin \
     && rm -rf .web
 
-FROM python:3.14-slim@sha256:00ebdcac87ebf7fd62576d8bbe8f8f1e94198befcc4e38c4db9671e61e0dfcfe
+FROM python:3.14-slim@sha256:fbecd461fc72d21b2143c6eaba25143738079154a6d0ea3da3aec724f50eed4a
 
 LABEL org.opencontainers.image.authors="mex@rki.de"
 LABEL org.opencontainers.image.description="Metadata admin web application."
