@@ -31,6 +31,7 @@ from mex.common.types import (
     IdentityProvider,
     Link,
     MergedPrimarySourceIdentifier,
+    ResourceCreationMethod,
     Text,
     TextLanguage,
     Theme,
@@ -196,7 +197,7 @@ def dummy_data() -> list[AnyExtractedModel]:
         shortName=["A1"],
         start=[YearMonthDay(1999, 12, 24)],
         end=[YearMonthDay(2023, 1, 1)],
-        theme=[Theme["INFECTIOUS_DISEASES_AND_EPIDEMIOLOGY"]],
+        theme=[Theme.INFECTIOUS_DISEASES_AND_EPIDEMIOLOGY],
         title=[Text(value="Aktivität 1", language=TextLanguage.DE)],
         website=[
             Link(title="Activity Homepage", url="https://activity-1"),
@@ -204,20 +205,22 @@ def dummy_data() -> list[AnyExtractedModel]:
         ],
     )
     resource_1 = ExtractedResource(
+        resourceCreationMethod=[ResourceCreationMethod.OTHER],
         hadPrimarySource=primary_source_1.stableTargetId,
         identifierInPrimarySource="r-1",
-        accessRestriction=AccessRestriction["OPEN"],
+        accessRestriction=AccessRestriction.OPEN,
         contact=[user_id],
-        theme=[Theme["BIOINFORMATICS_AND_SYSTEMS_BIOLOGY"]],
+        theme=[Theme.BIOINFORMATICS_AND_SYSTEMS_BIOLOGY],
         title=[Text(value="Bioinformatics Resource 1", language=None)],
         unitInCharge=[organizational_unit_1.stableTargetId],
     )
     resource_2 = ExtractedResource(
+        resourceCreationMethod=[ResourceCreationMethod.OTHER],
         hadPrimarySource=primary_source_2.stableTargetId,
         identifierInPrimarySource="r-2",
-        accessRestriction=AccessRestriction["OPEN"],
+        accessRestriction=AccessRestriction.OPEN,
         contact=[user_id, contact_point_2.stableTargetId],
-        theme=[Theme["PUBLIC_HEALTH"]],
+        theme=[Theme.PUBLIC_HEALTH],
         title=[
             Text(value="Some Resource with many titles 1", language=None),
             Text(value="Some Resource with many titles 2", language=TextLanguage.EN),
