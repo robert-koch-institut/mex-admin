@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-FROM python:3.14@sha256:455fc8bf2552c51738d27fde570c22bb0146d22f2e16e32a9baff8d2da94daf6 AS builder
+FROM python:3.15 AS builder
 
 WORKDIR /build
 
@@ -26,7 +26,7 @@ RUN REFLEX_FRONTEND_PATH=/admin reflex export --frontend-only --no-zip --no-ssr 
     && mv .web/build/client dist/admin \
     && rm -rf .web
 
-FROM python:3.14-slim@sha256:00ebdcac87ebf7fd62576d8bbe8f8f1e94198befcc4e38c4db9671e61e0dfcfe
+FROM python:3.15-slim
 
 LABEL org.opencontainers.image.authors="mex@rki.de"
 LABEL org.opencontainers.image.description="Metadata admin web application."
@@ -47,7 +47,7 @@ ENV REFLEX_ENV_MODE=prod
 
 WORKDIR /app
 
-COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
+COPY --from=builder /usr/local/lib/python3.15/site-packages /usr/local/lib/python3.15/site-packages
 COPY --from=builder /usr/local/bin/admin-api /usr/local/bin/admin-api
 COPY --from=builder /usr/local/bin/admin-frontend /usr/local/bin/admin-frontend
 COPY --from=builder --chown=10001 /build/assets assets
