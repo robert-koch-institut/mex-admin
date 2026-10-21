@@ -5,15 +5,15 @@ services:
     image: mex-admin:local
     ports:
       - 8030:8030
+    environment:
+      - MEX_ADMIN_FRONTEND_HOST=0.0.0.0
     healthcheck:
-      # the entrypoint downloads bun, installs the npm packages and runs a
-      # production build before serving, hence the long start period
-      test: [ "CMD", "curl", "--fail", "http://localhost:8030" ]
+      test: [ "CMD", "python", "-c", "import requests; requests.get('http://localhost:8030').raise_for_status()" ]
       interval: 30s
-      start_interval: 5s
+      start_interval: 2s
       timeout: 5s
       retries: 3
-      start_period: 360s
+      start_period: 30s
     entrypoint: admin-frontend
     depends_on:
       mex-admin-api:
@@ -32,7 +32,7 @@ services:
       - MEX_BACKEND_API_URL=http://mex-backend:8080/
       - MEX_IDENTITY_PROVIDER=backend
     healthcheck:
-      test: [ "CMD", "curl", "--fail", "http://localhost:8031/_system/check" ]
+      test: [ "CMD", "python", "-c", "import requests; requests.get('http://localhost:8031/_system/check').raise_for_status()" ]
       interval: 30s
       start_interval: 2s
       timeout: 5s
@@ -43,10 +43,11 @@ services:
       mex-backend:
         condition: service_healthy
   mex-backend:
-    image: ghcr.io/robert-koch-institut/mex-backend:4.4.0@sha256:ebeedd8301032978c06eed36cf968e8c98cd96c5b4e2804ad7e8e80c0661c517
+    image: ghcr.io/robert-koch-institut/mex-backend:4.6.2@sha256:de00421715eb74758927b11ed49b16c06223c7036eeef98ca498375e3c2ba28d
     ports:
       - 8080:8080
     environment:
+      - MEX_BACKEND_HOST=0.0.0.0
       - MEX_BACKEND_API_KEY_DATABASE={"read":["read_key"],"write":["write_key"]}
       - MEX_DEBUG=True
       - MEX_GRAPH_URL=neo4j://neo4j:7687
@@ -58,14 +59,14 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
-    # the testing backend mocks ldap and serves the graph flush endpoint,
-    # both of which the integration test suite relies on
+    # the testing backend serves the graph flush endpoint,
+    # which the integration test suite relies on
     entrypoint: testing-backend
     depends_on:
       neo4j:
         condition: service_healthy
   neo4j:
-    image: neo4j:2026.07.1-community@sha256:dbc377fb9cd8fe8dabc19d3041b197d5ca0ef8bae514cea175b8df265e5b7a76
+    image: neo4j:2026.09.0-community@sha256:d6269a020149934597c8c3df926d080a612796dbbb48861ca9d5b1109cabf0d8
     environment:
       - NEO4J_AUTH=neo4j/password
     ports:

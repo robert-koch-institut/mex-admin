@@ -16,7 +16,7 @@ from mex.admin.pagination_component import PaginationStateMixin
 from mex.admin.search.models import SearchPrimarySource
 from mex.admin.state import State
 from mex.admin.transform import transform_models_to_search_results
-from mex.admin.utils import resolve_editor_value
+from mex.admin.utils import resolve_editor_values_in_background
 from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.exceptions import MExError
 from mex.common.models import MERGED_MODEL_CLASSES, MergedPrimarySource
@@ -133,14 +133,22 @@ class SearchState(State, PaginationStateMixin):
         """Scroll the page to the top."""
         yield rx.call_script("window.scrollTo({top: 0, behavior: 'smooth'});")
 
+    @rx.event
+    def resolve_identifiers(self) -> Generator[EventSpec]:
+        """Resolve identifiers to human readable display values.
+
+        Background events start right away and do not wait for the events queued
+        before them, so they are yielded from here once those have been processed.
+        """
+        yield SearchState.resolve_identifiers_in_background
+
     @rx.event(background=True)
-    async def resolve_identifiers(self) -> None:
+    async def resolve_identifiers_in_background(self) -> None:
         """Resolve identifiers to human readable display values."""
-        for result in self.results:
-            for preview in result.preview:
-                if preview.identifier and not preview.text:
-                    async with self:
-                        await resolve_editor_value(preview)
+        await resolve_editor_values_in_background(
+            self,
+            lambda: (preview for result in self.results for preview in result.preview),
+        )
 
     @rx.event
     def refresh(self) -> Generator[EventSpec | None]:

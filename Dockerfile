@@ -1,6 +1,6 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-FROM python:3.14-trixie AS builder
+FROM python:3.15@sha256:4e324f579bdd7d0ce3cbae52e27bddeb316c9c23aa7563ac6a9811bbca55541b AS builder
 
 WORKDIR /build
 
@@ -12,13 +12,21 @@ ENV PIP_PROGRESS_BAR=off
 COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
-RUN uv export --frozen --no-hashes --no-dev --output-file requirements.lock
+RUN uv export --no-dev --no-editable | uv pip install --system --no-deps -r -
 
-RUN pip wheel --no-cache-dir --wheel-dir /build/wheels -r requirements.lock
-RUN pip wheel --no-cache-dir --wheel-dir /build/wheels --no-deps .
+# pre-build the frontend for serving on `/` and on `/admin`, using a placeholder for
+# the api url that is replaced at runtime (see `mex/admin/frontend.py`),
+# the root build uses an empty frontend path, because `/` breaks the vite base url
+ENV REFLEX_API_URL=http://mex-api-url-placeholder
+RUN REFLEX_FRONTEND_PATH= reflex export --frontend-only --no-zip --no-ssr \
+    && mkdir dist \
+    && mv .web/build/client dist/root \
+    && rm -rf .web
+RUN REFLEX_FRONTEND_PATH=/admin reflex export --frontend-only --no-zip --no-ssr \
+    && mv .web/build/client dist/admin \
+    && rm -rf .web
 
-
-FROM python:3.14-slim-trixie
+FROM python:3.15-slim@sha256:f5b92f2a669a4c347044f29367f31983280b648250ca94dea66f98c53bc87e58
 
 LABEL org.opencontainers.image.authors="mex@rki.de"
 LABEL org.opencontainers.image.description="Metadata admin web application."
@@ -36,36 +44,21 @@ ENV REFLEX_BACKEND_PORT=8031
 ENV REFLEX_API_URL=http://localhost:8031
 ENV REFLEX_TELEMETRY_ENABLED=False
 ENV REFLEX_ENV_MODE=prod
-ENV REFLEX_DIR=/app/reflex
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y unzip curl && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /usr/local/lib/python3.15/site-packages /usr/local/lib/python3.15/site-packages
+COPY --from=builder /usr/local/bin/admin-api /usr/local/bin/admin-api
+COPY --from=builder /usr/local/bin/admin-frontend /usr/local/bin/admin-frontend
+COPY --from=builder --chown=10001 /build/assets assets
+COPY --from=builder --chown=10001 /build/rxconfig.py rxconfig.py
+COPY --from=builder --chown=10001 /build/dist dist
 
-COPY --from=builder /build/wheels /wheels
+RUN chown 10001 /app
 
-RUN pip install --no-cache-dir \
-    --no-index \
-    --find-links=/wheels \
-    /wheels/*.whl \
-    && rm -rf /wheels
-
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    --uid "10001" \
-    mex
-
-RUN chown mex:mex /app
-
-COPY --chown=mex assets assets
-COPY --chown=mex rxconfig.py rxconfig.py
-
-USER mex
+USER 10001
 
 EXPOSE 8030
 EXPOSE 8031
 
-ENTRYPOINT [ "admin" ]
+ENTRYPOINT [ "admin-frontend" ]

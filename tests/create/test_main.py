@@ -8,6 +8,7 @@ from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.fields import MERGEABLE_FIELDS_BY_CLASS_NAME
 from mex.common.models import (
     MEX_EDITOR_PRIMARY_SOURCE_STABLE_TARGET_ID,
+    RULE_SET_REQUEST_CLASSES,
     AnyExtractedModel,
 )
 from tests.conftest import build_ui_label_regex
@@ -105,6 +106,23 @@ def test_create_page_renders_fields(create_page: Page) -> None:
 
 
 @pytest.mark.integration
+def test_create_page_renders_fields_for_all_entity_types(create_page: Page) -> None:
+    page = create_page
+    entity_type_select = page.get_by_test_id("entity-type-select")
+    for stem_type in sorted(cls.stemType for cls in RULE_SET_REQUEST_CLASSES):
+        entity_type_select.click()
+        page.get_by_test_id(
+            re.compile(rf"^value-label-select-item-\d+-{stem_type}$")
+        ).click()
+        expect(page.get_by_role("row")).to_have_count(
+            len(
+                set(MERGEABLE_FIELDS_BY_CLASS_NAME[f"Extracted{stem_type}"])
+                | set(MERGEABLE_FIELDS_BY_CLASS_NAME[f"Additive{stem_type}"])
+            )
+        )
+
+
+@pytest.mark.integration
 def test_create_page_test_additive_buttons(create_page: Page) -> None:
     page = create_page
     new_additive_button = page.get_by_test_id(
@@ -128,7 +146,6 @@ def test_create_page_test_additive_buttons(create_page: Page) -> None:
     expect(remove_additive_rule_button).not_to_be_visible()
 
 
-@pytest.mark.requires_rki_infrastructure
 @pytest.mark.integration
 def test_create_page_submit_item(create_page: Page) -> None:
     page = create_page
@@ -321,7 +338,7 @@ def test_logout_unsaved_changes_dialog_on_draft_logout_normal(
     _screenshot("changes")
 
     # click logout and expect dialog
-    page.get_by_test_id("user-menu").click()
+    expect(page.get_by_test_id("user-menu")).to_be_visible()
     page.get_by_test_id("logout-button").click()
     _screenshot("dialog")
     expect(page.get_by_test_id("unsaved-changes-dialog")).to_be_visible()
@@ -335,7 +352,7 @@ def test_logout_unsaved_changes_dialog_on_draft_logout_normal(
     _screenshot("changes_removed")
 
     # logout should work normal (no dialog anymore)
-    page.get_by_test_id("user-menu").click()
+    expect(page.get_by_test_id("user-menu")).to_be_visible()
     logout_button = page.get_by_test_id("logout-button")
     expect(logout_button).to_be_visible()
     _screenshot("user_menu")
@@ -362,7 +379,7 @@ def test_logout_unsaved_changes_dialog_on_draft(draft_create_page: DraftPage) ->
     _screenshot("changes")
 
     # click logout and expect dialog
-    page.get_by_test_id("user-menu").click()
+    expect(page.get_by_test_id("user-menu")).to_be_visible()
     page.get_by_test_id("logout-button").click()
     _screenshot("dialog")
     expect(page.get_by_test_id("unsaved-changes-dialog")).to_be_visible()

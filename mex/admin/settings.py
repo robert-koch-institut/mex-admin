@@ -1,8 +1,9 @@
+from pathlib import Path
+
 from pydantic import Field
 
 from mex.admin.types import AdminUserDatabase
 from mex.common.settings import BaseSettings
-from mex.common.types import AssetsPath
 
 
 class AdminSettings(BaseSettings):
@@ -29,6 +30,19 @@ class AdminSettings(BaseSettings):
         description="Port that the admin frontend should serve on.",
         validation_alias="MEX_ADMIN_FRONTEND_PORT",
     )
+    admin_frontend_host: str = Field(
+        "localhost",
+        min_length=1,
+        max_length=250,
+        description="Host that the admin frontend will run on.",
+        validation_alias="MEX_ADMIN_FRONTEND_HOST",
+    )
+    admin_frontend_directory: Path = Field(
+        Path("dist"),
+        description="Directory containing the pre-built frontends, one subdirectory "
+        "per frontend path, i.e. `root` for `/` and `admin` for `/admin`.",
+        validation_alias="MEX_ADMIN_FRONTEND_DIRECTORY",
+    )
     admin_api_root_path: str = Field(
         "",
         description="Root path that the admin server should run under.",
@@ -38,9 +52,4 @@ class AdminSettings(BaseSettings):
         AdminUserDatabase(),
         description="Database of users.",
         validation_alias="MEX_ADMIN_USER_DATABASE",
-    )
-    admin_assets_dir: AssetsPath = Field(
-        AssetsPath(""),
-        description="Admin-specific assets directory, e.g. for consent markdowns.",
-        validation_alias="MEX_ADMIN_ASSETS_DIR",
     )

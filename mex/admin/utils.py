@@ -1,6 +1,8 @@
 import asyncio
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from contextlib import AbstractAsyncContextManager
 from functools import lru_cache
+from typing import Any
 from urllib.parse import urlencode, urlparse, urlunparse
 
 from requests import RequestException
@@ -41,6 +43,30 @@ async def resolve_editor_value(editor_value: EditorValue) -> None:
     else:
         msg = f"Cannot resolve editor value: {editor_value}"
         raise MExError(msg)
+
+
+async def resolve_editor_values_in_background(
+    state: AbstractAsyncContextManager[Any],
+    get_editor_values: Callable[[], Iterable[EditorValue]],
+) -> None:
+    """Resolve unresolved editor values of a state from within a background task.
+
+    Every `async with state` reloads the state from the state manager, so editor
+    values must be looked up again after entering the context to be updated.
+    Identifiers are resolved outside of the context to keep the state unlocked.
+    """
+    async with state:
+        identifiers = {
+            value.identifier
+            for value in get_editor_values()
+            if value.identifier and not value.text
+        }
+    for identifier in identifiers:
+        text = await asyncio.to_thread(resolve_identifier, identifier)
+        async with state:
+            for value in get_editor_values():
+                if value.identifier == identifier and not value.text:
+                    value.text = text
 
 
 def load_settings() -> AdminSettings:

@@ -5,8 +5,6 @@ from typing import Protocol
 import yaml
 from pydantic import BaseModel, TypeAdapter
 
-from mex.common.types import MergedPersonIdentifier
-
 
 class EqualityDetector(Protocol):
     """Interface for checking equality without overriding __eq__."""
@@ -50,15 +48,6 @@ class User(BaseModel):
 
     name: str
     write_access: bool
-
-
-class MergedLoginPerson(BaseModel):
-    """Info on the currently logged-in user from the merged login endpoint."""
-
-    identifier: MergedPersonIdentifier | None = None
-    full_name: list[str] | None = None
-    email: list[str] | None = None
-    orcid_id: list[str] | None = None
 
 
 class NavItem(BaseModel):

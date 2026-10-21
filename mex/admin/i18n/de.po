@@ -151,12 +151,6 @@ msgstr "Gespeichert"
 msgid "rules.save_success_dialog.message_format"
 msgstr "{} wurde erfolgreich gespeichert."
 
-msgid "consent.save_success_dialog.title"
-msgstr "Gespeichert"
-
-msgid "consent.save_success_dialog.content"
-msgstr "Ihre Antwort wurde erfolgreich gespeichert."
-
 msgid "components.titles.additional_titles"
 msgstr "+ zusätzliche Titel"
 
@@ -187,33 +181,6 @@ msgstr "Aufnehmen"
 msgid "abstract.singular"
 msgstr "Kurzbeschreibung"
 
-msgid "consent.resources.title"
-msgstr "Datenbestände & Datensätze"
-
-msgid "consent.projects.title"
-msgstr "Projekte"
-
-msgid "consent.publications.title"
-msgstr "Publikationen"
-
-msgid "consent.user_data.loading"
-msgstr "Lade Kontodaten..."
-
-msgid "consent.consent_box.consent_button"
-msgstr "Einwilligen"
-
-msgid "consent.consent_box.no_consent_button"
-msgstr "Ablehnen"
-
-msgid "consent.consent_status.loading"
-msgstr "Lade Einverständniserklärung..."
-
-msgid "consent.nav_bar.consent_navitem"
-msgstr "Einverständniserklärung"
-
-msgid "consent.consent_retraction_denial"
-msgstr "Sie können Ihre Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen. Der Widerruf der Einwilligung berührt nicht die Rechtmäßigkeit der bis zum Widerruf erfolgten Verarbeitung. Wenn Sie von Ihrem Widerrufsrecht Gebrauch machen möchten, können Sie uns jederzeit unter folgender E-Mail-Adresse kontaktieren: mex@rki.de"
-
 msgid "search_reference_dialog.title"
 msgstr "Suche nach Referenzen"
 
@@ -232,14 +199,6 @@ msgstr "Leider wurden keine Ergebnisse für '{}' gefunden :("
 msgid "search_reference_dialog.results.select_button"
 msgstr "Auswählen"
 
-msgid "consent.consent_status.consented_format"
-msgstr "Sie haben Ihre Einwilligung am {} erteilt."
-
-msgid "consent.consent_status.declined_format"
-msgstr "Sie haben Ihre Ablehnung am {} erteilt."
-
-msgid "consent.consent_status.no_consent"
-msgstr "Sie haben noch keine Einwilligung erteilt."
 msgid "layout.nav_bar.advanced_search_navitem"
 msgstr "Erweiterte Suche"
 

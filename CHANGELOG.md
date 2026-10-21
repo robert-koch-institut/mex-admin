@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - set exact version for neo4j:2026.07.1
 - upgrade mex-backend to 4.4.0
 - upgrade mex-common to 3.4.0
+- upgrade to python 3.15
 
 ### Deprecated
 
@@ -22,6 +23,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [4.7.0] - 2026-10-20
+
+### Changes
+
+- update reflex to `>=0.9.12,<0.10`
+
+## [4.6.0] - 2026-10-07
+
+### Added
+
+- add `MEX_ADMIN_FRONTEND_HOST` to set the host for `admin-frontend`
+- add `MEX_ADMIN_FRONTEND_DIRECTORY` to set the directory of the pre-built frontends
+
+### Changes
+
+- bump mex-backend to 4.6.1
+- BREAKING: pre-build the frontend for `/` and `/admin` while building the docker image
+  and serve it from python, so `admin-frontend` no longer installs bun or npm packages
+  at runtime and `REFLEX_FRONTEND_PATH` must be one of `/` or `/admin`
+
+### Removed
+
+- remove curl and unzip from the docker image
+- BREAKING: remove the combined `admin` entrypoint from the docker image, the image
+  now starts `admin-frontend` by default (also used by `make run`)
+
+### Fixed
+
+- added missing greenlet dependency via `sqlalchemy[asyncio]`
+
+## [4.5.1] - 2026-09-14
+
+### Changes
+
+- inline the MEx wordmark as an svg component, so it no longer depends on the
+  assets path
+
+## [4.5.0] - 2026-09-14
+
+### Changes
+
+- upgrade mex-common to 3.4.1 and mex-model to 5.1.4, which ships the missing
+  `ResourceSeries` translations
+- flatten the user menu dropdown into an inline user name and logout button,
+  dropping the write-access user icon
+- render the nav bar as a solid accent surface with the MEx wordmark logo
+- assign a `library` icon to the `ResourceSeries` entity type, which fell back to the
+  generic unknown-type icon
+
+### Fixed
+
+- add a frontend display config for the new `ResourceSeries` entity type, which made
+  the create page crash with a `KeyError` when that type was selected
+- fix a typo in the resource display config: `publicationCoverage` (no such field) is
+  now `populationCoverage`, so that field renders as a textarea again
+
+## [4.4.0] - 2026-09-09
+
+### Changes
+
+- set exact version for neo4j:2026.07.1
+- upgrade mex-backend to 4.4.0
+- upgrade mex-common to 3.4.0
+- pin the app appearance to light mode
+- rename `State.user_mex` to `State.user`, now that it is the only user
+- rename the login page component `mex_login` to `index`, matching the other page
+  modules, and inline the single-caller `login_form` helper into it
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.1
+- new template https://github.com/robert-koch-institut/mex-template/releases/tag/2.0.0
+- trim the search and ingest roundtrip test down to the ldap aux provider, which the
+  testing backend mocks; wikidata and orcid are covered in mex-backend
+
+### Removed
+
+- removed the GDPR consent micro-page, which now lives in its own repo (mex-consent):
+  the `/consent` and `/login-ldap` routes, the LDAP login, the `mex.admin.consent`
+  package and its assets, and the `consent.*` UI labels
+- removed the `MEX_ADMIN_ASSETS_DIR` setting, which only located the consent markdowns
+- removed the light/dark mode toggle from the nav bar and the login form
+- the `requires_rki_infrastructure` marker, which only led to test rot
+
+### Fixed
+
+- success toast after creating an item, which was lost because the valueless `saved`
+  query parameter was dropped by `parse_qs`
+
+## [4.3.0] - 2026-08-31
+
+### Changes
+
+- set exact version for neo4j:2026.07.1
+- upgrade mex-backend to 4.4.0
+- upgrade mex-common to 3.4.0
 
 ## [4.2.0] - 2026-08-17
 
