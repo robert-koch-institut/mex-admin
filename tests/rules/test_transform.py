@@ -68,6 +68,7 @@ from mex.common.types import (
     MergedPersonIdentifier,
     MergedPrimarySourceIdentifier,
     PublishingTarget,
+    ResourceCreationMethod,
     Text,
     TextLanguage,
     Theme,
@@ -123,7 +124,7 @@ def test_get_primary_source_id_from_model_error() -> None:
         (
             MergedConsent(
                 identifier=MergedContactPointIdentifier.generate(),
-                hasConsentStatus=ConsentStatus["VALID_FOR_PROCESSING"],
+                hasConsentStatus=ConsentStatus.VALID_FOR_PROCESSING,
                 hasDataSubject=MergedPersonIdentifier.generate(),
                 isIndicatedAtTime=YearMonthDayTime("2022-09-30T20:48:35Z"),
             ),
@@ -132,7 +133,7 @@ def test_get_primary_source_id_from_model_error() -> None:
             [
                 EditorValue(
                     text="ConsentStatus",
-                    badge=ConsentStatus["VALID_FOR_PROCESSING"].name,
+                    badge=ConsentStatus.VALID_FOR_PROCESSING.name,
                 )
             ],
         ),
@@ -299,7 +300,7 @@ def test_transform_model_values_to_editor_values(
                     "CREATIVE_COMMONS_ATTRIBUTION_4_0_INTERNATIONAL"
                 ].name,
                 badge_options=[
-                    License["CREATIVE_COMMONS_ATTRIBUTION_4_0_INTERNATIONAL"].name
+                    License.CREATIVE_COMMONS_ATTRIBUTION_4_0_INTERNATIONAL.name
                 ],
                 badge_titles=["License"],
                 editable_badge=True,
@@ -434,6 +435,7 @@ def test_transform_model_to_input_config(
         (
             [
                 ExtractedPerson(
+                    fullName=["Test Person"],
                     identifierInPrimarySource="person-000",
                     hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
                 )
@@ -471,6 +473,7 @@ def test_id_shown_with_extracted_items(
     [
         (
             ExtractedPerson(
+                fullName=["Test Person"],
                 identifierInPrimarySource="example",
                 hadPrimarySource=MergedPrimarySourceIdentifier("primarySourceId"),
                 givenName=["Example"],
@@ -504,6 +507,7 @@ def test_id_shown_with_extracted_items(
         ),
         (
             ExtractedPerson(
+                fullName=["Test Person"],
                 identifierInPrimarySource="given-family",
                 hadPrimarySource=MergedPrimarySourceIdentifier("primarySourceId"),
                 givenName=["Given", "Gegeben"],
@@ -576,6 +580,7 @@ def test_transform_models_to_fields() -> None:
     editor_fields = transform_models_to_fields(
         [
             ExtractedPerson(
+                fullName=["Test Person"],
                 email=["person000@rki.de"],
                 hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
                 identifierInPrimarySource="person-000",
@@ -857,20 +862,18 @@ def test_transform_fields_to_preventive(
             Text(language=None, value="Text"),
         ),
         (
-            EditorValue(
-                text="ConsentType", badge=ConsentType["EXPRESSED_CONSENT"].name
-            ),
+            EditorValue(text="ConsentType", badge=ConsentType.EXPRESSED_CONSENT.name),
             "hasConsentType",
             "AdditiveConsent",
             "Consent",
-            ConsentType["EXPRESSED_CONSENT"],
+            ConsentType.EXPRESSED_CONSENT,
         ),
         (
             EditorValue(),
             "accrualPeriodicity",
             "AdditiveResource",
             "Resource",
-            Frequency["TRIENNIAL"],
+            Frequency.TRIENNIAL,
         ),
         (
             EditorValue(text="2004", badge="year"),
@@ -1094,33 +1097,49 @@ def test_transform_validation_error_to_messages() -> None:
     [
         (
             AdditiveResource(
-                accessRestriction=AccessRestriction["OPEN"],
+                accessRestriction=AccessRestriction.OPEN,
                 contact=[Identifier.generate(seed=999)],
                 unitInCharge=[Identifier.generate(seed=999)],
-                theme=[Theme["PUBLIC_HEALTH"]],
+                theme=[Theme.PUBLIC_HEALTH],
                 title=[Text(value="Dummy resource")],
             ),
-            ["accessRestriction", "contact", "theme", "title", "unitInCharge"],
+            [
+                "accessRestriction",
+                "contact",
+                "resourceCreationMethod",
+                "theme",
+                "title",
+                "unitInCharge",
+            ],
         ),
         (
             ExtractedResource(
                 identifierInPrimarySource="r1",
+                resourceCreationMethod=[ResourceCreationMethod.OTHER],
                 hadPrimarySource=Identifier.generate(seed=42),
-                accessRestriction=AccessRestriction["OPEN"],
+                accessRestriction=AccessRestriction.OPEN,
                 contact=[Identifier.generate(seed=999)],
                 unitInCharge=[Identifier.generate(seed=999)],
-                theme=[Theme["PUBLIC_HEALTH"]],
+                theme=[Theme.PUBLIC_HEALTH],
                 title=[Text(value="Dummy resource")],
             ),
-            ["accessRestriction", "contact", "theme", "title", "unitInCharge"],
+            [
+                "accessRestriction",
+                "contact",
+                "resourceCreationMethod",
+                "theme",
+                "title",
+                "unitInCharge",
+            ],
         ),
         (
             ExtractedPerson(
+                fullName=["Test Person"],
                 email=["person000@rki.de"],
                 hadPrimarySource=MEX_PRIMARY_SOURCE_STABLE_TARGET_ID,
                 identifierInPrimarySource="person-000",
             ),
-            [],
+            ["fullName"],
         ),
     ],
 )
