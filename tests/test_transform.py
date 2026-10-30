@@ -49,14 +49,14 @@ from mex.common.types import (
         (
             [
                 "bar",
-                APIType["REST"],
+                APIType.REST,
                 Text(value="hi there", language=TextLanguage.EN),
                 Link(url="http://mex", title="homepage", language=LinkLanguage.EN),
             ],
             True,
             [
                 EditorValue(text="bar"),
-                EditorValue(text="APIType", badge=APIType["REST"].name),
+                EditorValue(text="APIType", badge=APIType.REST.name),
                 EditorValue(text="hi there", badge=TextLanguage.EN.name),
                 EditorValue(
                     text="homepage",
@@ -261,14 +261,16 @@ def test_transform_models_to_preview(dummy_data: list[AnyExtractedModel]) -> Non
         [
             EditorValue(identifier="cWWm02l1c6cucKjIhkFqY4"),
             EditorValue(
-                text="Theme", badge=Theme["BIOINFORMATICS_AND_SYSTEMS_BIOLOGY"].name
+                text="Theme", badge=Theme.BIOINFORMATICS_AND_SYSTEMS_BIOLOGY.name
             ),
-            EditorValue(text="AccessRestriction", badge=AccessRestriction["OPEN"].name),
+            EditorValue(text="ResourceCreationMethod", badge="OTHER"),
+            EditorValue(text="AccessRestriction", badge=AccessRestriction.OPEN.name),
         ],
         [
             EditorValue(identifier="cWWm02l1c6cucKjIhkFqY4"),
-            EditorValue(text="Theme", badge=Theme["PUBLIC_HEALTH"].name),
-            EditorValue(text="AccessRestriction", badge=AccessRestriction["OPEN"].name),
+            EditorValue(text="Theme", badge=Theme.PUBLIC_HEALTH.name),
+            EditorValue(text="ResourceCreationMethod", badge="OTHER"),
+            EditorValue(text="AccessRestriction", badge=AccessRestriction.OPEN.name),
         ],
     ]
 

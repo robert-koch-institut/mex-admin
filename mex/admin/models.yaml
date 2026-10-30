@@ -48,6 +48,11 @@ Distribution:
     - accessRestriction
   textarea:
     - title
+Location:
+  title: name
+  preview:
+    - geoNamesId
+    - wikidataId
 Organization:
   title: officialName
   preview:

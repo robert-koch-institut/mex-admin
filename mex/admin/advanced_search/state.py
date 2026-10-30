@@ -176,7 +176,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
         start_time = time.monotonic()
         try:
             fetch_result = connector.fetch_preview_items(
-                query_string=self.query or None,
+                query_string=self.query,
                 entity_type=entity_type,
                 reference_filters=reference_filters or None,
                 skip=skip,

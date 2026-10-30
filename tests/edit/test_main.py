@@ -308,7 +308,7 @@ def test_edit_page_renders_vocab(
     page.screenshot(path="tests_edit_test_main-test_edit_page_renders_vocab.png")
     expect(theme).to_be_visible()
     expect(theme).to_contain_text(
-        Theme["INFECTIOUS_DISEASES_AND_EPIDEMIOLOGY"].name
+        Theme.INFECTIOUS_DISEASES_AND_EPIDEMIOLOGY.name
     )  # theme value
     expect(theme).to_contain_text("Theme")  # vocabulary name
 
@@ -649,7 +649,7 @@ def test_edit_page_renders_vocabulary_input(edit_page: Page) -> None:
     badge_select = page.get_by_test_id("additive-rule-activityType-0-badge")
     expect(badge_select).to_be_visible()
     expect(
-        page.get_by_text(ActivityType["THIRD_PARTY_FUNDED_PROJECT"].name)
+        page.get_by_text(ActivityType.THIRD_PARTY_FUNDED_PROJECT.name)
     ).to_be_visible()
     badge_select.focus()
     page.keyboard.press("ArrowDown")
@@ -660,7 +660,7 @@ def test_edit_page_renders_vocabulary_input(edit_page: Page) -> None:
     page.keyboard.press("Enter")
     page.locator("body").focus()
     expect(
-        page.get_by_text(ActivityType["INTERNAL_PROJECT_ENDEAVOR"].name)
+        page.get_by_text(ActivityType.INTERNAL_PROJECT_ENDEAVOR.name)
     ).to_be_visible()
 
 

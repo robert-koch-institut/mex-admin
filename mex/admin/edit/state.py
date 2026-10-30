@@ -49,11 +49,13 @@ class EditState(RuleState):
                 results = await asyncio.to_thread(
                     lambda: transform_models_to_search_results(
                         connector.fetch_all_merged_items(
+                            query_string="",
+                            entity_type=[],
                             reference_filters=[
                                 ReferenceFilter(
                                     field="supersededBy", identifiers=[item_id]
                                 )
-                            ]
+                            ],
                         )
                     )
                 )

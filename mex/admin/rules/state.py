@@ -182,9 +182,11 @@ class RuleState(State, LocalStorageMixinState):
         if self.item_id:
             connector = BackendApiConnector.get()
             extracted_items_response = connector.fetch_extracted_items(
+                query_string="",
+                entity_type=[],
                 reference_filters=[
                     ReferenceFilter(field="stableTargetId", identifiers=[self.item_id])
-                ]
+                ],
             )
             return extracted_items_response.items
         return []

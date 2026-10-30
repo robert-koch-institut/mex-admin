@@ -195,6 +195,10 @@ def icon_by_stem_type(
             rx.icon("container", size=size, style=style, title=stem_type),
         ),
         (
+            "Location",
+            rx.icon("map_pin", size=size, style=style, title=stem_type),
+        ),
+        (
             "Organization",
             rx.icon("building", size=size, style=style, title=stem_type),
         ),

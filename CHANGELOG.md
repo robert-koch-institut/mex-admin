@@ -9,8 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- add model config for the new `Location` stem type
+
 ### Changes
 
+- upgrade neo4j:2026.10.1
+- upgrade mex-backend to 4.8.0
+- upgrade mex-common to 3.6.1
+- upgrade mex-model to 5.2.1
 - upgrade to python 3.15
 
 ### Deprecated
@@ -20,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - disable unused redoc api documentation, swagger ui at `/docs` stays
 
 ### Fixed
+
+- send an empty query string and entity type list on advanced searches, because
+  mex-backend 4.8.0 rejects `null` for both and the edit, rules and advanced search
+  pages failed with 422
 
 ### Security
 
