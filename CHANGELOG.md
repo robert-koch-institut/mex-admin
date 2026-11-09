@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - upgrade mex-common to 3.6.1
 - upgrade mex-model to 5.2.1
 - upgrade to python 3.15
+- update reflex to `>=0.10.1,<0.11`
 
 ### Deprecated
 
@@ -27,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- allow the api in the frontend csp under the hostname the frontend is opened
+  with, because reflex swaps `localhost` for it (e.g. `127.0.0.1`)
 - send an empty query string and entity type list on advanced searches, because
   mex-backend 4.8.0 rejects `null` for both and the edit, rules and advanced search
   pages failed with 422

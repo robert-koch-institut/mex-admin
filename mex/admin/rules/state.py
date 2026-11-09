@@ -75,7 +75,7 @@ class RuleState(State, LocalStorageMixinState):
         item_id: str
         draft_id: str
 
-    @rx.var(cache=True, deps=["fields", "_api_fields"])
+    @rx.var(cache=True, deps=["fields", "_api_fields"], auto_deps=False)
     def has_changes(self) -> bool:
         """Indicates if the current edit state differs from the original loaded state.
 
@@ -119,9 +119,9 @@ class RuleState(State, LocalStorageMixinState):
         elif self.draft_id:
             self.delete_draft(self.draft_id)  # type: ignore[operator]
 
-    @rx.var(cache=True, deps=["fields", "current_locale"])
+    @rx.var(cache=True, deps=["fields", "current_locale", "stem_type"], auto_deps=False)
     def translated_fields(self) -> list[FieldTranslation]:
-        """Compute the translated fields based on fields and current_locale.
+        """Compute the translated fields based on fields, current_locale and stem_type.
 
         Returns:
             Translated fields containing label and description translation.
