@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changes
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.8.0] - 2026-11-10
+
+### Added
+
 - add model config for the new `Location` stem type
 
 ### Changes
@@ -20,8 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - upgrade mex-model to 5.2.1
 - upgrade to python 3.15
 - update reflex to `>=0.10.1,<0.11`
-
-### Deprecated
 
 ### Removed
 
