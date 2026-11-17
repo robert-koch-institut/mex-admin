@@ -82,10 +82,14 @@ class EditState(RuleState):
         """Toggle the given publish target by id."""
         if self.workflow_rule:
             target = PublishingTarget(publish_target_id)
-            if publish_target_id in self.workflow_rule.forbiddenPublishingTarget:
-                self.workflow_rule.forbiddenPublishingTarget.remove(target)
+            forbidden = list(self.workflow_rule.forbiddenPublishingTarget)
+            if target in forbidden:
+                forbidden.remove(target)
             else:
-                self.workflow_rule.forbiddenPublishingTarget.append(target)
+                forbidden.append(target)
+            self.workflow_rule = type(self.workflow_rule).model_validate(
+                {"forbiddenPublishingTarget": forbidden}
+            )
 
     @rx.event
     def delete_reset(self) -> Generator[EventSpec | None]:
