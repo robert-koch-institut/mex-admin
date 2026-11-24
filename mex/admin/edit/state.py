@@ -3,7 +3,7 @@ from collections.abc import Generator
 from urllib.parse import parse_qs, urlparse
 
 import reflex as rx
-from reflex.event import EventSpec
+from reflex.event import EventCallback, EventSpec
 from requests import RequestException
 
 from mex.admin.exceptions import escalate_error, response_payload
@@ -26,7 +26,9 @@ class EditState(RuleState):
     superseded_by_backward: list[SearchResult] = []
 
     @rx.event
-    def resolve_superseded_by_backward(self) -> Generator[EventSpec]:
+    def resolve_superseded_by_backward(
+        self,
+    ) -> Generator[EventSpec | EventCallback[()]]:
         """Load the superseding items for the current item.
 
         Background events start right away and do not wait for the events queued

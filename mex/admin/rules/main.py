@@ -34,7 +34,7 @@ def editor_value_switch(
     """Return a switch for toggling subtractive rules."""
     return rx.switch(
         checked=value.enabled,
-        on_change=RuleState.toggle_field_value(field_name, value),  # type: ignore[operator]
+        on_change=RuleState.toggle_field_value(field_name, value),
         custom_attrs={
             "data-testid": f"switch-{field_name}-{primary_source.identifier}-{index}"
         },
@@ -66,7 +66,7 @@ def editor_edit_button(
         variant="soft",
         size="1",
         on_click=[
-            RuleState.toggle_field_value_editing(field_name, index),  # type: ignore[operator]
+            RuleState.toggle_field_value_editing(field_name, index),
             RuleState.resolve_identifiers,
         ],
         custom_attrs={
@@ -169,7 +169,7 @@ def remove_additive_button(
         color_scheme="tomato",
         variant="soft",
         size="1",
-        on_click=RuleState.remove_additive_value(field_name, index),  # type: ignore[operator]
+        on_click=RuleState.remove_additive_value(field_name, index),
         custom_attrs={
             "data-testid": f"additive-rule-{field_name}-{index}-remove-button"
         },
@@ -185,7 +185,7 @@ def href_input(
     return rx.input(
         placeholder="URL",
         value=rx.cond(href, href, ""),  # type: ignore[call-overload]
-        on_change=RuleState.set_href_value(field_name, index),  # type: ignore[operator]
+        on_change=RuleState.set_href_value(field_name, index),
         style=rx.Style(
             margin="calc(-1 * var(--space-1))",
             width="100%",
@@ -203,7 +203,7 @@ def text_input(
     return rx.input(
         placeholder="Text",
         value=rx.cond(text, text, ""),  # type: ignore[call-overload]
-        on_change=RuleState.set_text_value(field_name, index),  # type: ignore[operator]
+        on_change=RuleState.set_text_value(field_name, index),
         style=rx.Style(
             margin="calc(-1 * var(--space-1))",
             width="100%",
@@ -221,7 +221,7 @@ def textarea_input(
     return rx.text_area(
         placeholder="Text",
         value=rx.cond(text, text, ""),  # type: ignore[call-overload]
-        on_change=RuleState.set_text_value(field_name, index),  # type: ignore[operator]
+        on_change=RuleState.set_text_value(field_name, index),
         style=rx.Style(
             margin="calc(-1 * var(--space-1))",
             width="100%",
@@ -243,7 +243,7 @@ def identifier_input(
         rx.input(
             placeholder="Identifier",
             value=rx.cond(identifier, identifier, ""),  # type: ignore[call-overload]
-            on_change=RuleState.set_identifier_value(field.name, index),  # type: ignore[operator]
+            on_change=RuleState.set_identifier_value(field.name, index),
             style=rx.Style(
                 margin="calc(-1 * var(--space-1))",
                 width="100%",
@@ -255,7 +255,7 @@ def identifier_input(
         search_reference_dialog(
             on_identifier_selected=lambda x: RuleState.select_identifier_value(
                 field_translation.field.name, index, x
-            ),  # type: ignore[operator]
+            ),
             reference_types=field_translation.field.value_type,
             field_label=field_translation.label,
         ),
@@ -286,7 +286,7 @@ def badge_input(
                 variant="soft",
                 radius="medium",
                 color_scheme="gray",
-                on_change=RuleState.set_badge_value(field_name, index),  # type: ignore[operator]
+                on_change=RuleState.set_badge_value(field_name, index),
                 custom_attrs={
                     "data-testid": f"additive-rule-{field_name}-{index}-badge"
                 },
@@ -370,7 +370,7 @@ def primary_source_switch(
         on_change=RuleState.toggle_primary_source(
             field_name,
             primary_source.name.href,
-        ),  # type: ignore[operator]
+        ),
         custom_attrs={
             "data-testid": f"switch-{field_name}-{primary_source.identifier}"
         },
@@ -425,7 +425,7 @@ def new_additive_button(
             color_scheme="jade",
             variant="soft",
             size="1",
-            on_click=RuleState.add_additive_value(field_name),  # type: ignore[operator]
+            on_click=RuleState.add_additive_value(field_name),
             custom_attrs={
                 "data-testid": f"new-additive-{field_name}-{primary_source_identifier}"
             },
@@ -606,10 +606,10 @@ def submit_button() -> rx.Component:
             size="3",
             color_scheme="jade",
             on_click=[
-                RuleState.set_is_submitting(value=True),  # type: ignore[operator]
+                RuleState.set_is_submitting(value=True),
                 RuleState.submit_rule_set,
                 RuleState.resolve_identifiers,
-                RuleState.set_is_submitting(value=False),  # type: ignore[operator]
+                RuleState.set_is_submitting(value=False),
             ],
             disabled=RuleState.is_submitting,
             style=rx.Style(margin="var(--line-height-1) 0"),

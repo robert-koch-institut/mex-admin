@@ -85,7 +85,7 @@ class PaginationStateMixin(rx.State, mixin=True):
     def set_total(self, total: int) -> None:
         """Set the total of the pagination."""
         self.total = total
-        self.set_current_page(self.current_page)  # type: ignore[operator]
+        self.set_current_page(self.current_page)
 
     @rx.event
     def set_current_page(self, page_number: str | int) -> None:
@@ -101,12 +101,12 @@ class PaginationStateMixin(rx.State, mixin=True):
     @rx.event
     def go_to_previous_page(self) -> None:
         """Navigate to the previous page."""
-        self.set_current_page(self.current_page - 1)  # type: ignore[operator]
+        self.set_current_page(self.current_page - 1)
 
     @rx.event
     def go_to_next_page(self) -> None:
         """Navigate to the next page."""
-        self.set_current_page(self.current_page + 1)  # type: ignore[operator]
+        self.set_current_page(self.current_page + 1)
 
     @rx.event
     def reset_pagination(self) -> None:

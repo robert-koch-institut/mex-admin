@@ -5,7 +5,7 @@ from typing import Literal, cast
 
 import reflex as rx
 from pydantic import BaseModel
-from reflex.event import EventSpec
+from reflex.event import EventCallback, EventSpec
 from requests import RequestException
 
 from mex.admin.exceptions import escalate_error, response_payload
@@ -201,7 +201,7 @@ class MergeState(State):
     @rx.event
     def reset_stem_type(self) -> None:
         """Set the stem type to the first available one in alphabetical order."""
-        self.set_stem_type(self.value_label_stem_types[0].value)  # type: ignore[operator]
+        self.set_stem_type(self.value_label_stem_types[0].value)
 
     @rx.event
     def set_current_page(self, side: MergeSide, page_number: str | int) -> None:
@@ -218,15 +218,15 @@ class MergeState(State):
     @rx.event
     def go_to_previous_page(self, side: MergeSide) -> None:
         """Navigate to the previous page of one side."""
-        self.set_current_page(side, self.current_pages[side] - 1)  # type: ignore[operator]
+        self.set_current_page(side, self.current_pages[side] - 1)
 
     @rx.event
     def go_to_next_page(self, side: MergeSide) -> None:
         """Navigate to the next page of one side."""
-        self.set_current_page(side, self.current_pages[side] + 1)  # type: ignore[operator]
+        self.set_current_page(side, self.current_pages[side] + 1)
 
     @rx.event
-    def resolve_identifiers(self) -> Generator[EventSpec]:
+    def resolve_identifiers(self) -> Generator[EventSpec | EventCallback[()]]:
         """Resolve identifiers to human readable display values.
 
         Background events start right away and do not wait for the events queued
@@ -253,6 +253,10 @@ class MergeState(State):
         sides: Iterable[MergeSide] = ("goner", "keeper"),
     ) -> Generator[EventSpec | None]:
         """Refresh the search results for the specified sides."""
+        yield from self._refresh_sides(sides)
+
+    def _refresh_sides(self, sides: Iterable[MergeSide]) -> Generator[EventSpec | None]:
+        """Reset the selection and refresh the results for the specified sides."""
         for side in ("goner", "keeper"):
             if side in sides:
                 self.selected_items[side] = None
@@ -289,10 +293,10 @@ class MergeState(State):
             self.results_count[side] = len(self._results(side))
             self.total_count[side] = response.total
             # the current page can fall outside the range when the total shrinks
-            self.set_current_page(side, self.current_pages[side])  # type: ignore[operator]
+            self.set_current_page(side, self.current_pages[side])
 
     @rx.event
-    def submit_merge_items(self) -> Generator[EventSpec | None]:
+    def submit_merge_items(self) -> Generator[EventSpec | EventCallback[()] | None]:
         """Submit merging the selected goner into the selected keeper."""
         goner_identifier = cast(
             "AnyMergedIdentifier", self._selected_identifier("goner")
@@ -324,8 +328,8 @@ class MergeState(State):
                 duration=5000,
             )
             # the goner is a tombstone now, so both result lists are stale
-            yield from self.refresh()  # type: ignore[operator]
-            yield MergeState.resolve_identifiers  # type: ignore[misc]
+            yield from self._refresh_sides(("goner", "keeper"))
+            yield MergeState.resolve_identifiers
 
     def _result_summary_args(self, side: MergeSide) -> list[float]:
         # the range is 1-based and inclusive, but collapses to 0-0 without results

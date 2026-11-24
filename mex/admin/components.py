@@ -168,7 +168,7 @@ def icon_by_stem_type(
 ) -> rx.Component | rx.Var[Any]:
     """Render an icon for the given stem type."""
     # Sigh, https://reflex.dev/docs/library/data-display/icon#using-dynamic-icon-tags
-    return rx.match(
+    return rx.match(  # type: ignore[no-any-return]
         stem_type,
         (
             "AccessPlatform",

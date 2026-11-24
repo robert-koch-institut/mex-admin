@@ -4,7 +4,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import reflex as rx
-from reflex.event import EventSpec
+from reflex.event import EventCallback, EventSpec
 from reflex.istate.data import RouterData
 from requests import RequestException
 
@@ -74,7 +74,7 @@ class SearchState(State, PaginationStateMixin):
         parsed_url = urlparse(router.url)
         params = parse_qs(parsed_url.query)
         current_page = params["page"][0] if "page" in params else 1
-        self.set_current_page(current_page)  # type: ignore[operator]
+        self.set_current_page(current_page)
         yield None
         self.query_string = " ".join(params.get("q", ""))
         type_params = params.get("entityType", [])
@@ -134,7 +134,7 @@ class SearchState(State, PaginationStateMixin):
         yield rx.call_script("window.scrollTo({top: 0, behavior: 'smooth'});")
 
     @rx.event
-    def resolve_identifiers(self) -> Generator[EventSpec]:
+    def resolve_identifiers(self) -> Generator[EventSpec | EventCallback[()]]:
         """Resolve identifiers to human readable display values.
 
         Background events start right away and do not wait for the events queued
@@ -151,7 +151,7 @@ class SearchState(State, PaginationStateMixin):
         )
 
     @rx.event
-    def refresh(self) -> Generator[EventSpec | None]:
+    def refresh(self) -> Generator[EventSpec | EventCallback[()] | None]:
         """Refresh the search results."""
         connector = BackendApiConnector.get()
         entity_type = [
@@ -175,8 +175,8 @@ class SearchState(State, PaginationStateMixin):
             self.search_duration_seconds = time.monotonic() - start_time
             self.is_loading = False
             self.results = []
-            yield SearchState.set_total(0)  # type: ignore[operator]
-            yield SearchState.set_current_page(1)  # type: ignore[operator]
+            yield SearchState.set_total(0)
+            yield SearchState.set_current_page(1)
             yield from escalate_error(
                 "backend", "error fetching merged items", response_payload(exc)
             )
@@ -184,7 +184,7 @@ class SearchState(State, PaginationStateMixin):
             self.search_duration_seconds = time.monotonic() - start_time
             self.is_loading = False
             self.results = transform_models_to_search_results(response.items)
-            yield SearchState.set_total(response.total)  # type: ignore[operator]
+            yield SearchState.set_total(response.total)
 
     @rx.event
     def get_available_primary_sources(self) -> Generator[EventSpec]:
