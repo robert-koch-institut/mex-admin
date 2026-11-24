@@ -30,7 +30,7 @@ def merge_title() -> rx.Component:
             value=MergeState.stem_type,
             on_change=[
                 MergeState.set_stem_type,
-                MergeState.refresh(["goner", "keeper"]),  # type: ignore[operator]
+                MergeState.refresh(["goner", "keeper"]),
                 MergeState.resolve_identifiers,
             ],
             disabled=MergeState.is_loading,
@@ -44,23 +44,23 @@ def merge_title() -> rx.Component:
 def build_pagination_options(side: MergeSide) -> PaginationOptions:
     """Build the pagination options for one side of the merge page."""
     refresh_side = [
-        MergeState.refresh([side]),  # type: ignore[operator]
+        MergeState.refresh([side]),
         MergeState.resolve_identifiers,
     ]
     return PaginationOptions(
         PaginationButtonOptions(
             MergeState.disable_previous_pages[side],
-            [MergeState.go_to_previous_page(side), *refresh_side],  # type: ignore[operator]
+            [MergeState.go_to_previous_page(side), *refresh_side],
         ),
         PaginationButtonOptions(
             MergeState.disable_next_pages[side],
-            [MergeState.go_to_next_page(side), *refresh_side],  # type: ignore[operator]
+            [MergeState.go_to_next_page(side), *refresh_side],
         ),
         PaginationPageOptions(
             MergeState.current_pages[side],
             MergeState.page_selections[side],
             MergeState.disable_page_selections[side],
-            [MergeState.set_current_page(side), *refresh_side],  # type: ignore[operator]
+            [MergeState.set_current_page(side), *refresh_side],
         ),
     )
 
@@ -76,7 +76,7 @@ def search_input(side: MergeSide) -> rx.Component:
                     default_value=MergeState.query_strings[side],
                     max_length=100,
                     name=f"query_string_{side}",
-                    on_change=MergeState.handle_submit(side),  # type: ignore[operator]
+                    on_change=MergeState.handle_submit(side),
                     placeholder=MergeState.label_search_input_placeholder,
                     width="100%",
                     tab_index=1,
@@ -90,8 +90,8 @@ def search_input(side: MergeSide) -> rx.Component:
                     variant="surface",
                     disabled=MergeState.is_loading,
                     on_click=[
-                        MergeState.go_to_first_page(side),  # type: ignore[operator]
-                        MergeState.refresh([side]),  # type: ignore[operator]
+                        MergeState.go_to_first_page(side),
+                        MergeState.refresh([side]),
                         MergeState.resolve_identifiers,
                     ],
                     custom_attrs={"data-testid": f"search-button-{side}"},
@@ -193,7 +193,7 @@ def search_panel(side: MergeSide) -> rx.Component:
             State.has_write_access,
             rx.checkbox(
                 checked=MergeState.selected_items[side] == index,
-                on_change=MergeState.select_item(side, index),  # type:ignore[operator]
+                on_change=MergeState.select_item(side, index),
             ),
         )
 

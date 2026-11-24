@@ -18,7 +18,7 @@ def test_state_logout(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(State, "_mark_dirty", MagicMock(spec=State._mark_dirty))
 
     assert state.user
-    assert "/" in str(list(state.logout()))  # type: ignore[operator]
+    assert "/" in str(list(state.logout()))
     assert state.user is None
 
 
@@ -26,14 +26,14 @@ def test_state_check_login_pass() -> None:
     state = State(user=User(name="Test", write_access=True))
     assert state.user
 
-    assert list(state.check_mex_login()) == []  # type: ignore[operator]
+    assert list(state.check_mex_login()) == []
 
 
 def test_state_check_login_fail() -> None:
     state = State()
     assert state.user is None
 
-    assert "/login" in str(list(state.check_mex_login()))  # type: ignore[operator]
+    assert "/login" in str(list(state.check_mex_login()))
 
 
 @pytest.mark.parametrize(

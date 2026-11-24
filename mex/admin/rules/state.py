@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Literal, cast
 
 import reflex as rx
 from pydantic import ValidationError
-from reflex.event import EventSpec
+from reflex.event import EventCallback, EventSpec
 from requests import RequestException
 from starlette import status
 
@@ -101,7 +101,7 @@ class RuleState(State, LocalStorageMixinState):
             self.update_edit(
                 self.item_id,
                 LocalEdit(fields=_fields),
-            )  # type: ignore[operator]
+            )
         elif self.draft_id:
             self.update_draft(
                 self.draft_id,
@@ -109,15 +109,15 @@ class RuleState(State, LocalStorageMixinState):
                     fields=_fields,
                     stem_type=self.stem_type or "",
                 ),
-            )  # type: ignore[operator]
+            )
 
     @rx.event
     def delete_local_state(self) -> None:
         """Delete local state for draft or edit."""
         if self.item_id:
-            self.delete_edit(self.item_id)  # type: ignore[operator]
+            self.delete_edit(self.item_id)
         elif self.draft_id:
-            self.delete_draft(self.draft_id)  # type: ignore[operator]
+            self.delete_draft(self.draft_id)
 
     @rx.var(cache=True, deps=["fields", "current_locale", "stem_type"], auto_deps=False)
     def translated_fields(self) -> list[FieldTranslation]:
@@ -143,7 +143,7 @@ class RuleState(State, LocalStorageMixinState):
         return []
 
     @rx.event
-    def resolve_identifiers(self) -> Generator[EventSpec]:
+    def resolve_identifiers(self) -> Generator[EventSpec | EventCallback[()]]:
         """Resolve identifiers to human readable display values.
 
         Background events start right away and do not wait for the events queued

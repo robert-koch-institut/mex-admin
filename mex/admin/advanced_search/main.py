@@ -53,7 +53,7 @@ def entity_type_choice(choice: ValueLabelCheckboxItem) -> rx.Component:
         choice.label,
         checked=choice.checked,
         on_change=[
-            AdvancedSearchState.toggle_entity_type(choice.value),  # type: ignore[operator]
+            AdvancedSearchState.toggle_entity_type(choice.value),
             AdvancedSearchState.search,
             AdvancedSearchState.resolve_identifiers,
         ],
@@ -94,7 +94,7 @@ def ref_filter_value(
             on_change=[
                 lambda value: AdvancedSearchState.set_ref_filter_value(
                     index, val_index, value
-                ),  # type: ignore[operator]
+                ),
                 AdvancedSearchState.search,
                 AdvancedSearchState.resolve_identifiers,
             ],
@@ -107,7 +107,7 @@ def ref_filter_value(
             on_identifier_selected=[
                 lambda value: AdvancedSearchState.set_ref_filter_value(
                     index, val_index, value
-                ),  # type: ignore[operator]
+                ),
                 AdvancedSearchState.search,
                 AdvancedSearchState.resolve_identifiers,
             ],
@@ -122,7 +122,7 @@ def ref_filter_value(
             color_scheme="tomato",
             size="1",
             on_click=[
-                AdvancedSearchState.remove_ref_filter_value(index, val_index),  # type: ignore[operator]
+                AdvancedSearchState.remove_ref_filter_value(index, val_index),
                 AdvancedSearchState.search,
                 AdvancedSearchState.resolve_identifiers,
             ],
@@ -145,7 +145,7 @@ def ref_filter(ref: RefFilter, index: int) -> rx.Component:
                 placeholder=AdvancedSearchState.label_reference_field_filter_placeholder,
                 on_change=lambda value: AdvancedSearchState.set_ref_filter_field(
                     index, value
-                ),  # type: ignore[operator]
+                ),
                 custom_attrs={"data-testid": f"ref-filter-{index}-field"},
                 item_testid_prefix="ref-filter-",
             ),
@@ -158,7 +158,7 @@ def ref_filter(ref: RefFilter, index: int) -> rx.Component:
                 class_name="truncate",
                 style=rx.Style(align_self="end", max_width="60%", display="block"),
                 on_click=[
-                    AdvancedSearchState.remove_ref_filter(index),  # type: ignore[operator]
+                    AdvancedSearchState.remove_ref_filter(index),
                     AdvancedSearchState.search,
                     AdvancedSearchState.resolve_identifiers,
                 ],
@@ -176,7 +176,7 @@ def ref_filter(ref: RefFilter, index: int) -> rx.Component:
             variant="ghost",
             color_scheme="jade",
             size="1",
-            on_click=lambda: AdvancedSearchState.add_ref_filter_value(index, ""),  # type: ignore[operator]
+            on_click=lambda: AdvancedSearchState.add_ref_filter_value(index, ""),
             class_name="truncate",
             style=rx.Style(
                 align_self="end", margin_right="0", max_width="60%", display="block"
@@ -200,7 +200,7 @@ def filter_references() -> rx.Component:
                     rx.icon("plus"),
                     on_click=AdvancedSearchState.add_ref_filter(
                         AdvancedSearchState.all_fields_for_entity_types[0].value  # type: ignore[attr-defined]
-                    ),  # type: ignore[operator]
+                    ),
                     variant="ghost",
                     color_scheme="jade",
                     style=rx.Style(margin_left="auto"),
@@ -257,8 +257,8 @@ def search_results() -> rx.Component:
                 ),
                 pagination_options=build_pagination_options(
                     AdvancedSearchState,
-                    AdvancedSearchState.search,  # type: ignore[arg-type]
-                    AdvancedSearchState.resolve_identifiers,  # type: ignore[arg-type]
+                    AdvancedSearchState.search,
+                    AdvancedSearchState.resolve_identifiers,
                 ),
             ),
             style=rx.Style(

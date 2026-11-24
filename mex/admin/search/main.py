@@ -55,7 +55,7 @@ def entity_type_choice(choice: ValueLabelCheckboxItem) -> rx.Component:
         choice.label,
         checked=choice.checked,
         on_change=[
-            SearchState.set_entity_type(choice.value),  # type: ignore[operator]
+            SearchState.set_entity_type(choice.value),
             SearchState.go_to_first_page,
             SearchState.push_search_params,
             SearchState.refresh,
@@ -93,7 +93,7 @@ def primary_source_choice(choice: tuple[str, SearchPrimarySource]) -> rx.Compone
         choice[1].title,
         checked=choice[1].checked,
         on_change=[
-            SearchState.set_had_primary_source(choice[0]),  # type: ignore[operator]
+            SearchState.set_had_primary_source(choice[0]),
             SearchState.go_to_first_page,
             SearchState.push_search_params,
             SearchState.refresh,
@@ -161,7 +161,7 @@ def search_results() -> rx.Component:
                 ),
                 pagination_options=build_pagination_for_state_options(
                     SearchState,
-                    SearchState.push_search_params,  # type: ignore[arg-type]
+                    SearchState.push_search_params,
                 ),
             ),
             style=rx.Style(

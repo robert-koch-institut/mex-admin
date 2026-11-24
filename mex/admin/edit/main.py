@@ -45,7 +45,7 @@ def render_publish_target_switch(item: PublishTarget) -> rx.Component:
         rx.text(item.label.title(), style={"margin-right": ".5em"}),
         rx.switch(
             checked=item.enabled,
-            on_change=EditState.toggle_publish_target(item.identifier),  # type: ignore[operator]
+            on_change=EditState.toggle_publish_target(item.identifier),
         ),
         custom_attrs={"data-testid": f"publish-target-{item.identifier}"},
     )

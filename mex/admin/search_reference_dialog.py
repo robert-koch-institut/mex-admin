@@ -2,7 +2,7 @@ from collections.abc import Generator, Iterable
 from typing import cast
 
 import reflex as rx
-from reflex.event import EventSpec, EventType
+from reflex.event import EventCallback, EventSpec, EventType
 from requests import RequestException
 
 from mex.admin.exceptions import escalate_error, response_payload
@@ -92,7 +92,7 @@ class SearchReferenceDialogState(State, PaginationStateMixin):
             self.user_query = ""
             self.user_reference_types = []
             self.results = []
-            self.reset_pagination()  # type: ignore[operator]
+            self.reset_pagination()
 
     @rx.event
     def set_user_query(self, value: str) -> None:
@@ -105,7 +105,7 @@ class SearchReferenceDialogState(State, PaginationStateMixin):
         self.user_reference_types = value
 
     @rx.event
-    def resolve_identifiers(self) -> Generator[EventSpec]:
+    def resolve_identifiers(self) -> Generator[EventSpec | EventCallback[()]]:
         """Resolve identifiers to human readable display values.
 
         Background events start right away and do not wait for the events queued
@@ -126,7 +126,7 @@ class SearchReferenceDialogState(State, PaginationStateMixin):
         )
 
     @rx.event
-    def search(self) -> Generator[EventSpec | None]:
+    def search(self) -> Generator[EventSpec | EventCallback[()] | None]:
         """Search for entities by query and reference_types."""
         if self.is_loading:
             return
@@ -145,7 +145,7 @@ class SearchReferenceDialogState(State, PaginationStateMixin):
             self.is_loading = False
             self.results = []
             self.total = 0
-            yield SearchReferenceDialogState.set_current_page(1)  # type: ignore[operator]
+            yield SearchReferenceDialogState.set_current_page(1)
             yield None
             yield from escalate_error(
                 "backend", "error fetching merged items", response_payload(exc)
@@ -153,13 +153,13 @@ class SearchReferenceDialogState(State, PaginationStateMixin):
         else:
             self.is_loading = False
             self.results = transform_models_to_search_results(response.items, True)  # noqa: FBT003
-            yield SearchReferenceDialogState.set_total(response.total)  # type: ignore[operator]
-            yield SearchReferenceDialogState.resolve_identifiers  # type: ignore[misc]
+            yield SearchReferenceDialogState.set_total(response.total)
+            yield SearchReferenceDialogState.resolve_identifiers
 
 
 def search_reference_dialog(
     on_identifier_selected: EventType[str],
-    reference_types: rx.Var[Iterable[str]] | Iterable[str],
+    reference_types: rx.Var[list[str]] | list[str],
     field_label: rx.Var[str] | str | None = None,
 ) -> rx.Component:
     """Create a button that opens a dialog to search for references."""
@@ -206,7 +206,7 @@ def search_reference_dialog(
                     SearchResultsListOptions(
                         item_options=SearchResultsListItemOptions(
                             enable_show_all_properties=True,
-                            on_toggle_show_all_properties=SearchReferenceDialogState.toggle_show_all_properties,  # type: ignore[arg-type]
+                            on_toggle_show_all_properties=SearchReferenceDialogState.toggle_show_all_properties,
                             render_title_fn=render_select_button,
                         )
                     ),
@@ -313,8 +313,8 @@ def search_reference_dialog(
             ),
             style=rx.Style({"max-width": "62vw !important"}),
             on_open_auto_focus=[
-                SearchReferenceDialogState.set_user_query(""),  # type: ignore[operator]
-                SearchReferenceDialogState.set_user_reference_types(reference_types),  # type: ignore[operator]
+                SearchReferenceDialogState.set_user_query(""),
+                SearchReferenceDialogState.set_user_reference_types(reference_types),
                 SearchReferenceDialogState.search,
                 SearchReferenceDialogState.resolve_identifiers,
             ],

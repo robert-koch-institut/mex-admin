@@ -103,7 +103,7 @@ def unsaved_changes_dialog() -> rx.Component:
                         State.label_unsaved_changes_dialog_cancel_button,
                         variant="soft",
                         color_scheme="gray",
-                        on_click=State.set_is_unsaved_changes_dialog_open(False),  # type: ignore[operator]
+                        on_click=State.set_is_unsaved_changes_dialog_open(False),
                         custom_attrs={
                             "data-testid": "unsaved-changes-dialog-cancel-button"
                         },
@@ -124,9 +124,9 @@ def logout_button() -> rx.Component:
     return rx.button(
         State.label_nav_bar_logout_button,
         rx.icon("arrow-right", size=18),
-        on_click=rx.cond(
+        on_click=rx.cond(  # type: ignore[call-overload]
             CreateState.draft_count + EditState.edit_count,
-            State.set_is_unsaved_changes_dialog_open(True),  # type: ignore[operator]
+            State.set_is_unsaved_changes_dialog_open(True),
             State.logout,
         ),
         variant="solid",
@@ -161,7 +161,7 @@ def language_switcher_segment(locale: MExLocale) -> rx.Component:
     is_current = State.current_locale == locale.id
     return rx.button(
         locale.code,
-        on_click=State.change_locale(locale.id),  # type: ignore[operator]
+        on_click=State.change_locale(locale.id),
         title=locale.label,
         variant="ghost",
         radius="none",

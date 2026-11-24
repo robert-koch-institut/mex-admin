@@ -6,7 +6,7 @@ from typing import Any
 
 import reflex as rx
 from pydantic import BaseModel
-from reflex.event import EventSpec
+from reflex.event import EventCallback, EventSpec
 from requests import RequestException
 
 from mex.admin.exceptions import escalate_error, response_payload
@@ -200,7 +200,7 @@ class AdvancedSearchState(State, PaginationStateMixin):
         self.is_searching = False
 
     @rx.event
-    def resolve_identifiers(self) -> Generator[EventSpec]:
+    def resolve_identifiers(self) -> Generator[EventSpec | EventCallback[()]]:
         """Resolve identifiers to human readable display values.
 
         Background events start right away and do not wait for the events queued

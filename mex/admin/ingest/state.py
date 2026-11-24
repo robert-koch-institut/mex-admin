@@ -3,7 +3,7 @@ from collections.abc import Generator
 from typing import Any
 
 import reflex as rx
-from reflex.event import EventSpec
+from reflex.event import EventCallback, EventSpec
 from requests import RequestException
 
 from mex.admin.exceptions import escalate_error, response_payload
@@ -94,7 +94,7 @@ class IngestState(State, PaginationStateMixin):
             yield from provider.resolve_dynamic_name()
 
     @rx.event
-    def resolve_identifiers(self) -> Generator[EventSpec]:
+    def resolve_identifiers(self) -> Generator[EventSpec | EventCallback[()]]:
         """Resolve identifiers to human readable display values.
 
         Background events start right away and do not wait for the events queued
@@ -115,7 +115,7 @@ class IngestState(State, PaginationStateMixin):
         )
 
     @rx.event
-    def flag_ingested_items(self) -> Generator[EventSpec]:
+    def flag_ingested_items(self) -> Generator[EventSpec | EventCallback[()]]:
         """Check and flag, if any result is already ingested into backend.
 
         Background events start right away and do not wait for the events queued
@@ -150,7 +150,7 @@ class IngestState(State, PaginationStateMixin):
                             result.show_ingest_button = False
 
     @rx.event
-    def refresh(self) -> Generator[EventSpec | None]:
+    def refresh(self) -> Generator[EventSpec | EventCallback[()] | None]:
         """Refresh the search results."""
         connector = BackendApiConnector.get()
         self.is_loading = True
@@ -169,8 +169,8 @@ class IngestState(State, PaginationStateMixin):
             self.is_loading = False
             self.results_transformed = []
             self.results_extracted = []
-            yield IngestState.set_total(0)  # type: ignore[operator]
-            yield IngestState.set_current_page(1)  # type: ignore[operator]
+            yield IngestState.set_total(0)
+            yield IngestState.set_current_page(1)
             yield None
             yield from escalate_error(
                 "backend",
@@ -184,7 +184,7 @@ class IngestState(State, PaginationStateMixin):
             )
             self.results_extracted = container.items
             self.results_transformed = transform_models_to_results(container.items)
-            self.set_total(container.total)  # type: ignore[operator]
+            self.set_total(container.total)
 
     @label_var(label_id="ingest.button_ingest")
     def label_button_ingest(self) -> None:

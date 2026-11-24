@@ -1,6 +1,6 @@
 import reflex as rx
-from reflex.components.radix import themes
 from reflex.plugins.sitemap import SitemapPlugin
+from reflex_components_radix import themes
 
 config = rx.Config(
     app_name="mex",

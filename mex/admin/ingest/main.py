@@ -28,7 +28,7 @@ def ingest_button(result: IngestResult, index: int) -> rx.Component:
                 align="end",
                 color_scheme="jade",
                 variant="surface",
-                on_click=IngestState.ingest_result(index),  # type: ignore[operator]
+                on_click=IngestState.ingest_result(index),
                 width="calc(8em * var(--scaling))",
                 custom_attrs={"data-testid": f"ingest-button-{index}"},
             ),
@@ -112,12 +112,12 @@ def search_results() -> rx.Component:
                 summary_text=IngestState.label_search_result_summary_format,
                 pagination_options=build_pagination_for_state_options(
                     IngestState,
-                    IngestState.flag_ingested_items,  # type: ignore[arg-type]
+                    IngestState.flag_ingested_items,
                 ),
                 list_options=SearchResultsListOptions(
                     item_options=SearchResultsListItemOptions(
                         enable_show_all_properties=True,
-                        on_toggle_show_all_properties=IngestState.toggle_show_all_properties,  # type: ignore[arg-type]
+                        on_toggle_show_all_properties=IngestState.toggle_show_all_properties,
                         render_append_fn=ingest_button,  # type: ignore[arg-type]
                     )
                 ),
