@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - upgrade mex-common to 3.8.0
 - upgrade mex-model to 5.2.2
+- upgrade reflex to 0.11
 
 ### Deprecated
 
