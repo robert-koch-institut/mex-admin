@@ -1,7 +1,7 @@
 import math
 import time
 from collections.abc import Generator, Iterable
-from typing import Literal
+from typing import Literal, cast
 
 import reflex as rx
 from pydantic import BaseModel
@@ -19,6 +19,7 @@ from mex.admin.value_label_select import ValueLabelSelectItem
 from mex.common.backend_api.connector import BackendApiConnector
 from mex.common.models import MERGED_MODEL_CLASSES
 from mex.common.transform import ensure_prefix
+from mex.common.types import AnyMergedIdentifier
 
 # The item that is superseded (left) and the one that survives the merge (right).
 # This has to stay a plain assignment: a PEP 695 `type` alias would be a
@@ -293,23 +294,19 @@ class MergeState(State):
     @rx.event
     def submit_merge_items(self) -> Generator[EventSpec | None]:
         """Submit merging the selected goner into the selected keeper."""
-        goner_identifier = self._selected_identifier("goner")
-        keeper_identifier = self._selected_identifier("keeper")
+        goner_identifier = cast(
+            "AnyMergedIdentifier", self._selected_identifier("goner")
+        )
+        keeper_identifier = cast(
+            "AnyMergedIdentifier", self._selected_identifier("keeper")
+        )
         if not (goner_identifier and keeper_identifier):
             # the submit button is disabled until both sides have a selection
             return
         connector = BackendApiConnector.get()
         try:
-            # TODO(ND): use the dedicated connector method once it is available
             # TODO(ND): use user auth for backend requests (stop-gap MX-1616)
-            connector.request(
-                method="POST",
-                endpoint="merge",
-                payload={
-                    "gonerIdentifier": str(goner_identifier),
-                    "keeperIdentifier": str(keeper_identifier),
-                },
-            )
+            connector.merge_items(goner_identifier, keeper_identifier)
         except RequestException as exc:
             # keep the selections, so a transient error can be retried as-is
             yield from escalate_error(

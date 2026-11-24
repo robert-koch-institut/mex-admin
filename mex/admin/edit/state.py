@@ -14,6 +14,7 @@ from mex.admin.transform import transform_models_to_search_results
 from mex.admin.utils import resolve_editor_value
 from mex.common.backend_api.connector import BackendApiConnector, ReferenceFilter
 from mex.common.logging import logger
+from mex.common.models import WORKFLOW_MODEL_CLASSES_BY_NAME
 from mex.common.types import PublishingTarget
 
 
@@ -48,7 +49,7 @@ class EditState(RuleState):
             try:
                 results = await asyncio.to_thread(
                     lambda: transform_models_to_search_results(
-                        connector.fetch_all_merged_items(
+                        connector.fetch_preview_items(
                             query_string="",
                             entity_type=[],
                             reference_filters=[
@@ -56,14 +57,14 @@ class EditState(RuleState):
                                     field="supersededBy", identifiers=[item_id]
                                 )
                             ],
-                        )
+                        ).items
                     )
                 )
             except RequestException as ex:
                 logger.error(
                     "%s - %s: %s",
                     "backend",
-                    "error fetching superseding items using 'fetch_all_merged_items'.",
+                    "error fetching superseding items",
                     response_payload(ex),
                     exc_info=False,
                 )
@@ -82,10 +83,15 @@ class EditState(RuleState):
         """Toggle the given publish target by id."""
         if self.workflow_rule:
             target = PublishingTarget(publish_target_id)
-            if publish_target_id in self.workflow_rule.forbiddenPublishingTarget:
-                self.workflow_rule.forbiddenPublishingTarget.remove(target)
+            forbidden = list(self.workflow_rule.forbiddenPublishingTarget)
+            if target in forbidden:
+                forbidden.remove(target)
             else:
-                self.workflow_rule.forbiddenPublishingTarget.append(target)
+                forbidden.append(target)
+            cls = WORKFLOW_MODEL_CLASSES_BY_NAME[f"Workflow{self.stem_type}"]
+            self.workflow_rule = cls.model_validate(
+                {"forbiddenPublishingTarget": forbidden}
+            )
 
     @rx.event
     def delete_reset(self) -> Generator[EventSpec | None]:
